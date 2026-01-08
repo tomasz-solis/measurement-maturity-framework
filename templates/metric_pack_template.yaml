@@ -1,0 +1,60 @@
+# Metric pack template
+# A pack is a collection of metrics plus an optional strategy tree.
+# Keep it generic — this should work across teams.
+
+pack:
+  id: example_pack_id
+  name: Example Metric Pack
+  version: 0.1.0
+  description: >
+    Short description of what this pack covers and who it is for.
+
+# Optional: high-level goals this pack supports.
+# This is used for the strategy tree if you provide one.
+strategy:
+  company_goals:
+    # - id: total_arr
+    #   name: TOTAL ARR
+    # - id: nrr
+    #   name: NRR / RETENTION
+
+  group_goal:
+    # id: group_success
+    # name: GROUP SUCCESS
+    # description: The main outcome this group optimizes for.
+
+  levers:
+    # - id: growth
+    #   name: Growth Levers (Offense)
+    # - id: trust
+    #   name: Trust Levers (Defense)
+
+  # Optional mapping between levers and metrics.
+  # If present, it helps render a clean tree.
+  lever_metrics:
+    # growth:
+    #   - example_metric_id
+    # trust:
+    #   - example_metric_id
+
+metrics:
+  - id: example_metric_id
+    name: Example Metric Name
+    description: >
+      What this metric measures and why it matters.
+    tier: V0
+    status: active
+    responsible: Team / Squad / Role
+    unit: count
+    grain: account_day
+
+    requires:
+      # - warehouse.schema.source_table
+
+    sql:
+      # value: |
+      #   SELECT ...
+
+    tests:
+      # - type: not_null
+      #   field: value

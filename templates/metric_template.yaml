@@ -1,0 +1,51 @@
+# Metric definition template
+# Use this as a starting point for new metrics.
+# V0 metrics can be incomplete by design; add SQL, tests, and dependencies as they stabilize.
+
+id: example_metric_id
+name: Example Metric Name
+description: >
+  One or two sentences explaining what this metric measures,
+  why it matters, and how it should be interpreted.
+
+# V0 | V1 | V2
+tier: V0
+
+# active | draft | deprecated
+status: active
+
+# Team or role accountable for correctness and follow-up
+responsible: Team / Squad / Role
+
+# Measurement details
+unit: count            # e.g. count | percent | currency | hours
+grain: account_day     # e.g. user_day, account_week, org_month
+
+# Optional but recommended once the metric is used for decisions
+requires:
+  # - warehouse.schema.source_table
+  # - upstream_event_name
+
+# SQL definition
+# Optional at V0. Required for V1+.
+# Provide EITHER `value` OR (`numerator` + `denominator`).
+sql:
+  # value: |
+  #   SELECT COUNT(*) FROM ...
+
+  # numerator: |
+  #   SELECT COUNT(*) FROM ...
+
+  # denominator: |
+  #   SELECT COUNT(*) FROM ...
+
+# Data quality and sanity checks
+# Optional early; add once teams rely on the metric.
+tests:
+  # - type: not_null
+  #   field: value
+  #
+  # - type: range
+  #   field: value
+  #   min: 0
+  #   max: 100
