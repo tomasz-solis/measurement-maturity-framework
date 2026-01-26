@@ -4,6 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+from .config import load_config
+
 
 @dataclass
 class MetricScore:
@@ -41,7 +43,8 @@ def score_pack(pack: Dict[str, Any], issues: Optional[List[Any]] = None) -> Scor
 
 
 def _score_metric(metric: Dict[str, Any]) -> MetricScore:
-    base = 100
+    config = load_config()
+    base = config.base_score
     gaps: List[str] = []
 
     tier = metric.get("tier")
@@ -49,12 +52,12 @@ def _score_metric(metric: Dict[str, Any]) -> MetricScore:
 
     # Tier expectations
     if (tier or "").upper() == "V0":
-        base -= 10
+        base -= config.deductions["v0_tier"]
         gaps.append("tier_v0")
 
     # Accountable
     if not metric.get("accountable"):
-        base -= 5
+        base -= config.deductions["missing_accountable"]
         gaps.append("missing_accountable")
 
     # SQL
@@ -62,19 +65,16 @@ def _score_metric(metric: Dict[str, Any]) -> MetricScore:
     has_value_sql = bool(sql.get("value"))
     has_ratio_sql = bool(sql.get("numerator")) and bool(sql.get("denominator"))
     if not (has_value_sql or has_ratio_sql):
-        base -= 5
+        base -= config.deductions["missing_sql"]
         gaps.append("missing_sql")
 
     # Tests
     if not metric.get("tests"):
-        base -= 5
+        base -= config.deductions["missing_tests"]
         gaps.append("missing_tests")
 
     score = max(0, min(100, base))
-    if "ai" in metric:
-        score = max(0.0, score - 10.0)
-        gaps.append("ai flag present (review + remove 'ai')")
-        
+
     why = _build_why(score=score, gaps=gaps)
 
     return MetricScore(

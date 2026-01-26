@@ -110,30 +110,6 @@ This makes trade-offs visible instead of implicit.
 
 ---
 
-## Optional AI helper (deliberately constrained)
-
-The project includes an **optional AI helper** for drafting text only:
-- rewriting metric descriptions
-- suggesting test ideas
-- clarifying validation warnings in plain language
-
-If AI-generated content is used, the metric can be flagged with:
-
-```yaml
-ai: true
-```
-
-This lowers the score until a human review removes the flag.
-
-AI never:
-- changes scores
-- alters YAML automatically
-- invents sources, dependencies, or ownership
-
-The framework must remain useful with AI fully disabled.
-
----
-
 ## How to read the score
 
 Think of the score as a **decision risk signal**, not a quality grade.
@@ -237,29 +213,68 @@ If a metric cannot be described clearly in YAML, it is usually not ready to be t
 - Sanity-checking experiment success metrics
 - Aligning product, data, and engineering on ownership
 - Making metric trade-offs explicit in planning discussions
-- Teaching teams what “good enough” looks like at each stage
+- Teaching teams what "good enough" looks like at each stage
 
 ---
 
-## How to run
+## Examples
 
-The app runs locally via a small Streamlit UI.
- 
-### Requirements
-- Python 3.10+
+The [examples/](examples/) directory contains metric packs demonstrating different use cases.
 
-### Setup
+See [examples/accounting_pilot_metric_pack.yaml](examples/accounting_pilot_metric_pack.yaml) for a sample pack covering adoption, engagement, and health metrics for an accounting product pilot.
 
+---
+
+## Quick Start
+
+**Get up and running in 3 minutes:**
+
+### 1. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### Run
+### 2. Run the app
 ```bash
 streamlit run app.py
 ```
 
-Then open the URL shown in the terminal and upload a metric-pack YAML (built from the template provided - also downloadable in the webapp).
+The app will open in your browser at `http://localhost:8501`
+
+### 3. Upload a metric pack
+- **Option A**: Download the example pack from the sidebar (accounting pilot metrics)
+- **Option B**: Download the template, fill it out, and upload
+- **Option C**: Upload your own YAML file
+
+### 4. Interpret results
+
+The app provides three views:
+
+**Validation** - Schema and structure checks:
+- 🔴 Errors: Must fix (invalid YAML, missing required fields)
+- 🟡 Warnings: Should fix (missing tests, unclear ownership)
+- 🔵 Info: Consider fixing (optional improvements)
+
+**Scoring** - Decision readiness signal (0-100):
+- 🟢 **80-100**: Decision-ready (clear definition, ownership, basic guardrails)
+- 🟡 **60-79**: Usable with caution (gaps present, proceed carefully)
+- 🔴 **0-59**: Not decision-ready (significant gaps, risky for commitments)
+
+**Suggestions** - Deterministic, actionable improvements per metric
+
+### 5. Fix and iterate
+1. Review validation issues and suggestions
+2. Update your YAML file locally
+3. Re-upload to see updated score
+4. Repeat until metrics reach your desired maturity level
+
+**Remember:** Low scores don't mean metrics are wrong - they mean the risk of misinterpretation is high.
+
+---
+
+### Requirements
+- Python 3.10+
+- Works on macOS, Linux, Windows
 
 ---
 

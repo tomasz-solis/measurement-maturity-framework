@@ -4,6 +4,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+try:
+    import sqlparse
+    SQLPARSE_AVAILABLE = True
+except ImportError:
+    SQLPARSE_AVAILABLE = False
+
 
 # -------------------------
 # Public data structures
@@ -11,7 +17,7 @@ from typing import Any, Dict, List, Optional
 
 @dataclass
 class ValidationIssue:
-    severity: str          # ❌ ERROR | ⚠️ WARNING | ℹ️ INFO
+    severity: str          # ERROR | WARNING | INFO
     code: str
     message: str
     path: str              # raw JSON pointer
@@ -39,7 +45,7 @@ def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
             pack=pack,
             issues=[
                 ValidationIssue(
-                    severity="❌ ERROR",
+                    severity="ERROR",
                     code="pack_not_mapping",
                     message="Top-level YAML must be a mapping (object).",
                     path="/",
@@ -47,6 +53,29 @@ def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
                 )
             ],
         )
+
+    # Check schema version (informational)
+    pack_def = pack.get("pack", {})
+    if isinstance(pack_def, dict):
+        schema_version = pack_def.get("schema_version")
+        if not schema_version:
+            issues.append(
+                _info(
+                    "missing_schema_version",
+                    "Consider adding 'schema_version' to pack metadata for future compatibility tracking.",
+                    "/pack/schema_version",
+                    "pack.schema_version",
+                )
+            )
+        elif schema_version != "1.0":
+            issues.append(
+                _warning(
+                    "unknown_schema_version",
+                    f"Schema version '{schema_version}' is not recognized. Current supported version: 1.0",
+                    "/pack/schema_version",
+                    "pack.schema_version",
+                )
+            )
 
     metrics = pack.get("metrics")
     if not isinstance(metrics, list):
@@ -63,6 +92,18 @@ def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
     # Check duplicate metric IDs
     seen_ids = set()
     for idx, m in enumerate(metrics):
+        # Skip non-dict metrics
+        if not isinstance(m, dict):
+            issues.append(
+                _error(
+                    "metric_not_dict",
+                    f"Metric at index {idx} is not a dictionary. Expected a metric object.",
+                    f"/metrics/{idx}",
+                    f"metrics[{idx}]",
+                )
+            )
+            continue
+
         mid = m.get("id")
         if not mid:
             issues.append(
@@ -115,21 +156,6 @@ def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
                 )
             )
 
-        # Add warning when ai flag exists
-        if isinstance(metric, dict) and "ai" in metric:
-            issues.append(
-                ValidationIssue(
-                    severity="WARNING",
-                    code="ai_flag_present",
-                    message=(
-                        "AI draft flag is set. Review the AI-generated content and "
-                        "remove the 'ai' field before treating this metric as ready."
-                    ),
-                    path=f"/metrics/{idx}/ai",
-                    human_location=f"{mid}.ai",
-                )
-            )
-
         # SQL (optional at V0)
         sql = metric.get("sql") or {}
         has_value_sql = bool(sql.get("value"))
@@ -145,6 +171,27 @@ def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
                     f"{mid}.sql",
                 )
             )
+        else:
+            # Validate SQL syntax if sqlparse is available
+            if SQLPARSE_AVAILABLE:
+                sql_fields = []
+                if has_value_sql:
+                    sql_fields.append(("value", sql.get("value")))
+                if has_ratio_sql:
+                    sql_fields.append(("numerator", sql.get("numerator")))
+                    sql_fields.append(("denominator", sql.get("denominator")))
+
+                for field_name, sql_text in sql_fields:
+                    if sql_text and not _validate_sql_syntax(sql_text):
+                        issues.append(
+                            _warning(
+                                "metric_sql_syntax_error",
+                                f"SQL syntax appears invalid in '{field_name}'. "
+                                "This is a basic check - verify the query works in your database.",
+                                f"/metrics/{idx}/sql/{field_name}",
+                                f"{mid}.sql.{field_name}",
+                            )
+                        )
 
         # Tests (optional early)
         if not metric.get("tests"):
@@ -169,7 +216,7 @@ def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
                 )
             )
 
-    has_errors = any(i.severity == "❌ ERROR" for i in issues)
+    has_errors = any(i.severity == "ERROR" for i in issues)
 
     return ValidationResult(
         ok=not has_errors,
@@ -184,7 +231,7 @@ def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
 
 def _error(code: str, message: str, path: str, human: str) -> ValidationIssue:
     return ValidationIssue(
-        severity="❌ ERROR",
+        severity="ERROR",
         code=code,
         message=message,
         path=path,
@@ -194,7 +241,7 @@ def _error(code: str, message: str, path: str, human: str) -> ValidationIssue:
 
 def _warning(code: str, message: str, path: str, human: str) -> ValidationIssue:
     return ValidationIssue(
-        severity="⚠️ WARNING",
+        severity="WARNING",
         code=code,
         message=message,
         path=path,
@@ -204,9 +251,42 @@ def _warning(code: str, message: str, path: str, human: str) -> ValidationIssue:
 
 def _info(code: str, message: str, path: str, human: str) -> ValidationIssue:
     return ValidationIssue(
-        severity="ℹ️ INFO",
+        severity="INFO",
         code=code,
         message=message,
         path=path,
         human_location=human,
     )
+
+
+def _validate_sql_syntax(sql_text: str) -> bool:
+    """
+    Basic SQL syntax validation using sqlparse.
+    Returns True if SQL appears valid, False if syntax errors detected.
+
+    Note: This is a basic check. It does not validate:
+    - Table/column existence
+    - Database-specific syntax
+    - Query correctness
+    """
+    if not SQLPARSE_AVAILABLE or not sql_text or not sql_text.strip():
+        return True  # Assume valid if we can't validate
+
+    try:
+        # Parse the SQL
+        parsed = sqlparse.parse(sql_text)
+
+        # If parsing returns nothing, it's likely invalid
+        if not parsed:
+            return False
+
+        # Check for basic structure - should have at least one statement
+        for statement in parsed:
+            if statement.get_type() is None:
+                # Unknown statement type might indicate syntax error
+                return False
+
+        return True
+    except Exception:
+        # If parsing raises an exception, assume syntax error
+        return False

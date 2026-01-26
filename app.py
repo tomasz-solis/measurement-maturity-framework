@@ -11,7 +11,6 @@ import yaml
 from mmf.validator import validate_metric_pack
 from mmf.scoring import score_pack
 from mmf.suggestions import deterministic_suggestions
-from mmf.ai_helper import AIConfig, load_env, rewrite_description, draft_tests, explain_warning
 
 
 
@@ -166,8 +165,6 @@ def _severity_rank(sev: str) -> int:
 def main() -> None:
     st.set_page_config(page_title=APP_TITLE, layout="wide")
 
-    load_env()
-
     st.title(APP_TITLE)
     st.caption("Upload a metric-pack YAML to validate it, score it, and generate deterministic suggestions.")
 
@@ -212,27 +209,6 @@ def main() -> None:
             )
         else:
             st.caption("No example pack found in ./examples (add one to enable this download).")
-
-        st.markdown("---")
-        st.subheader("AI helper")
-
-        st.checkbox("AI helper (draft text only)", value=False, key="ai_enabled")
-        st.caption("AI outputs are drafts. Deterministic checks remain the source of truth.")
-
-        if st.session_state.get("ai_enabled"):
-            provider = st.selectbox(
-                "Provider",
-                options=["openai", "anthropic", "gemini"],
-                index=0,
-                key="ai_provider",
-            )
-
-            default_models = {
-                "openai": "gpt-4.1-mini",
-                "anthropic": "claude-3-5-sonnet-latest",
-                "gemini": "gemini-1.5-pro",
-            }
-            st.text_input("Model", value=default_models[provider], key="ai_model")
 
         st.markdown("---")
         st.caption("Tip: keep IDs stable. It makes trends and governance easier later.")
@@ -290,12 +266,22 @@ def main() -> None:
     )
 
     if issues_sorted:
+        def _severity_icon(severity: str) -> str:
+            sev_lower = severity.lower()
+            if sev_lower == "error":
+                return "🔴 ERROR"
+            elif sev_lower == "warning":
+                return "🟡 WARNING"
+            elif sev_lower == "info":
+                return "🔵 INFO"
+            return severity
+
         rows = []
         for i in issues_sorted:
             rows.append(
                 {
                     "Location": getattr(i, "human_location", "") or getattr(i, "path", ""),
-                    "Severity": getattr(i, "severity", getattr(i, "level", "")),
+                    "Severity": _severity_icon(getattr(i, "severity", getattr(i, "level", ""))),
                     "Code": getattr(i, "code", ""),
                     "Message": getattr(i, "message", ""),
                 }
@@ -313,17 +299,32 @@ def main() -> None:
     st.subheader("Scoring")
     score_result = score_pack(normalized_pack, issues=issues)
 
-    col_a, col_b = st.columns(2)
-    col_a.metric("Pack score (0–100)", f"{score_result.pack_score:.2f}")
-    #col_b.metric("Avg metric score (0–100)", f"{score_result.avg_metric_score:.2f}")
+    # Pack-level score with icon
+    pack_score = score_result.pack_score
+    if pack_score >= 80:
+        pack_icon = "🟢"
+        pack_label = "Decision-ready"
+    elif pack_score >= 55:
+        pack_icon = "🟡"
+        pack_label = "Use with caution"
+    else:
+        pack_icon = "🔴"
+        pack_label = "Not decision-ready"
 
+    col_a, col_b = st.columns(2)
+    col_a.metric(f"{pack_icon} Pack Score", f"{pack_score:.2f}", help=f"{pack_label} (80+ = decision-ready, 55-79 = caution, <55 = risky)")
+
+    # Threshold explanation
+    st.caption("**Score thresholds:** 80-100 = decision-ready | 55-79 = usable with caution | 0-54 = early/fragile")
+
+    # Metric-level scores with icons
     def _score_label(score: float) -> str:
         if score >= 80:
-            return "✅ Good"
+            return "🟢 Good"
         if score >= 55:
-            return "⚠️ Watch"
-        return "❌ Risk"
-    
+            return "🟡 Watch"
+        return "🔴 Risk"
+
     metric_rows = []
     for ms in score_result.metric_scores:
         metric_rows.append(
@@ -364,99 +365,6 @@ def main() -> None:
                     else:
                         st.info(msg)
 
-    st.markdown("---")
-
-    # --- AI drafts (optional) ---
-    if st.session_state.get("ai_enabled"):
-        st.markdown("**AI drafts (optional)**")
-        st.caption("Draft output — review before use. If you paste AI content into YAML, add `ai: true` and remove it after review.")
-
-        # Map metric_id -> metric dict
-        metrics_list = normalized_pack.get("metrics", []) or []
-        metric_by_id = {m.get("id"): m for m in metrics_list if isinstance(m, dict) and m.get("id")}
-        metric = metric_by_id.get(mid, {})
-
-        # Metric-specific warnings for "Explain warning"
-        metric_warnings = []
-        for it in issues_sorted:
-            p = getattr(it, "path", "") or ""
-            if p.startswith(f"/metrics/") and f"/{mid}/" in p:
-                metric_warnings.append(
-                    {
-                        "code": getattr(it, "code", ""),
-                        "message": getattr(it, "message", ""),
-                        "location": getattr(it, "human_location", "") or p,
-                    }
-                )
-
-        cfg = AIConfig(
-            provider=st.session_state.get("ai_provider", "openai"),
-            model=st.session_state.get("ai_model", "gpt-4.1-mini"),
-        )
-
-        ctx = {
-            "metric": {
-                "id": metric.get("id"),
-                "name": metric.get("name"),
-                "description": metric.get("description"),
-                "tier": metric.get("tier"),
-                "unit": metric.get("unit"),
-                "grain": metric.get("grain"),
-                "status": metric.get("status"),
-            },
-            "deterministic": {
-                "score": ms.score,
-                "why": getattr(ms, "why", ""),
-                "gaps": getattr(ms, "gaps", []),
-            },
-        }
-
-        key_base = f"ai_{mid}"
-        if "ai_outputs" not in st.session_state:
-            st.session_state["ai_outputs"] = {}
-
-        col1, col2, col3 = st.columns(3)
-
-        if col1.button("Rewrite description", key=f"{key_base}_rewrite"):
-            try:
-                out = rewrite_description(cfg, ctx)
-                st.session_state["ai_outputs"][(mid, "rewrite")] = out
-            except Exception as e:
-                st.session_state["ai_outputs"][(mid, "rewrite")] = f"ERROR: {e}"
-
-        if col2.button("Draft tests", key=f"{key_base}_tests"):
-            try:
-                out = draft_tests(cfg, ctx)
-                st.session_state["ai_outputs"][(mid, "tests")] = out
-            except Exception as e:
-                st.session_state["ai_outputs"][(mid, "tests")] = f"ERROR: {e}"
-
-        selected_warning = None
-        if metric_warnings:
-            selected_warning = col3.selectbox(
-                "Explain warning",
-                options=metric_warnings,
-                format_func=lambda w: f"{w['code']}: {w['location']}",
-                key=f"{key_base}_warn_select",
-            )
-            if col3.button("Explain", key=f"{key_base}_explain"):
-                try:
-                    out = explain_warning(cfg, ctx, selected_warning)
-                    st.session_state["ai_outputs"][(mid, "explain")] = out
-                except Exception as e:
-                    st.session_state["ai_outputs"][(mid, "explain")] = f"ERROR: {e}"
-        else:
-            col3.caption("No warnings for this metric.")
-
-        # Show outputs (if any)
-        for action, label in [("rewrite", "Rewritten description"), ("tests", "Draft tests"), ("explain", "Warning explanation")]:
-            out = st.session_state["ai_outputs"].get((mid, action))
-            if out:
-                st.markdown(f"**{label}**")
-                if out.startswith("ERROR:"):
-                    st.error(out)
-                else:
-                    st.code(out, language="yaml" if action == "tests" else "markdown")
     st.markdown("---")
 
     # 4) Strategy tree (safe)

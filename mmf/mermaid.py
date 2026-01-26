@@ -10,7 +10,7 @@ def build_strategy_mermaid(pack: Dict[str, Any]) -> str:
     metrics_by_id = {m.get("id"): m for m in pack.get("metrics", []) if isinstance(m, dict)}
 
     lines: List[str] = []
-    lines.append("graph TB")
+    lines.append("flowchart TB")
 
     # -------------------------
     # Company Goals (Context)
@@ -24,12 +24,12 @@ def build_strategy_mermaid(pack: Dict[str, Any]) -> str:
     goal_ids = [g.get("id") for g in goals if g.get("id")]
 
     lines.append("  %% --- TOP LEVEL: COMPANY GOALS ---")
-    lines.append(f'  subgraph Context ["{_esc(context_title)}"]')
+    lines.append(f'  subgraph Context["{_esc(context_title)}"]')
     lines.append("    direction TB")
 
     for gid in goal_ids:
         label = goal_labels.get(gid) or gid
-        lines.append(f'    {gid}("<b>{_esc(label)}</b>")')
+        lines.append(f'    {gid}["{_esc(label)}"]')
 
     # Prefer impact_graph goal-to-goal edges (correct causal direction)
     goal_edges = _goal_to_goal_edges(ig, set(goal_ids))
@@ -54,12 +54,12 @@ def build_strategy_mermaid(pack: Dict[str, Any]) -> str:
     success_title = sb.get("title") or "SUCCESS"
     subtitle = sb.get("subtitle") or ""
 
-    group_label = f"<b>{_esc(success_title)}</b>"
+    group_label = f"{_esc(success_title)}"
     if subtitle:
-        group_label += f"<br>{_esc(subtitle)}"
+        group_label += f"<br/>{_esc(subtitle)}"
 
     lines.append("  %% --- THE GROUP GOAL ---")
-    lines.append(f'  {success_id}("{group_label}")')
+    lines.append(f'  {success_id}["{group_label}"]')
     lines.append("")
 
     # -------------------------
@@ -89,7 +89,7 @@ def build_strategy_mermaid(pack: Dict[str, Any]) -> str:
         subgraph_name = "Growth" if is_growth else "Trust"
         title = lever.get("title") or lever.get("id") or subgraph_name
 
-        lines.append(f'  subgraph {subgraph_name} ["{_esc(title)}"]')
+        lines.append(f'  subgraph {subgraph_name}["{_esc(title)}"]')
         lines.append("    direction LR")
 
         for p in lever.get("pillars", []) or []:
@@ -128,16 +128,16 @@ def build_strategy_mermaid(pack: Dict[str, Any]) -> str:
                 supporting_names.append(_metric_name(metrics_by_id, sid))
             supporting_names = [s for s in supporting_names if s]
 
-            parts = [f"<b>{_esc(label)}</b>"]
+            parts = [f"{_esc(label)}"]
             if kpi_name:
                 parts.append(f"KPI: {_esc(kpi_name)}")
             if supporting_names:
                 parts.append(f"Supporting: {_esc(', '.join(supporting_names))}")
             if accountable:
-                parts.append(f"<i>Accountable: {_esc(accountable)}</i>")
+                parts.append(f"Accountable: {_esc(accountable)}")
 
-            card = "<br>".join(parts)
-            lines.append(f'    {pid}("{card}")')
+            card = "<br/>".join(parts)
+            lines.append(f'    {pid}["{card}"]')
 
             if is_growth:
                 growth_nodes.append(pid)
@@ -157,7 +157,7 @@ def build_strategy_mermaid(pack: Dict[str, Any]) -> str:
     # Success -> goals (labelled "Impacts") via impact_graph edges
     for e in ig.get("edges", []) or []:
         if e.get("from") == success_id and e.get("to") in goal_ids:
-            lines.append(f'  {success_id} == "Impacts" ==> {e.get("to")}')
+            lines.append(f'  {success_id} == Impacts ==> {e.get("to")}')
 
     lines.append("")
 
@@ -223,4 +223,5 @@ def _strip_numeric_prefix(label: str) -> str:
 
 
 def _esc(text: str) -> str:
-    return str(text).replace('"', '\\"')
+    # Escape quotes and remove angle brackets (HTML tags not allowed in v10+)
+    return str(text).replace('"', '&quot;').replace('<', '').replace('>', '')

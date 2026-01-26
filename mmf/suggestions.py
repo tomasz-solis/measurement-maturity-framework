@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Set, Tuple
 
+from .config import load_config
+
 
 def deterministic_suggestions(pack: Dict[str, Any], score_result: Any) -> Dict[str, List[Dict[str, str]]]:
     """
@@ -55,6 +57,7 @@ def deterministic_suggestions(pack: Dict[str, Any], score_result: Any) -> Dict[s
 
 
 def _good_signals(metric: Dict[str, Any], ms: Any) -> List[Dict[str, str]]:
+    config = load_config()
     good: List[Dict[str, str]] = []
 
     # Lightweight, reusable signals
@@ -70,7 +73,7 @@ def _good_signals(metric: Dict[str, Any], ms: Any) -> List[Dict[str, str]]:
         good.append({"severity": "good", "message": f"Status is set to '{metric.get('status')}'."})
 
     # If the score is high, call it out once
-    if getattr(ms, "score", 0) >= 85:
+    if getattr(ms, "score", 0) >= config.thresholds["decision_ready"]:
         good.append({"severity": "good", "message": "Overall maturity is strong for the current tier."})
 
     return good

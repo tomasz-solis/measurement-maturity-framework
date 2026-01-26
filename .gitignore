@@ -1,4 +1,35 @@
-archive/
-.env
-.DS_Store
+# Python
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+
+# Temporary/scratch
+scratch/
+tmp/
+
+# Test coverage
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+
+# Optional: exclude company-specific examples for public repo
+examples/pleo/
+examples/accounting_pilot_example.yaml
