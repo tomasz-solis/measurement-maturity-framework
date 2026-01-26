@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 try:
     import sqlparse
+
     SQLPARSE_AVAILABLE = True
 except ImportError:
     SQLPARSE_AVAILABLE = False
@@ -15,13 +16,14 @@ except ImportError:
 # Public data structures
 # -------------------------
 
+
 @dataclass
 class ValidationIssue:
-    severity: str          # ERROR | WARNING | INFO
+    severity: str  # ERROR | WARNING | INFO
     code: str
     message: str
-    path: str              # raw JSON pointer
-    human_location: str    # metric_id.field (or pack.field)
+    path: str  # raw JSON pointer
+    human_location: str  # metric_id.field (or pack.field)
 
 
 @dataclass
@@ -34,6 +36,7 @@ class ValidationResult:
 # -------------------------
 # Validator entry point
 # -------------------------
+
 
 def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
     issues: List[ValidationIssue] = []
@@ -228,6 +231,7 @@ def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
 # -------------------------
 # Helpers
 # -------------------------
+
 
 def _error(code: str, message: str, path: str, human: str) -> ValidationIssue:
     return ValidationIssue(

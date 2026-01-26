@@ -33,7 +33,11 @@ def score_pack(pack: Dict[str, Any], issues: Optional[List[Any]] = None) -> Scor
         if isinstance(metric, dict):
             metric_scores.append(_score_metric(metric))
 
-    avg_score = (sum(m.score for m in metric_scores) / len(metric_scores)) if metric_scores else 0.0
+    avg_score = (
+        (sum(m.score for m in metric_scores) / len(metric_scores))
+        if metric_scores
+        else 0.0
+    )
 
     return ScoreResult(
         pack_score=round(avg_score, 2),
@@ -51,13 +55,14 @@ def _score_metric(metric: Dict[str, Any]) -> MetricScore:
     status = metric.get("status", "active")
 
     # Tier expectations
+    deductions = config.deductions  # type: ignore[union-attr]
     if (tier or "").upper() == "V0":
-        base -= config.deductions["v0_tier"]
+        base -= deductions["v0_tier"]  # type: ignore[index]
         gaps.append("tier_v0")
 
     # Accountable
     if not metric.get("accountable"):
-        base -= config.deductions["missing_accountable"]
+        base -= deductions["missing_accountable"]  # type: ignore[index]
         gaps.append("missing_accountable")
 
     # SQL
@@ -65,12 +70,12 @@ def _score_metric(metric: Dict[str, Any]) -> MetricScore:
     has_value_sql = bool(sql.get("value"))
     has_ratio_sql = bool(sql.get("numerator")) and bool(sql.get("denominator"))
     if not (has_value_sql or has_ratio_sql):
-        base -= config.deductions["missing_sql"]
+        base -= deductions["missing_sql"]  # type: ignore[index]
         gaps.append("missing_sql")
 
     # Tests
     if not metric.get("tests"):
-        base -= config.deductions["missing_tests"]
+        base -= deductions["missing_tests"]  # type: ignore[index]
         gaps.append("missing_tests")
 
     score = max(0, min(100, base))

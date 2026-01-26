@@ -6,7 +6,9 @@ from typing import Any, Dict, List, Set, Tuple
 from .config import load_config
 
 
-def deterministic_suggestions(pack: Dict[str, Any], score_result: Any) -> Dict[str, List[Dict[str, str]]]:
+def deterministic_suggestions(
+    pack: Dict[str, Any], score_result: Any
+) -> Dict[str, List[Dict[str, str]]]:
     """
     Deterministic, rules-based suggestions grouped per metric.
 
@@ -19,21 +21,27 @@ def deterministic_suggestions(pack: Dict[str, Any], score_result: Any) -> Dict[s
       }
     """
     metrics = pack.get("metrics", []) or []
-    metrics_by_id = {m.get("id"): m for m in metrics if isinstance(m, dict) and m.get("id")}
+    metrics_by_id = {
+        m.get("id"): m for m in metrics if isinstance(m, dict) and m.get("id")
+    }
 
     metric_scores = getattr(score_result, "metric_scores", []) or []
-    score_by_id = {getattr(ms, "metric_id", None): ms for ms in metric_scores if getattr(ms, "metric_id", None)}
+    score_by_id: Dict[str, Any] = {
+        str(getattr(ms, "metric_id", "")): ms
+        for ms in metric_scores
+        if getattr(ms, "metric_id", None)
+    }
 
     out: Dict[str, List[Dict[str, str]]] = {}
 
     for mid, m in metrics_by_id.items():
-        ms = score_by_id.get(mid)
+        ms = score_by_id.get(mid)  # type: ignore[arg-type]
         if not ms:
             continue
 
         items: List[Dict[str, str]] = []
 
-        # --- What’s good ---
+        # --- What's good ---
         items.extend(_good_signals(m, ms))
 
         # --- What to do next (based on scoring gaps) ---
@@ -46,11 +54,14 @@ def deterministic_suggestions(pack: Dict[str, Any], score_result: Any) -> Dict[s
             items.append(
                 {
                     "severity": "info",
-                    "message": "V0 is fine for early rollout. Once the definition stabilizes, consider a V1 pass (SQL + basic tests).",
+                    "message": (
+                        "V0 is fine for early rollout. Once the definition stabilizes, "
+                        "consider a V1 pass (SQL + basic tests)."
+                    ),
                 }
             )
 
-        out[mid] = _dedupe(items)
+        out[mid] = _dedupe(items)  # type: ignore[index]
 
     # Remove empty groups
     return {k: v for k, v in out.items() if v}
@@ -64,17 +75,37 @@ def _good_signals(metric: Dict[str, Any], ms: Any) -> List[Dict[str, str]]:
     if metric.get("name") and metric.get("id"):
         good.append({"severity": "good", "message": "Clear identity (id + name)."})
     if metric.get("description"):
-        good.append({"severity": "good", "message": "Description is present (people can understand the intent)."})
+        good.append(
+            {
+                "severity": "good",
+                "message": "Description is present (people can understand the intent).",
+            }
+        )
     if metric.get("unit"):
         good.append({"severity": "good", "message": "Unit is specified."})
     if metric.get("grain"):
-        good.append({"severity": "good", "message": "Grain is specified (what one row represents)."})
+        good.append(
+            {
+                "severity": "good",
+                "message": "Grain is specified (what one row represents).",
+            }
+        )
     if metric.get("status"):
-        good.append({"severity": "good", "message": f"Status is set to '{metric.get('status')}'."})
+        good.append(
+            {
+                "severity": "good",
+                "message": f"Status is set to '{metric.get('status')}'.",
+            }
+        )
 
     # If the score is high, call it out once
-    if getattr(ms, "score", 0) >= config.thresholds["decision_ready"]:
-        good.append({"severity": "good", "message": "Overall maturity is strong for the current tier."})
+    if getattr(ms, "score", 0) >= config.thresholds["decision_ready"]:  # type: ignore[index]
+        good.append(
+            {
+                "severity": "good",
+                "message": "Overall maturity is strong for the current tier.",
+            }
+        )
 
     return good
 
@@ -97,14 +128,20 @@ def _gap_actions(metric: Dict[str, Any], gaps: List[str]) -> List[Dict[str, str]
             actions.append(
                 {
                     "severity": "warning",
-                    "message": "Add SQL when the proxy stabilizes. Start with a simple query and document assumptions in comments.",
+                    "message": (
+                        "Add SQL when the proxy stabilizes. Start with a simple query "
+                        "and document assumptions in comments."
+                    ),
                 }
             )
         else:
             actions.append(
                 {
                     "severity": "warning",
-                    "message": "Add SQL (value.sql or numerator/denominator). Without it, the metric can’t be reproduced.",
+                    "message": (
+                        "Add SQL (value.sql or numerator/denominator). Without it, "
+                        "the metric can't be reproduced."
+                    ),
                 }
             )
 
@@ -121,7 +158,10 @@ def _gap_actions(metric: Dict[str, Any], gaps: List[str]) -> List[Dict[str, str]
         actions.append(
             {
                 "severity": "info",
-                "message": "Optional: add 'requires' to list upstream tables/events. Helps debugging and impact analysis later.",
+                "message": (
+                    "Optional: add 'requires' to list upstream tables/events. "
+                    "Helps debugging and impact analysis later."
+                ),
             }
         )
 

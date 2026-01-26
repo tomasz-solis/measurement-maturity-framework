@@ -1,7 +1,6 @@
 """Tests for mmf.scoring module."""
-import pytest
 
-from mmf.scoring import score_pack, ScoreResult, MetricScore
+from mmf.scoring import score_pack
 from mmf.config import ScoringConfig
 
 
@@ -51,31 +50,37 @@ class TestBasicScoring:
         config = ScoringConfig()
 
         pack_v0 = {
-            "metrics": [{
-                "id": "v0_metric",
-                "name": "V0 Metric",
-                "tier": "V0",
-                "accountable": "Team",
-                "sql": {"value": "SELECT 1"},
-                "tests": [{}],
-            }]
+            "metrics": [
+                {
+                    "id": "v0_metric",
+                    "name": "V0 Metric",
+                    "tier": "V0",
+                    "accountable": "Team",
+                    "sql": {"value": "SELECT 1"},
+                    "tests": [{}],
+                }
+            ]
         }
         pack_v1 = {
-            "metrics": [{
-                "id": "v1_metric",
-                "name": "V1 Metric",
-                "tier": "V1",
-                "accountable": "Team",
-                "sql": {"value": "SELECT 1"},
-                "tests": [{}],
-            }]
+            "metrics": [
+                {
+                    "id": "v1_metric",
+                    "name": "V1 Metric",
+                    "tier": "V1",
+                    "accountable": "Team",
+                    "sql": {"value": "SELECT 1"},
+                    "tests": [{}],
+                }
+            ]
         }
 
         result_v0 = score_pack(pack_v0)
         result_v1 = score_pack(pack_v1)
 
         # V0 should score lower
-        assert result_v0.pack_score == result_v1.pack_score - config.deductions["v0_tier"]
+        assert (
+            result_v0.pack_score == result_v1.pack_score - config.deductions["v0_tier"]
+        )
         assert "tier_v0" in result_v0.metric_scores[0].gaps
 
 
@@ -85,13 +90,15 @@ class TestSQLScoring:
     def test_value_sql_counts(self):
         """Metric with 'value' SQL should not lose points."""
         pack = {
-            "metrics": [{
-                "id": "test",
-                "name": "Test",
-                "sql": {"value": "SELECT COUNT(*) FROM table"},
-                "accountable": "Team",
-                "tests": [{}],
-            }]
+            "metrics": [
+                {
+                    "id": "test",
+                    "name": "Test",
+                    "sql": {"value": "SELECT COUNT(*) FROM table"},
+                    "accountable": "Team",
+                    "tests": [{}],
+                }
+            ]
         }
         result = score_pack(pack)
 
@@ -101,16 +108,18 @@ class TestSQLScoring:
     def test_ratio_sql_counts(self):
         """Metric with numerator/denominator SQL should not lose points."""
         pack = {
-            "metrics": [{
-                "id": "test",
-                "name": "Test",
-                "sql": {
-                    "numerator": "SELECT COUNT(*) FROM success",
-                    "denominator": "SELECT COUNT(*) FROM total"
-                },
-                "accountable": "Team",
-                "tests": [{}],
-            }]
+            "metrics": [
+                {
+                    "id": "test",
+                    "name": "Test",
+                    "sql": {
+                        "numerator": "SELECT COUNT(*) FROM success",
+                        "denominator": "SELECT COUNT(*) FROM total",
+                    },
+                    "accountable": "Team",
+                    "tests": [{}],
+                }
+            ]
         }
         result = score_pack(pack)
 
@@ -120,13 +129,15 @@ class TestSQLScoring:
     def test_partial_ratio_sql_deducts(self):
         """Metric with only numerator should deduct points."""
         pack = {
-            "metrics": [{
-                "id": "test",
-                "name": "Test",
-                "sql": {"numerator": "SELECT COUNT(*) FROM success"},
-                "accountable": "Team",
-                "tests": [{}],
-            }]
+            "metrics": [
+                {
+                    "id": "test",
+                    "name": "Test",
+                    "sql": {"numerator": "SELECT COUNT(*) FROM success"},
+                    "accountable": "Team",
+                    "tests": [{}],
+                }
+            ]
         }
         result = score_pack(pack)
 
@@ -135,13 +146,15 @@ class TestSQLScoring:
     def test_empty_sql_dict_deducts(self):
         """Metric with empty SQL dict should deduct points."""
         pack = {
-            "metrics": [{
-                "id": "test",
-                "name": "Test",
-                "sql": {},
-                "accountable": "Team",
-                "tests": [{}],
-            }]
+            "metrics": [
+                {
+                    "id": "test",
+                    "name": "Test",
+                    "sql": {},
+                    "accountable": "Team",
+                    "tests": [{}],
+                }
+            ]
         }
         result = score_pack(pack)
 
@@ -165,7 +178,13 @@ class TestPackScoring:
         pack = {
             "metrics": [
                 # Perfect metric: 100
-                {"id": "m1", "name": "M1", "accountable": "T", "sql": {"value": "1"}, "tests": [{}]},
+                {
+                    "id": "m1",
+                    "name": "M1",
+                    "accountable": "T",
+                    "sql": {"value": "1"},
+                    "tests": [{}],
+                },
                 # Missing all: 85
                 {"id": "m2", "name": "M2"},
             ]
@@ -196,11 +215,7 @@ class TestScoreResult:
 
     def test_score_result_contains_all_fields(self):
         """ScoreResult should have all expected fields."""
-        pack = {
-            "metrics": [
-                {"id": "test", "name": "Test"}
-            ]
-        }
+        pack = {"metrics": [{"id": "test", "name": "Test"}]}
         result = score_pack(pack)
 
         assert hasattr(result, "pack_score")
@@ -210,11 +225,7 @@ class TestScoreResult:
 
     def test_metric_score_contains_all_fields(self):
         """MetricScore should have all expected fields."""
-        pack = {
-            "metrics": [
-                {"id": "test", "name": "Test Metric", "status": "active"}
-            ]
-        }
+        pack = {"metrics": [{"id": "test", "name": "Test Metric", "status": "active"}]}
         result = score_pack(pack)
         ms = result.metric_scores[0]
 
@@ -232,27 +243,33 @@ class TestScoreWhy:
     def test_perfect_score_gets_positive_why(self):
         """Perfect score should get positive message."""
         pack = {
-            "metrics": [{
-                "id": "perfect",
-                "name": "Perfect",
-                "accountable": "Team",
-                "sql": {"value": "SELECT 1"},
-                "tests": [{}],
-            }]
+            "metrics": [
+                {
+                    "id": "perfect",
+                    "name": "Perfect",
+                    "accountable": "Team",
+                    "sql": {"value": "SELECT 1"},
+                    "tests": [{}],
+                }
+            ]
         }
         result = score_pack(pack)
 
-        assert "production-ready" in result.metric_scores[0].why.lower() or \
-               "well-defined" in result.metric_scores[0].why.lower()
+        assert (
+            "production-ready" in result.metric_scores[0].why.lower()
+            or "well-defined" in result.metric_scores[0].why.lower()
+        )
 
     def test_gaps_appear_in_why(self):
         """Gaps should be mentioned in why message."""
         pack = {
-            "metrics": [{
-                "id": "gappy",
-                "name": "Gappy Metric",
-                # Missing: accountable, sql, tests
-            }]
+            "metrics": [
+                {
+                    "id": "gappy",
+                    "name": "Gappy Metric",
+                    # Missing: accountable, sql, tests
+                }
+            ]
         }
         result = score_pack(pack)
         why = result.metric_scores[0].why.lower()
@@ -268,13 +285,15 @@ class TestEdgeCases:
         """Score should never go below 0."""
         # This shouldn't be possible with current deductions, but test anyway
         pack = {
-            "metrics": [{
-                "id": "worst",
-                "name": "Worst Metric",
-                "tier": "V0",
-                "ai": True,
-                # Missing accountable, sql, tests
-            }]
+            "metrics": [
+                {
+                    "id": "worst",
+                    "name": "Worst Metric",
+                    "tier": "V0",
+                    "ai": True,
+                    # Missing accountable, sql, tests
+                }
+            ]
         }
         result = score_pack(pack)
 
@@ -283,13 +302,15 @@ class TestEdgeCases:
     def test_score_never_above_100(self):
         """Score should never exceed 100."""
         pack = {
-            "metrics": [{
-                "id": "best",
-                "name": "Best Metric",
-                "accountable": "Team",
-                "sql": {"value": "SELECT 1"},
-                "tests": [{}],
-            }]
+            "metrics": [
+                {
+                    "id": "best",
+                    "name": "Best Metric",
+                    "accountable": "Team",
+                    "sql": {"value": "SELECT 1"},
+                    "tests": [{}],
+                }
+            ]
         }
         result = score_pack(pack)
 
@@ -297,34 +318,21 @@ class TestEdgeCases:
 
     def test_missing_metric_id_handled(self):
         """Missing metric ID should default to 'unknown'."""
-        pack = {
-            "metrics": [{
-                "name": "No ID Metric"
-            }]
-        }
+        pack = {"metrics": [{"name": "No ID Metric"}]}
         result = score_pack(pack)
 
         assert result.metric_scores[0].metric_id == "unknown"
 
     def test_missing_metric_name_handled(self):
         """Missing metric name should default."""
-        pack = {
-            "metrics": [{
-                "id": "no_name"
-            }]
-        }
+        pack = {"metrics": [{"id": "no_name"}]}
         result = score_pack(pack)
 
         assert result.metric_scores[0].name == "Unnamed metric"
 
     def test_missing_status_defaults_to_active(self):
         """Missing status should default to 'active'."""
-        pack = {
-            "metrics": [{
-                "id": "test",
-                "name": "Test"
-            }]
-        }
+        pack = {"metrics": [{"id": "test", "name": "Test"}]}
         result = score_pack(pack)
 
         assert result.metric_scores[0].status == "active"
@@ -333,14 +341,16 @@ class TestEdgeCases:
         """V0 tier should be case-insensitive."""
         for tier_value in ["V0", "v0", "V0"]:
             pack = {
-                "metrics": [{
-                    "id": "test",
-                    "name": "Test",
-                    "tier": tier_value,
-                    "accountable": "Team",
-                    "sql": {"value": "1"},
-                    "tests": [{}],
-                }]
+                "metrics": [
+                    {
+                        "id": "test",
+                        "name": "Test",
+                        "tier": tier_value,
+                        "accountable": "Team",
+                        "sql": {"value": "1"},
+                        "tests": [{}],
+                    }
+                ]
             }
             result = score_pack(pack)
 

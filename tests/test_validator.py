@@ -1,10 +1,9 @@
 """Tests for mmf.validator module."""
-import pytest
+
 import yaml
 from pathlib import Path
 
-from mmf.validator import validate_metric_pack, ValidationIssue, ValidationResult
-
+from mmf.validator import validate_metric_pack
 
 # Test fixtures directory
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -63,11 +62,7 @@ class TestMetricValidation:
 
     def test_missing_metric_id(self):
         """Metric without ID should produce error."""
-        pack = {
-            "metrics": [
-                {"name": "Test Metric"}  # Missing 'id'
-            ]
-        }
+        pack = {"metrics": [{"name": "Test Metric"}]}  # Missing 'id'
         result = validate_metric_pack(pack)
 
         assert result.ok is False
@@ -76,11 +71,7 @@ class TestMetricValidation:
 
     def test_missing_metric_name(self):
         """Metric without name should produce error."""
-        pack = {
-            "metrics": [
-                {"id": "test_metric"}  # Missing 'name'
-            ]
-        }
+        pack = {"metrics": [{"id": "test_metric"}]}  # Missing 'name'
         result = validate_metric_pack(pack)
 
         assert result.ok is False
@@ -103,11 +94,7 @@ class TestMetricValidation:
 
     def test_missing_accountable_warns(self):
         """Missing 'accountable' field should produce warning."""
-        pack = {
-            "metrics": [
-                {"id": "test", "name": "Test"}  # Missing 'accountable'
-            ]
-        }
+        pack = {"metrics": [{"id": "test", "name": "Test"}]}  # Missing 'accountable'
         result = validate_metric_pack(pack)
 
         # Should pass but with warnings
@@ -117,11 +104,7 @@ class TestMetricValidation:
 
     def test_missing_sql_warns(self):
         """Missing SQL should produce warning."""
-        pack = {
-            "metrics": [
-                {"id": "test", "name": "Test"}  # No SQL
-            ]
-        }
+        pack = {"metrics": [{"id": "test", "name": "Test"}]}  # No SQL
         result = validate_metric_pack(pack)
 
         warnings = [i for i in result.issues if i.severity == "WARNING"]
@@ -129,11 +112,7 @@ class TestMetricValidation:
 
     def test_missing_tests_warns(self):
         """Missing tests should produce warning."""
-        pack = {
-            "metrics": [
-                {"id": "test", "name": "Test"}  # No tests
-            ]
-        }
+        pack = {"metrics": [{"id": "test", "name": "Test"}]}  # No tests
         result = validate_metric_pack(pack)
 
         warnings = [i for i in result.issues if i.severity == "WARNING"]
@@ -145,10 +124,7 @@ class TestSchemaVersioning:
 
     def test_missing_schema_version_info(self):
         """Missing schema_version should produce INFO message."""
-        pack = {
-            "pack": {"id": "test", "name": "Test"},
-            "metrics": []
-        }
+        pack = {"pack": {"id": "test", "name": "Test"}, "metrics": []}
         result = validate_metric_pack(pack)
 
         infos = [i for i in result.issues if i.severity == "INFO"]
@@ -158,26 +134,31 @@ class TestSchemaVersioning:
         """Valid schema_version should not produce warning."""
         pack = {
             "pack": {"id": "test", "name": "Test", "schema_version": "1.0"},
-            "metrics": []
+            "metrics": [],
         }
         result = validate_metric_pack(pack)
 
-        schema_warnings = [i for i in result.issues
-                          if "schema_version" in i.message.lower()
-                          and i.severity == "WARNING"]
+        schema_warnings = [
+            i
+            for i in result.issues
+            if "schema_version" in i.message.lower() and i.severity == "WARNING"
+        ]
         assert len(schema_warnings) == 0
 
     def test_unknown_schema_version_warns(self):
         """Unknown schema_version should produce warning."""
         pack = {
             "pack": {"id": "test", "name": "Test", "schema_version": "99.0"},
-            "metrics": []
+            "metrics": [],
         }
         result = validate_metric_pack(pack)
 
         warnings = [i for i in result.issues if i.severity == "WARNING"]
-        assert any("schema version" in i.message.lower() and "not recognized" in i.message.lower()
-                  for i in warnings)
+        assert any(
+            "schema version" in i.message.lower()
+            and "not recognized" in i.message.lower()
+            for i in warnings
+        )
 
 
 class TestSQLValidation:
@@ -190,15 +171,17 @@ class TestSQLValidation:
                 {
                     "id": "test",
                     "name": "Test",
-                    "sql": {"value": "SELECT COUNT(*) FROM table"}
+                    "sql": {"value": "SELECT COUNT(*) FROM table"},
                 }
             ]
         }
         result = validate_metric_pack(pack)
 
-        sql_warnings = [i for i in result.issues
-                       if "sql" in i.message.lower()
-                       and i.severity == "WARNING"]
+        sql_warnings = [
+            i
+            for i in result.issues
+            if "sql" in i.message.lower() and i.severity == "WARNING"
+        ]
         assert len(sql_warnings) == 0
 
     def test_ratio_sql_valid(self):
@@ -210,16 +193,18 @@ class TestSQLValidation:
                     "name": "Test",
                     "sql": {
                         "numerator": "SELECT COUNT(*) FROM success",
-                        "denominator": "SELECT COUNT(*) FROM total"
-                    }
+                        "denominator": "SELECT COUNT(*) FROM total",
+                    },
                 }
             ]
         }
         result = validate_metric_pack(pack)
 
-        sql_warnings = [i for i in result.issues
-                       if "sql" in i.message.lower()
-                       and i.severity == "WARNING"]
+        sql_warnings = [
+            i
+            for i in result.issues
+            if "sql" in i.message.lower() and i.severity == "WARNING"
+        ]
         assert len(sql_warnings) == 0
 
     def test_partial_ratio_sql_warns(self):
@@ -229,16 +214,18 @@ class TestSQLValidation:
                 {
                     "id": "test",
                     "name": "Test",
-                    "sql": {"numerator": "SELECT COUNT(*) FROM success"}
+                    "sql": {"numerator": "SELECT COUNT(*) FROM success"},
                     # Missing denominator
                 }
             ]
         }
         result = validate_metric_pack(pack)
 
-        sql_warnings = [i for i in result.issues
-                       if "sql" in i.message.lower()
-                       and i.severity == "WARNING"]
+        sql_warnings = [
+            i
+            for i in result.issues
+            if "sql" in i.message.lower() and i.severity == "WARNING"
+        ]
         assert len(sql_warnings) > 0
 
 
@@ -247,23 +234,19 @@ class TestEdgeCases:
 
     def test_metric_not_dict(self):
         """Non-dict metric should be skipped gracefully."""
-        pack = {
-            "metrics": [
-                "not a dict",
-                {"id": "valid", "name": "Valid Metric"}
-            ]
-        }
+        pack = {"metrics": ["not a dict", {"id": "valid", "name": "Valid Metric"}]}
         result = validate_metric_pack(pack)
 
         # Should validate the valid metric
-        assert len(result.issues) > 0  # Will have warnings for missing fields on valid metric
+        assert (
+            len(result.issues) > 0
+        )  # Will have warnings for missing fields on valid metric
 
     def test_very_long_metric_list(self):
         """Large number of metrics should not crash."""
         pack = {
             "metrics": [
-                {"id": f"metric_{i}", "name": f"Metric {i}"}
-                for i in range(1000)
+                {"id": f"metric_{i}", "name": f"Metric {i}"} for i in range(1000)
             ]
         }
         result = validate_metric_pack(pack)
@@ -274,11 +257,7 @@ class TestEdgeCases:
 
     def test_unicode_in_names(self):
         """Unicode characters should be handled correctly."""
-        pack = {
-            "metrics": [
-                {"id": "test", "name": "Test Metric 测试 🚀"}
-            ]
-        }
+        pack = {"metrics": [{"id": "test", "name": "Test Metric 测试 🚀"}]}
         result = validate_metric_pack(pack)
 
         # Should not crash
@@ -286,11 +265,7 @@ class TestEdgeCases:
 
     def test_empty_strings(self):
         """Empty strings for required fields should fail."""
-        pack = {
-            "metrics": [
-                {"id": "", "name": ""}
-            ]
-        }
+        pack = {"metrics": [{"id": "", "name": ""}]}
         result = validate_metric_pack(pack)
 
         # Empty ID is treated as missing

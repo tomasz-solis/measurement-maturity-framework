@@ -1,10 +1,9 @@
 """
 Tests for mmf/suggestions.py - deterministic suggestion generation
 """
+
 from dataclasses import dataclass
 from typing import List, Optional
-
-import pytest
 
 from mmf.suggestions import deterministic_suggestions
 
@@ -12,6 +11,7 @@ from mmf.suggestions import deterministic_suggestions
 @dataclass
 class MockMetricScore:
     """Mock MetricScore for testing"""
+
     metric_id: str
     score: float
     gaps: List[str]
@@ -23,6 +23,7 @@ class MockMetricScore:
 @dataclass
 class MockScoreResult:
     """Mock ScoreResult for testing"""
+
     pack_score: float
     metric_scores: List[MockMetricScore]
     avg_metric_score: float = 0.0
@@ -54,9 +55,7 @@ class TestDeterministicSuggestions:
         }
         score_result = MockScoreResult(
             pack_score=90,
-            metric_scores=[
-                MockMetricScore(metric_id="test_metric", score=90, gaps=[])
-            ]
+            metric_scores=[MockMetricScore(metric_id="test_metric", score=90, gaps=[])],
         )
 
         result = deterministic_suggestions(pack, score_result)
@@ -82,11 +81,9 @@ class TestDeterministicSuggestions:
             pack_score=75,
             metric_scores=[
                 MockMetricScore(
-                    metric_id="no_sql_metric",
-                    score=75,
-                    gaps=["missing_sql"]
+                    metric_id="no_sql_metric", score=75, gaps=["missing_sql"]
                 )
-            ]
+            ],
         )
 
         result = deterministic_suggestions(pack, score_result)
@@ -113,11 +110,9 @@ class TestDeterministicSuggestions:
             pack_score=75,
             metric_scores=[
                 MockMetricScore(
-                    metric_id="no_tests_metric",
-                    score=75,
-                    gaps=["missing_tests"]
+                    metric_id="no_tests_metric", score=75, gaps=["missing_tests"]
                 )
-            ]
+            ],
         )
 
         result = deterministic_suggestions(pack, score_result)
@@ -126,7 +121,9 @@ class TestDeterministicSuggestions:
         suggestions = result["no_tests_metric"]
 
         # Should have suggestion about tests
-        test_suggestions = [s for s in suggestions if "test" in s.get("message", "").lower()]
+        test_suggestions = [
+            s for s in suggestions if "test" in s.get("message", "").lower()
+        ]
         assert len(test_suggestions) > 0
 
     def test_missing_accountable_generates_gap_action(self):
@@ -143,11 +140,9 @@ class TestDeterministicSuggestions:
             pack_score=70,
             metric_scores=[
                 MockMetricScore(
-                    metric_id="no_owner_metric",
-                    score=70,
-                    gaps=["missing_accountable"]
+                    metric_id="no_owner_metric", score=70, gaps=["missing_accountable"]
                 )
-            ]
+            ],
         )
 
         result = deterministic_suggestions(pack, score_result)
@@ -156,8 +151,14 @@ class TestDeterministicSuggestions:
         suggestions = result["no_owner_metric"]
 
         # Should have suggestion about ownership
-        owner_suggestions = [s for s in suggestions if any(word in s.get("message", "").lower()
-                                                          for word in ["accountable", "owner", "responsible"])]
+        owner_suggestions = [
+            s
+            for s in suggestions
+            if any(
+                word in s.get("message", "").lower()
+                for word in ["accountable", "owner", "responsible"]
+            )
+        ]
         assert len(owner_suggestions) > 0
 
     def test_v0_tier_with_good_score_suggests_upgrade(self):
@@ -177,7 +178,7 @@ class TestDeterministicSuggestions:
             pack_score=80,
             metric_scores=[
                 MockMetricScore(metric_id="v0_metric", score=80, gaps=[], tier="V0")
-            ]
+            ],
         )
 
         result = deterministic_suggestions(pack, score_result)
@@ -206,9 +207,9 @@ class TestDeterministicSuggestions:
                 MockMetricScore(
                     metric_id="many_gaps_metric",
                     score=60,
-                    gaps=["missing_sql", "missing_tests", "missing_accountable"]
+                    gaps=["missing_sql", "missing_tests", "missing_accountable"],
                 )
-            ]
+            ],
         )
 
         result = deterministic_suggestions(pack, score_result)
@@ -231,7 +232,7 @@ class TestDeterministicSuggestions:
             pack_score=75,
             metric_scores=[
                 MockMetricScore(metric_id="metric_with_score", score=75, gaps=[])
-            ]
+            ],
         )
 
         result = deterministic_suggestions(pack, score_result)
@@ -254,7 +255,7 @@ class TestDeterministicSuggestions:
             pack_score=70,
             metric_scores=[
                 MockMetricScore(metric_id="test_metric", score=70, gaps=["missing_sql"])
-            ]
+            ],
         )
 
         result = deterministic_suggestions(pack, score_result)
@@ -273,34 +274,30 @@ class TestSuggestionSeverityLevels:
     def test_good_severity_for_high_scores(self):
         """High-scoring metrics should get 'good' severity"""
         pack = {
-            "metrics": [
-                {"id": "excellent_metric", "name": "Excellent", "tier": "V1"}
-            ]
+            "metrics": [{"id": "excellent_metric", "name": "Excellent", "tier": "V1"}]
         }
         score_result = MockScoreResult(
             pack_score=95,
             metric_scores=[
                 MockMetricScore(metric_id="excellent_metric", score=95, gaps=[])
-            ]
+            ],
         )
 
         result = deterministic_suggestions(pack, score_result)
 
-        good_suggestions = [s for s in result["excellent_metric"] if s["severity"] == "good"]
+        good_suggestions = [
+            s for s in result["excellent_metric"] if s["severity"] == "good"
+        ]
         assert len(good_suggestions) > 0
 
     def test_info_severity_for_optional_improvements(self):
         """Optional improvements should use 'info' severity"""
-        pack = {
-            "metrics": [
-                {"id": "v0_ready", "name": "V0 Ready", "tier": "V0"}
-            ]
-        }
+        pack = {"metrics": [{"id": "v0_ready", "name": "V0 Ready", "tier": "V0"}]}
         score_result = MockScoreResult(
             pack_score=75,
             metric_scores=[
                 MockMetricScore(metric_id="v0_ready", score=75, gaps=[], tier="V0")
-            ]
+            ],
         )
 
         result = deterministic_suggestions(pack, score_result)
@@ -333,7 +330,7 @@ class TestEdgeCases:
             pack_score=75,
             metric_scores=[
                 MockMetricScore(metric_id="valid_metric", score=75, gaps=[])
-            ]
+            ],
         )
 
         result = deterministic_suggestions(pack, score_result)
@@ -343,16 +340,12 @@ class TestEdgeCases:
 
     def test_empty_gaps_list_handled(self):
         """Empty gaps list should not crash"""
-        pack = {
-            "metrics": [
-                {"id": "perfect_metric", "name": "Perfect"}
-            ]
-        }
+        pack = {"metrics": [{"id": "perfect_metric", "name": "Perfect"}]}
         score_result = MockScoreResult(
             pack_score=100,
             metric_scores=[
                 MockMetricScore(metric_id="perfect_metric", score=100, gaps=[])
-            ]
+            ],
         )
 
         result = deterministic_suggestions(pack, score_result)
@@ -363,25 +356,23 @@ class TestEdgeCases:
 
     def test_unknown_gap_types_handled_gracefully(self):
         """Unknown gap types should not crash the system"""
-        pack = {
-            "metrics": [
-                {"id": "unknown_gap", "name": "Unknown Gap"}
-            ]
-        }
+        pack = {"metrics": [{"id": "unknown_gap", "name": "Unknown Gap"}]}
         score_result = MockScoreResult(
             pack_score=70,
             metric_scores=[
                 MockMetricScore(
                     metric_id="unknown_gap",
                     score=70,
-                    gaps=["missing_sql", "unknown_gap_type", "another_unknown"]
+                    gaps=["missing_sql", "unknown_gap_type", "another_unknown"],
                 )
-            ]
+            ],
         )
 
         result = deterministic_suggestions(pack, score_result)
 
         # Should not crash, should handle known gaps at minimum
         assert "unknown_gap" in result
-        sql_suggestions = [s for s in result["unknown_gap"] if "SQL" in s.get("message", "")]
+        sql_suggestions = [
+            s for s in result["unknown_gap"] if "SQL" in s.get("message", "")
+        ]
         assert len(sql_suggestions) > 0

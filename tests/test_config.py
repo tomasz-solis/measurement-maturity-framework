@@ -1,6 +1,7 @@
 """
 Tests for mmf/config.py - scoring configuration and validation
 """
+
 import pytest
 
 from mmf.config import ScoringConfig, load_config
@@ -38,8 +39,14 @@ class TestConfigDefaults:
         """Thresholds should be in descending order"""
         config = ScoringConfig()
 
-        assert config.thresholds["decision_ready"] > config.thresholds["usable_with_caution"]
-        assert config.thresholds["usable_with_caution"] > config.thresholds["early_fragile"]
+        assert (
+            config.thresholds["decision_ready"]
+            > config.thresholds["usable_with_caution"]
+        )
+        assert (
+            config.thresholds["usable_with_caution"]
+            > config.thresholds["early_fragile"]
+        )
 
 
 class TestConfigValidation:
@@ -47,10 +54,14 @@ class TestConfigValidation:
 
     def test_invalid_base_score_raises(self):
         """Base score outside 0-100 should raise ValueError"""
-        with pytest.raises(ValueError, match="base_score must be an integer between 0 and 100"):
+        with pytest.raises(
+            ValueError, match="base_score must be an integer between 0 and 100"
+        ):
             ScoringConfig(base_score=150)
 
-        with pytest.raises(ValueError, match="base_score must be an integer between 0 and 100"):
+        with pytest.raises(
+            ValueError, match="base_score must be an integer between 0 and 100"
+        ):
             ScoringConfig(base_score=-10)
 
     def test_negative_deduction_raises(self):
@@ -75,33 +86,43 @@ class TestConfigValidation:
 
     def test_missing_required_threshold_raises(self):
         """Missing required threshold keys should raise ValueError"""
-        with pytest.raises(ValueError, match="Missing required threshold: decision_ready"):
+        with pytest.raises(
+            ValueError, match="Missing required threshold: decision_ready"
+        ):
             ScoringConfig(thresholds={"usable_with_caution": 60, "early_fragile": 40})
 
     def test_threshold_out_of_range_raises(self):
         """Threshold values outside 0-100 should raise ValueError"""
         with pytest.raises(ValueError, match="must be between 0 and 100"):
-            ScoringConfig(thresholds={
-                "decision_ready": 150,
-                "usable_with_caution": 60,
-                "early_fragile": 40,
-            })
+            ScoringConfig(
+                thresholds={
+                    "decision_ready": 150,
+                    "usable_with_caution": 60,
+                    "early_fragile": 40,
+                }
+            )
 
     def test_wrong_threshold_order_raises(self):
         """Thresholds not in descending order should raise ValueError"""
         with pytest.raises(ValueError, match="Thresholds must be ordered"):
-            ScoringConfig(thresholds={
-                "decision_ready": 60,  # Should be highest
-                "usable_with_caution": 80,  # Wrong order
-                "early_fragile": 40,
-            })
+            ScoringConfig(
+                thresholds={
+                    "decision_ready": 60,  # Should be highest
+                    "usable_with_caution": 80,  # Wrong order
+                    "early_fragile": 40,
+                }
+            )
 
     def test_valid_custom_config_works(self):
         """Valid custom configuration should not raise"""
         config = ScoringConfig(
             base_score=100,
             deductions={"v0_tier": 15, "missing_sql": 10},
-            thresholds={"decision_ready": 90, "usable_with_caution": 70, "early_fragile": 50}
+            thresholds={
+                "decision_ready": 90,
+                "usable_with_caution": 70,
+                "early_fragile": 50,
+            },
         )
 
         assert config.base_score == 100
@@ -159,11 +180,14 @@ class TestConfigImmutability:
     def test_validation_preserves_values(self):
         """Validation should not modify config values"""
         original_deductions = {"v0_tier": 10, "missing_sql": 5}
-        original_thresholds = {"decision_ready": 80, "usable_with_caution": 60, "early_fragile": 40}
+        original_thresholds = {
+            "decision_ready": 80,
+            "usable_with_caution": 60,
+            "early_fragile": 40,
+        }
 
         config = ScoringConfig(
-            deductions=original_deductions.copy(),
-            thresholds=original_thresholds.copy()
+            deductions=original_deductions.copy(), thresholds=original_thresholds.copy()
         )
 
         assert config.deductions == original_deductions
@@ -175,22 +199,29 @@ class TestEdgeCases:
 
     def test_minimum_valid_config(self):
         """Minimum valid config should work with proper ordering"""
-        config = ScoringConfig(base_score=100, deductions={}, thresholds={
-            "decision_ready": 80,
-            "usable_with_caution": 60,
-            "early_fragile": 40,
-        })
+        config = ScoringConfig(
+            base_score=100,
+            deductions={},
+            thresholds={
+                "decision_ready": 80,
+                "usable_with_caution": 60,
+                "early_fragile": 40,
+            },
+        )
 
         assert config.base_score == 100
         assert len(config.deductions) == 0
 
     def test_empty_deductions_valid(self):
         """Empty deductions dictionary should be valid"""
-        config = ScoringConfig(deductions={}, thresholds={
-            "decision_ready": 80,
-            "usable_with_caution": 60,
-            "early_fragile": 40,
-        })
+        config = ScoringConfig(
+            deductions={},
+            thresholds={
+                "decision_ready": 80,
+                "usable_with_caution": 60,
+                "early_fragile": 40,
+            },
+        )
 
         assert config.deductions == {}
 
@@ -198,7 +229,11 @@ class TestEdgeCases:
         """Float deduction values should be accepted"""
         config = ScoringConfig(
             deductions={"v0_tier": 10.5, "missing_sql": 5.5},
-            thresholds={"decision_ready": 80, "usable_with_caution": 60, "early_fragile": 40}
+            thresholds={
+                "decision_ready": 80,
+                "usable_with_caution": 60,
+                "early_fragile": 40,
+            },
         )
 
         assert config.deductions["v0_tier"] == 10.5

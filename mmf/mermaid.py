@@ -7,7 +7,9 @@ from typing import Any, Dict, List, Tuple
 def build_strategy_mermaid(pack: Dict[str, Any]) -> str:
     sb = pack.get("strategy_board") or {}
     ig = pack.get("impact_graph") or {}
-    metrics_by_id = {m.get("id"): m for m in pack.get("metrics", []) if isinstance(m, dict)}
+    metrics_by_id = {
+        m.get("id"): m for m in pack.get("metrics", []) if isinstance(m, dict)
+    }
 
     lines: List[str] = []
     lines.append("flowchart TB")
@@ -109,14 +111,20 @@ def build_strategy_mermaid(pack: Dict[str, Any]) -> str:
 
             # Pillar KPI
             kpi_metric_id = p.get("kpi_metric_id") or ""
-            kpi_name = _metric_name(metrics_by_id, kpi_metric_id)
+            kpi_name = _metric_name(metrics_by_id, kpi_metric_id)  # type: ignore[arg-type]
 
             # Acc label (preferred keys)
-            accountable = p.get("accountable") or p.get("responsible") or p.get("owner") or ""
+            accountable = (
+                p.get("accountable") or p.get("responsible") or p.get("owner") or ""
+            )
 
             # Optional: supporting metrics (if present)
             supporting_ids: List[str] = []
-            for key in ("supporting_metric_ids", "supporting_metrics", "supporting_kpi_metric_ids"):
+            for key in (
+                "supporting_metric_ids",
+                "supporting_metrics",
+                "supporting_kpi_metric_ids",
+            ):
                 v = p.get(key)
                 if isinstance(v, list):
                     supporting_ids.extend([str(x) for x in v if x])
@@ -125,7 +133,7 @@ def build_strategy_mermaid(pack: Dict[str, Any]) -> str:
 
             supporting_names = []
             for sid in supporting_ids:
-                supporting_names.append(_metric_name(metrics_by_id, sid))
+                supporting_names.append(_metric_name(metrics_by_id, sid))  # type: ignore[arg-type]
             supporting_names = [s for s in supporting_names if s]
 
             parts = [f"{_esc(label)}"]
@@ -165,17 +173,27 @@ def build_strategy_mermaid(pack: Dict[str, Any]) -> str:
     # Styling
     # -------------------------
     lines.append("  %% --- STYLING ---")
-    lines.append("  classDef kpi_growth fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000")
-    lines.append("  classDef kpi_trust fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000")
+    lines.append(
+        "  classDef kpi_growth fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000"
+    )
+    lines.append(
+        "  classDef kpi_trust fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000"
+    )
 
     if growth_nodes:
         lines.append(f"  class {','.join(growth_nodes)} kpi_growth")
     if trust_nodes:
         lines.append(f"  class {','.join(trust_nodes)} kpi_trust")
 
-    lines.append('  style Growth fill:#ffffff,stroke:#0288d1,stroke-width:1px,stroke-dasharray: 5 5,color:#01579b')
-    lines.append('  style Trust fill:#ffffff,stroke:#fbc02d,stroke-width:1px,stroke-dasharray: 5 5,color:#f57f17')
-    lines.append('  style Context fill:#f5f5f5,stroke:#bdbdbd,stroke-width:1px,color:#757575,stroke-dasharray: 5 5')
+    lines.append(
+        "  style Growth fill:#ffffff,stroke:#0288d1,stroke-width:1px,stroke-dasharray: 5 5,color:#01579b"
+    )
+    lines.append(
+        "  style Trust fill:#ffffff,stroke:#fbc02d,stroke-width:1px,stroke-dasharray: 5 5,color:#f57f17"
+    )
+    lines.append(
+        "  style Context fill:#f5f5f5,stroke:#bdbdbd,stroke-width:1px,color:#757575,stroke-dasharray: 5 5"
+    )
 
     # Style goal nodes as dashed grey cards
     for gid in goal_ids:
@@ -189,6 +207,7 @@ def build_strategy_mermaid(pack: Dict[str, Any]) -> str:
 # -------------------------
 # Helpers
 # -------------------------
+
 
 def _metric_name(metrics_by_id: Dict[str, Dict[str, Any]], metric_id: str) -> str:
     if not metric_id:
@@ -205,7 +224,9 @@ def _goal_labels_from_impact_graph(impact_graph: Dict[str, Any]) -> Dict[str, st
     return out
 
 
-def _goal_to_goal_edges(impact_graph: Dict[str, Any], goal_ids: set[str]) -> List[Tuple[str, str]]:
+def _goal_to_goal_edges(
+    impact_graph: Dict[str, Any], goal_ids: set[str]
+) -> List[Tuple[str, str]]:
     edges = []
     for e in impact_graph.get("edges", []) or []:
         frm = e.get("from")
@@ -224,4 +245,4 @@ def _strip_numeric_prefix(label: str) -> str:
 
 def _esc(text: str) -> str:
     # Escape quotes and remove angle brackets (HTML tags not allowed in v10+)
-    return str(text).replace('"', '&quot;').replace('<', '').replace('>', '')
+    return str(text).replace('"', "&quot;").replace("<", "").replace(">", "")
