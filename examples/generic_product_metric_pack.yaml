@@ -1,0 +1,214 @@
+# Generic Product Pilot - Metric Pack
+#
+# Example pack for a product workflow that could fit many SaaS teams.
+# The goal is to stay concrete enough to audit without tying the repo
+# to one business domain or one company's internal naming.
+
+pack:
+  id: generic_product_pilot
+  name: Generic Product Pilot
+  version: 0.2.0
+  schema_version: "1.0"
+  description: >
+    Example pack showing how to model adoption, engagement, outcome,
+    reliability, and support metrics for a generic product workflow.
+
+strategy_board:
+  title: PRODUCT PILOT SUCCESS
+  success_node_id: pilot_success
+  company_goals_box:
+    title: Company Goals
+    goals:
+      - id: revenue_growth
+      - id: customer_retention
+  levers:
+    - id: growth
+      title: Growth Levers
+      style: growth
+      pillars:
+        - id: activation
+          label: Feature Activation
+          kpi_metric_id: feature_activation_rate
+          accountable: Growth Team
+        - id: engagement
+          label: Weekly Product Usage
+          kpi_metric_id: weekly_active_rate
+          accountable: Product Team
+    - id: trust
+      title: Trust Levers
+      style: trust
+      pillars:
+        - id: quality
+          label: Workflow Reliability
+          kpi_metric_id: workflow_error_rate
+          accountable: Platform Team
+        - id: support
+          label: Support Load
+          kpi_metric_id: support_ticket_ratio
+          accountable: Customer Success
+
+impact_graph:
+  nodes:
+    - id: revenue_growth
+      type: goal
+      label: Revenue Growth
+    - id: customer_retention
+      type: goal
+      label: Customer Retention
+  edges:
+    - from: pilot_success
+      to: revenue_growth
+    - from: pilot_success
+      to: customer_retention
+    - from: revenue_growth
+      to: customer_retention
+
+metrics:
+  # --- Adoption ---
+  - id: feature_activation_rate
+    name: Feature Activation Rate
+    description: >
+      Percentage of new accounts that complete the core setup workflow
+      within 14 days of signup. This is a common early signal that the
+      product is understandable and delivering first value quickly.
+    tier: V1
+    status: active
+    accountable: Growth Team
+    unit: percent
+    grain: account_week
+    requires:
+      - warehouse.product.account_lifecycle
+      - warehouse.product.setup_events
+    sql:
+      numerator: |
+        SELECT COUNT(DISTINCT account_id)
+        FROM warehouse.product.setup_events
+        WHERE event_name = 'core_setup_completed'
+          AND occurred_at >= CURRENT_DATE - INTERVAL '14 days'
+      denominator: |
+        SELECT COUNT(DISTINCT account_id)
+        FROM warehouse.product.account_lifecycle
+        WHERE signup_at >= CURRENT_DATE - INTERVAL '14 days'
+    tests:
+      - type: not_null
+      - type: range
+        field: value
+        min: 0
+        max: 100
+      - type: freshness
+        max_age_hours: 24
+
+  # --- Engagement ---
+  - id: weekly_active_rate
+    name: Weekly Active Rate
+    description: >
+      Percentage of live accounts that use the core workflow at least
+      three times in a week. It captures repeated usage rather than a
+      one-time visit.
+    tier: V1
+    status: active
+    accountable: Product Team
+    unit: percent
+    grain: account_week
+    requires:
+      - warehouse.product.account_status
+      - warehouse.product.workflow_events
+    sql:
+      numerator: |
+        SELECT COUNT(*)
+        FROM (
+          SELECT account_id
+          FROM warehouse.product.workflow_events
+          WHERE occurred_at >= DATE_TRUNC('week', CURRENT_DATE)
+          GROUP BY account_id
+          HAVING COUNT(*) >= 3
+        ) active_accounts
+      denominator: |
+        SELECT COUNT(DISTINCT account_id)
+        FROM warehouse.product.account_status
+        WHERE week_start = DATE_TRUNC('week', CURRENT_DATE)
+          AND lifecycle_state = 'live'
+    tests:
+      - type: not_null
+      - type: range
+        field: value
+        min: 0
+        max: 100
+
+  # --- Outcome ---
+  - id: time_to_first_value_hours
+    name: Time to First Value
+    description: >
+      Median hours between signup and the first successful completion of
+      the core workflow. Lower is better. This helps teams spot friction
+      early in onboarding.
+    tier: V1
+    status: active
+    accountable: Product Team
+    unit: hours
+    grain: account_day
+    requires:
+      - warehouse.product.account_lifecycle
+    sql:
+      value: |
+        SELECT
+          account_id,
+          DATE_TRUNC('day', signup_at) AS signup_day,
+          EXTRACT(EPOCH FROM (first_value_at - signup_at)) / 3600.0
+            AS hours_to_first_value
+        FROM warehouse.product.account_lifecycle
+        WHERE signup_at >= CURRENT_DATE - INTERVAL '90 days'
+          AND first_value_at IS NOT NULL
+    tests:
+      - type: not_null
+        field: hours_to_first_value
+      - type: range
+        field: hours_to_first_value
+        min: 0
+        max: 720
+
+  # --- Health ---
+  - id: workflow_error_rate
+    name: Workflow Error Rate
+    description: >
+      Percentage of workflow runs that end in an error. Spikes usually
+      point to upstream changes, product regressions, or fragile
+      integrations.
+    tier: V1
+    status: active
+    accountable: Platform Team
+    unit: percent
+    grain: account_day
+    requires:
+      - warehouse.product.workflow_runs
+    sql:
+      numerator: |
+        SELECT COUNT(*)
+        FROM warehouse.product.workflow_runs
+        WHERE finished_at >= CURRENT_DATE - INTERVAL '1 day'
+          AND final_state = 'error'
+      denominator: |
+        SELECT COUNT(*)
+        FROM warehouse.product.workflow_runs
+        WHERE finished_at >= CURRENT_DATE - INTERVAL '1 day'
+    tests:
+      - type: not_null
+      - type: range
+        field: value
+        min: 0
+        max: 100
+      - type: freshness
+        max_age_hours: 24
+
+  # --- Support (V0 proxy) ---
+  - id: support_ticket_ratio
+    name: Support Ticket Ratio (V0 proxy)
+    description: >
+      Weekly ratio of support tickets tagged to the core workflow
+      relative to active accounts. It is a rough proxy for user friction
+      until a more direct experience metric is ready.
+    tier: V0
+    status: active
+    responsible: Support / Customer Success
+    unit: ratio
+    grain: account_week

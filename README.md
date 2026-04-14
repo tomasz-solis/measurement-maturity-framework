@@ -1,311 +1,240 @@
-# Measurement Maturity Framework — YAML Auditor
+# Measurement Maturity Framework
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This repository contains a small, opinionated tool for reviewing metric definitions before they are treated as decision-ready.
+The Measurement Maturity Framework is a small Streamlit app and Python library for reviewing metric definitions before they are treated as decision-ready.
 
-This framework was built to support repeated decisions, not one-off analyses.
+It does three things:
+- validates the structure of a metric pack
+- scores metric maturity and pack-level decision risk
+- generates deterministic suggestions for the next improvement step
 
-The core idea:  
-**most metric failures are structural, not analytical** — missing context, unclear ownership, unstable definitions, or hidden assumptions.
-
-The auditor makes those issues visible early, while they are still inexpensive to fix.
-
----
-
-## What this is (and what it isn’t)
-
-**This is:**
-- A structured review tool for metric definitions
-- A way to surface ownership gaps, weak proxies, and missing guardrails
-- A pre-flight check before metrics reach dashboards, experiments, or planning decks
-
-**This is not:**
-- An automated decision engine
-- A BI framework or metrics catalog
-- A replacement for human judgment
-
-**Non-goals:**
-- This is not meant to standardize metrics across teams
-- This does not prevent bad decisions, only makes risk visible
-
-**When not to use:**
-- One-off exploratory analysis
-- Pure research metrics with no downstream decisions
-
-The framework is intentionally conservative. 
-
-It rewards clarity and discipline over completeness.
+The point is simple: many metric problems are structural before they are analytical. If ownership is unclear, SQL is missing, or basic tests do not exist, the number can still look precise while being risky to use.
 
 ---
 
-## Core concepts
+## What It Is
 
-### Metric packs
+- A review layer for YAML metric definitions
+- A lightweight way to surface ownership, reproducibility, and guardrail gaps
+- A decision-risk check before metrics reach dashboards, planning, or targets
 
-Metrics are defined in YAML packs, not ad-hoc SQL files.
+## What It Is Not
 
-Each metric is expected to state:
-- what it measures
-- why it exists
-- how it is computed (or why it isn’t yet)
-- who owns it
-- what depends on it
-
-This makes the *shape* of the metric explicit before anyone argues about the number.
+- A BI framework
+- A metrics catalog
+- A replacement for judgment
+- A system that auto-fixes or auto-approves metrics
 
 ---
 
-### Validation
+## Pack Shape
 
-The validator checks for predictable failure modes, such as:
-- missing descriptions
-- unclear ownership
-- absent tests
-- undefined dependencies
-- early-stage proxies without guardrails
+The app expects a top-level YAML mapping with a `metrics` list and optional pack metadata.
 
-Validation is explicit and non-blocking. Issues remain visible even when scoring proceeds.
-
----
-
-### Scoring
-
-Each metric receives a score from **0–100**, representing how safe it is to use for decisions.
-
-Scores do **not** measure business performance.  
-They measure **definition maturity**.
-
-Observed patterns in practice:
-- V0 proxy metrics score lower by design
-- Scores increase as ownership, tests, and stability are added
-- Missing context hurts more than missing SQL
-
----
-
-### Suggestions
-
-Suggestions are deterministic and rule-based.
-
-They explain:
-- what is missing
-- why it matters
-- what a reasonable next step looks like
-
-Nothing is auto-fixed. All changes remain human decisions.
-
----
-
-### Strategy tree
-
-When multiple metrics compete for attention, local optimizations become hard to see.
-
-Metrics are rendered into a strategy tree to show:
-- how product levers connect
-- where metrics overlap or compete
-- how local signals roll up into broader outcomes
-
-This makes trade-offs visible instead of implicit.
-
----
-
-## How to read the score
-
-Think of the score as a **decision risk signal**, not a quality grade.
-
-It answers one question:
-> *How safe is it to base decisions on this metric today?*
-
-### Interpretation guide
-- **80–100** - Decision-ready. Clear definition, ownership, and basic guardrails are in place.
-
-- **60–79** - Usable with caution. The metric is mostly stable but still missing structure (tests, dependencies, or clarity around change).
-
-- **40–59** - Early or fragile. Useful for exploration, risky for commitments or targets.
-
-- **Below 40** - Not safe for decisions. Definition gaps dominate.
-
-A low score does not mean the metric is wrong.  
-It means the risk of misinterpretation is high.
-
----
-
-## One-page example: metric pack walkthrough
-
-Below is a minimal end-to-end example showing how a single metric moves from definition to decision readiness.
-
-
-### Step 1: Pack metadata
 ```yaml
-id: accounting_pilot
-name: Accounting & Ecosystem Pilot
-version: 0.2.0
+pack:
+  id: product_pilot
+  name: Product Pilot Metrics
+  version: 0.1.0
+  schema_version: "1.0"
+
+strategy_board:
+  title: TEAM SUCCESS
+  success_node_id: team_success
+  company_goals_box:
+    title: Company Goals
+    goals:
+      - id: revenue_growth
+  levers: []
+
+impact_graph:
+  nodes:
+    - id: revenue_growth
+      type: goal
+      label: Revenue Growth
+  edges:
+    - from: team_success
+      to: revenue_growth
+
+metrics:
+  - id: feature_activation_rate
+    name: Feature Activation Rate
+    description: Percentage of accounts that finish setup within 14 days.
+    tier: V1
+    status: active
+    accountable: Growth Team
+    unit: percent
+    grain: account_week
+    requires:
+      - warehouse.product.setup_events
+    sql:
+      numerator: |
+        SELECT COUNT(DISTINCT account_id) FROM warehouse.product.setup_events
+      denominator: |
+        SELECT COUNT(DISTINCT account_id) FROM warehouse.product.accounts
+    tests:
+      - type: not_null
+      - type: range
+        field: value
+        min: 0
+        max: 100
 ```
-Pack-level metadata anchors the scope.
-Missing this makes trend tracking and governance impossible later.
 
-### Step 2: A V0 proxy metric
-```yaml
-- id: support_ticket_ratio
-  name: Support Ticket Ratio (V0 proxy)
-  tier: V0
-  description: >
-    Weekly ratio of support tickets related to accounting integrations
-    relative to active connected accounts.
-```
-At this stage:
-- SQL may be missing
-- the definition may still evolve
-
-That’s acceptable — as long as it is explicit.
-
-### Step 3: Ownership and expectations
-```yaml
-  responsible: CS Ops / Support
-  grain: weekly
-  unit: ratio
-```
-Ownership matters more than precision early on.
-Someone must be accountable when the metric moves.
-
-### Step 4: Guardrails (optional early)
-```yaml
-  tests:
-    - test: freshness
-    - test: range_check
-```
-Even basic tests reduce silent failure risk.
-
-### Step 5: Result
-The auditor will:
-
-- validate structure
-- assign a maturity score
-- explain what limits decision safety
-- suggest the next improvement step
-
-The output is a clear signal:
-- whether the metric is safe to use
-- what is missing
-- what the next concrete improvement should be
-
-The goal is not perfection.
-It is honest readiness.
+`strategy_board` and `impact_graph` are optional. They are only used for the strategy visualization.
 
 ---
 
-## Why YAML
+## What The Validator Checks
 
-YAML is not about configuration.
+Validation is explicit and non-blocking. Structural errors stop a pack from being considered clean, but scoring still runs so you can inspect the rest of the pack.
 
-It forces decisions to be written down:
-- what matters
-- what is assumed
-- what is still unknown
+Current checks:
+- top-level YAML must be a mapping
+- `metrics` must exist and be a list
+- every metric needs a unique `id`
+- every metric needs a `name`
+- missing `accountable` or `responsible` produces a warning
+- missing SQL produces a warning
+- missing tests produces a warning
+- missing `requires` produces an info message
+- missing `pack.schema_version` produces an info message
+- unknown `schema_version` produces a warning
+- if `sqlparse` is installed, defined SQL gets a lightweight syntax check
 
-If a metric cannot be described clearly in YAML, it is usually not ready to be trusted in a dashboard or planning discussion.
+What validation does not do today:
+- it does not enforce `description`, `grain`, or `unit`
+- it does not execute SQL
+- it does not check warehouse objects or schemas
 
 ---
 
-## Typical use cases
-- Reviewing new metrics before shipping dashboards
-- Sanity-checking experiment success metrics
-- Aligning product, data, and engineering on ownership
-- Making metric trade-offs explicit in planning discussions
-- Teaching teams what "good enough" looks like at each stage
+## How Scoring Works
+
+Scores measure **definition maturity**, not business performance.
+
+### Metric score
+
+Every metric starts at `100`, then loses points for specific structural gaps:
+
+| Check | Deduction |
+|---|---:|
+| `tier: V0` | -10 |
+| missing `accountable` / `responsible` | -5 |
+| missing SQL | -5 |
+| missing tests | -5 |
+
+The score is clamped to `0-100`.
+
+### Pack score
+
+The pack score is a composite:
+
+```text
+pack_score = (1 - pack_floor_weight) * average_metric_score
+           + pack_floor_weight * min_metric_score
+```
+
+Default `pack_floor_weight` is `0.3`, so the weakest metric still pulls the pack down.
+
+### Score interpretation
+
+| Range | Meaning |
+|---|---|
+| `80-100` | Decision-ready |
+| `60-79` | Usable with caution |
+| `40-59` | Early/fragile |
+| `0-39` | Not safe for decisions |
+
+This is conservative on purpose. A polished chart is not the same thing as a reliable metric.
 
 ---
 
-## Examples
+## Suggestions
 
-The [examples/](examples/) directory contains metric packs demonstrating different use cases.
+Suggestions are deterministic. Nothing is generated from hidden prompts or silent edits.
 
-See [examples/accounting_pilot_metric_pack.yaml](examples/accounting_pilot_metric_pack.yaml) for a sample pack covering adoption, engagement, and health metrics for an accounting product pilot.
+They combine:
+- positive signals, like clear naming or strong maturity
+- gap-based actions, like adding ownership, SQL, or tests
+- a small amount of tier-aware prioritization
+
+The current scorer emits gaps for:
+- V0 tier
+- missing ownership
+- missing SQL
+- missing tests
+
+The suggestion layer can also handle richer gap types if future scoring rules add them, but those are not part of the current scoring contract.
+
+---
+
+## Strategy Tree
+
+If a pack includes `strategy_board` and `impact_graph`, the app renders a Mermaid strategy tree. This gives you a simple way to see:
+- which KPI anchors each pillar
+- which levers connect to the team success node
+- how success rolls up into company goals
+
+The visualization is optional. Packs without strategy metadata still validate, score, and generate suggestions.
 
 ---
 
 ## Quick Start
 
-**Get up and running in 3 minutes:**
-
 ### 1. Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 2. Run the app
+
 ```bash
 streamlit run app.py
 ```
 
-The app will open in your browser at `http://localhost:8501`
+### 3. Open a pack
 
-### 3. Upload a metric pack
-- **Option A**: Download the example pack from the sidebar (accounting pilot metrics)
-- **Option B**: Download the template, fill it out, and upload
-- **Option C**: Upload your own YAML file
+- Download the generic example pack from the sidebar
+- Or use the templates in `templates/`
+- Or upload your own YAML
 
-### 4. Interpret results
+### 4. Review the output
 
-The app provides three views:
-
-**Validation** - Schema and structure checks:
-- 🔴 Errors: Must fix (invalid YAML, missing required fields)
-- 🟡 Warnings: Should fix (missing tests, unclear ownership)
-- 🔵 Info: Consider fixing (optional improvements)
-
-**Scoring** - Decision readiness signal (0-100):
-- 🟢 **80-100**: Decision-ready (clear definition, ownership, basic guardrails)
-- 🟡 **60-79**: Usable with caution (gaps present, proceed carefully)
-- 🔴 **0-59**: Not decision-ready (significant gaps, risky for commitments)
-
-**Suggestions** - Deterministic, actionable improvements per metric
-
-### 5. Fix and iterate
-1. Review validation issues and suggestions
-2. Update your YAML file locally
-3. Re-upload to see updated score
-4. Repeat until metrics reach your desired maturity level
-
-**Remember:** Low scores don't mean metrics are wrong - they mean the risk of misinterpretation is high.
+- `Validation`: structural issues and metadata gaps
+- `Scoring`: pack score, weakest metric, and metric-level scores
+- `Suggestions`: deterministic next steps per metric
+- `Strategy Tree`: optional Mermaid visualization
 
 ---
 
-### Requirements
-- Python 3.10+
-- Works on macOS, Linux, Windows
+## Files Worth Knowing
 
----
+- [app.py](app.py): Streamlit app
+- [mmf/validator.py](mmf/validator.py): validation logic
+- [mmf/scoring.py](mmf/scoring.py): metric and pack scoring
+- [mmf/suggestions.py](mmf/suggestions.py): deterministic suggestions
+- [mmf/mermaid.py](mmf/mermaid.py): strategy diagram generation
 
-## Project structure
-```yaml
-├── app.py
-├── mmf/
-│   ├── validator.py
-│   ├── scoring.py
-│   ├── suggestions.py
-│   ├── mermaid.py
-│   └── streamlit_mermaid.py
-└── templates/
-    ├── metric_pack_template.yaml
-    └── metric_template.yaml
-```
+Documentation:
+- [docs/README.md](docs/README.md)
+- [docs/SCORING_METHODOLOGY.md](docs/SCORING_METHODOLOGY.md)
+- [examples/README.md](examples/README.md)
+
+Working assets:
+- [examples/generic_product_metric_pack.yaml](examples/generic_product_metric_pack.yaml)
+- [templates/metric_template.yaml](templates/metric_template.yaml)
+- [templates/metric_pack_template.yaml](templates/metric_pack_template.yaml)
 
 ---
 
 ## Philosophy
 
-This tool sits upstream of any decision process that relies on metrics.
+Metrics are never just numbers. They carry assumptions, ownership, and failure modes.
 
-Metrics are not neutral.
-
-They encode assumptions, incentives, and risk.
-
-This tool exists to surface those things early —
-before they quietly shape decisions.
-
----
+This repo exists to make those things visible early, while the cost of fixing them is still low.
 
 ## Contact
 

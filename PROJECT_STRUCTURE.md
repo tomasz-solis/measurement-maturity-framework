@@ -29,8 +29,11 @@ mmf/                                # Core framework library
 ```
 tests/                              # Test suite
 ├── __init__.py
-├── test_validator.py               # Validator tests (15+ test classes)
-├── test_scorer.py                  # Scorer tests (8+ test classes)
+├── test_validator.py               # Validator tests
+├── test_scorer.py                  # Scorer tests
+├── test_suggestions.py             # Suggestion tests
+├── test_integration.py             # End-to-end pipeline tests
+├── test_mermaid.py                 # Strategy tree tests
 └── fixtures/                       # Test data
     ├── minimal_pack.yaml
     ├── empty_pack.yaml
@@ -45,13 +48,15 @@ templates/                          # Starter templates
 └── metric_pack_template.yaml       # Full pack template
 
 examples/                           # Example metric packs
-└── README.md                       # Examples overview
+├── README.md                       # Examples overview
+└── generic_product_metric_pack.yaml # Generic sample pack
 ```
 
 ## Documentation
 
 ```
 docs/                               # Framework documentation
+├── README.md                       # Docs index / navigation
 └── SCORING_METHODOLOGY.md          # Detailed scoring rationale
 ```
 
@@ -113,7 +118,8 @@ mypy mmf/                           # Type check
 
 **Adding a new metric pack example:**
 - Add to `examples/` directory
-- The app will automatically discover `*.yaml` files there
+- The app prefers `generic_product_metric_pack.yaml` for the sidebar download
+- If that file is missing, it falls back to the first `*.yaml` file it finds
 
 **Adding new validation logic:**
 - Edit `mmf/validator.py`
@@ -124,6 +130,6 @@ mypy mmf/                           # Type check
 - Update `docs/SCORING_METHODOLOGY.md` with rationale
 - Add tests to `tests/test_scorer.py`
 
-**Company-specific content:**
-- create `examples/yourcompany/`
-- Can be excluded from public repo by uncommenting in `.gitignore`
+**Private examples:**
+- Keep reusable examples at the top level of `examples/`
+- If you need local company-specific packs, place them under a gitignored path and keep them out of the canonical docs

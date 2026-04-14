@@ -30,6 +30,5 @@ coverage.xml
 htmlcov/
 .pytest_cache/
 
-# Optional: exclude company-specific examples for public repo
+# Optional: exclude private local examples
 examples/pleo/
-examples/accounting_pilot_example.yaml

@@ -1,433 +1,293 @@
 # Scoring Methodology
 
-**Version**: 1.0
-**Last Updated**: 2026-01-26
+**Version**: 1.1  
+**Last Updated**: 2026-04-14  
 **Status**: Active
 
----
+This document describes the scoring logic that is actually implemented in the repo today.
 
-## Overview
-
-This document explains how the Measurement Maturity Framework calculates metric maturity scores and why specific deduction values were chosen.
-
-**Purpose**: Scores measure definition maturity and decision readiness, not business performance.
-
-**Philosophy**: Conservative scoring that rewards clarity and discipline over completeness.
+If this file and the code ever disagree, the code is the source of truth:
+- [mmf/config.py](../mmf/config.py)
+- [mmf/scoring.py](../mmf/scoring.py)
 
 ---
 
-## Score Interpretation (Visual Signals)
+## Scope
 
-The app uses color-coded icons to make score interpretation scannable:
+The scoring system measures **definition maturity** and **decision risk**.
 
-| Score Range | Icon | Signal | Meaning |
-|-------------|------|--------|---------|
-| 80-100 | 🟢 | Decision-ready | Clear definition, ownership, and basic guardrails in place. Safe for commitments and targets. |
-| 55-79 | 🟡 | Use with caution | Mostly stable but missing structure (tests, dependencies, or clarity around change). Useful for exploration, risky for commitments. |
-| 0-54 | 🔴 | Not decision-ready | Early or fragile. Definition gaps dominate. Risk of misinterpretation is high. |
+It does not measure:
+- business performance
+- forecast quality
+- whether the metric is strategically important
 
-**Why these thresholds:**
-- **80+**: Observed correlation with stable metrics (no retroactive definition changes in 6+ months)
-- **55-79**: Gray zone where metrics work for exploration but caused confusion when used for targets
-- **<55**: Metrics in this range had >70% chance of requiring definition changes within 3 months
-
-**Severity levels (validation issues):**
-- 🔴 **ERROR**: Blocks scoring or causes misleading results (fix first)
-- 🟡 **WARNING**: Reduces decision readiness (address before commitments)
-- 🔵 **INFO**: Optional improvements (future-proofing, best practices)
+The current implementation is intentionally narrow. It focuses on a small set of failure modes that are easy to explain and easy to act on.
 
 ---
 
-## Scoring Formula
+## Metric Score
 
-```
-Score = BASE_SCORE - Σ(deductions for missing elements)
-Score = clamp(Score, 0, 100)
-```
+Each metric starts at `100`.
 
-- **Base Score**: 100 (innocent until proven risky)
-- **Deductions**: Applied for known failure modes
-- **Range**: 0-100 (clamped to prevent negative scores)
+Points are deducted for the following gaps:
 
----
+| Check | Deduction | Why it matters |
+|---|---:|---|
+| `tier: V0` | -10 | Early proxies are less stable by definition. |
+| missing `accountable` or `responsible` | -5 | No clear owner means slower debugging and weaker follow-up. |
+| missing SQL | -5 | Without query logic, the metric cannot be reproduced or inspected. |
+| missing tests | -5 | Without basic checks, breakage is easier to miss. |
 
-## Deduction Values and Rationale
+Formula:
 
-### Base Score: 100 points
-
-**Rationale**: All metrics start at perfect score. We deduct points only when specific risk factors are identified.
-
-**Philosophy**: "Innocent until proven guilty" - assume the metric is sound unless evidence suggests otherwise.
-
----
-
-### V0 Tier: -10 points
-
-**What it means**: Metric is marked as a proxy or experimental
-
-**Rationale**:
-- Early-stage proxies change 3x more frequently than established metrics (observed in Pleo case study)
-- V0 metrics had 60% higher rate of retroactive definition changes
-- Proxy metrics carry inherent measurement error that compounds in decision chains
-
-**Empirical Basis** (Pleo Case Study, n=18 metrics):
-- V0 metrics (n=4): Definition changed within 6 months - 75%
-- V1 metrics (n=14): Definition changed within 6 months - 21%
-- Risk ratio: 3.6x higher instability
-
-**When acceptable**:
-- Scores 70+ still usable for directional decisions
-- Appropriate for exploration and hypothesis testing
-- Clear upgrade path documented to V1
-
-**Upgrade criteria**:
-- Definition stable for 3+ months
-- SQL query finalized
-- Tests added and passing
-- Proxy validated against ground truth (if available)
-
----
-
-### Missing Accountable: -5 points
-
-**What it means**: No team or person is explicitly responsible for this metric
-
-**Rationale**:
-- Metrics without clear owners take 2+ weeks longer to resolve issues (internal observation)
-- 40% of orphaned metrics in production showed data quality issues that went undetected
-- No escalation path when metric moves unexpectedly
-
-**Failure Mode Example**:
-```
-Day 1: Metric drops 30%, flagged in dashboard
-Day 3: Data team investigates, finds no pipeline issues
-Day 7: Product team asked, unsure who owns this metric
-Day 14: Finally discover accountable team was restructured 3 months ago
-Day 21: Resolution - metric was measuring deprecated feature
+```text
+metric_score = clamp(
+    base_score
+    - v0_tier_deduction
+    - missing_accountable_deduction
+    - missing_sql_deduction
+    - missing_tests_deduction,
+    0,
+    100
+)
 ```
 
-**Cost of Missing**:
-- Average 10 person-hours wasted per incident
-- Trust erosion in metrics catalog
-- Decisions delayed while ownership is clarified
-
-**Fix**: Add `accountable: "Team Name or Role"` to metric definition
+Default base score is `100`.
 
 ---
 
-### Missing SQL: -5 points
+## Pack Score
 
-**What it means**: No query logic is documented
+The pack score is not a plain average.
 
-**Rationale**:
-- Cannot verify correctness without seeing the query
-- Cannot reproduce the metric independently
-- Cannot debug when numbers look wrong
-- Cannot assess if metric measures what it claims
+It blends:
+- the average metric score
+- the weakest metric score
 
-**Failure Mode Example**:
-```
-Stakeholder: "Why did conversion rate drop?"
-Analyst: "Let me check the query..."
-Analyst: "...there is no query documented"
-Analyst: "I need to reverse-engineer from dashboard"
-2 hours later: Discover metric was using cached data from different time zone
+Formula:
+
+```text
+pack_score = (1 - pack_floor_weight) * average_metric_score
+           + pack_floor_weight * min_metric_score
 ```
 
-**Cost of Missing**:
-- Average 3 hours to reverse-engineer per incident
-- Risk of misinterpretation (metric name != actual calculation)
-- Cannot assess data quality or assumptions
+Default configuration:
 
-**Fix Options**:
-1. Add `sql.value:` with full query
-2. Add `sql.numerator:` and `sql.denominator:` for ratios
-3. If not yet ready, keep at V0 with documented proxy approach
+```text
+pack_floor_weight = 0.3
+```
+
+This means the pack score is:
+- 70% average metric quality
+- 30% weakest-metric floor
+
+Why do this:
+- a pack is often used as one decision surface
+- a single fragile metric can distort a broader story
+- pure averages hide that risk too easily
 
 ---
 
-### Missing Tests: -5 points
+## Thresholds
 
-**What it means**: No automated checks for data quality
+Current thresholds come from [mmf/config.py](../mmf/config.py):
 
-**Rationale**:
-- Unmonitored metrics degrade silently
-- 30% of metrics with no tests had undetected data issues for 1+ month (observed)
-- Broken pipelines go unnoticed until humans spot anomalies
+| Range | Label |
+|---|---|
+| `80-100` | Decision-ready |
+| `60-79` | Usable with caution |
+| `40-59` | Early/fragile |
+| `0-39` | Not safe for decisions |
 
-**Failure Mode Example**:
-```
-Day 1: Upstream table schema changes, column renamed
-Day 30: No alerts, dashboard shows 0s
-Day 60: Executive asks about suspicious trend
-Day 61: Discover metric broken for 2 months
-Day 62: Realize 4 decisions made on bad data
-```
+Interpretation:
 
-**Cost of Missing**:
-- Average 6 weeks of bad data before detection
-- Decisions made on incorrect metrics
-- Trust damage across organization
+### 80-100: Decision-ready
 
-**Minimum Viable Tests**:
-1. `not_null`: Value exists
-2. `freshness`: Data updated within SLA
-3. `range_check`: Value within expected bounds (e.g., percentage 0-100)
+This usually means:
+- ownership is defined
+- SQL is present
+- tests are present
+- the metric is not a V0 proxy, or it compensates for that elsewhere
 
-**Fix**: Add `tests:` array with at least one check
+Safe for:
+- dashboards used in regular operating reviews
+- target tracking
+- decisions that need a stable metric definition
+
+### 60-79: Usable with caution
+
+This usually means:
+- the metric is useful
+- at least one structural gap still matters
+- the metric may be acceptable for directional work but should be reviewed before it becomes a commitment metric
+
+Safe for:
+- exploration
+- trend monitoring
+- hypothesis generation
+
+### 40-59: Early/fragile
+
+This usually means:
+- multiple structural gaps are still present
+- the metric is more of a draft signal than a reliable operating metric
+
+Safe for:
+- prototypes
+- early exploratory analysis
+
+### 0-39: Not safe for decisions
+
+This usually means:
+- too many core safeguards are missing
+- the metric definition is not strong enough for serious reliance
+
+Recommendation:
+- fix ownership, SQL, and tests before using it in a meaningful decision loop
 
 ---
 
-## Score Thresholds
+## Worked Examples
 
-### 80-100: Decision-Ready
+### Example 1: Fully defined V1 metric
 
-**Interpretation**: Clear definition, ownership, and basic guardrails in place.
-
-**Characteristics**:
-- All required fields present
-- Query logic documented
-- Owner assigned
-- Basic tests exist
-- May still be V0 if marked as such and score compensates elsewhere
-
-**Observed frequency**: 44% of production metrics (8/18 in Pleo case study)
-
-**Safe for**:
-- Setting OKR targets
-- A/B test success metrics
-- Executive dashboards
-- Resource allocation decisions
-
-**Example**:
 ```yaml
-id: monthly_active_users
-name: Monthly Active Users
-accountable: Growth Team
+id: active_accounts
+name: Active Accounts
 tier: V1
+accountable: Growth Team
 sql:
   value: |
-    SELECT COUNT(DISTINCT user_id)
-    FROM activity
-    WHERE activity_date >= DATE_TRUNC('month', CURRENT_DATE)
+    SELECT COUNT(DISTINCT account_id) FROM account_activity
 tests:
   - type: not_null
-  - type: freshness
-    max_age_hours: 24
 ```
-**Score**: 100
 
----
+Score:
 
-### 60-79: Usable with Caution
+```text
+100
+```
 
-**Interpretation**: Mostly stable but missing structure (tests, dependencies, or clarity).
+### Example 2: V0 proxy with no SQL or tests
 
-**Characteristics**:
-- Definition present but incomplete
-- May lack tests or SQL
-- Owner may be ambiguous
-- Definition reasonably stable
-
-**Observed frequency**: 33% of production metrics (6/18 in Pleo case study)
-
-**Safe for**:
-- Directional insights
-- Hypothesis generation
-- Monitoring trends (not absolutes)
-
-**NOT safe for**:
-- OKR targets
-- High-stakes decisions
-- Automated actions
-
-**Example**:
 ```yaml
 id: support_ticket_ratio
 name: Support Ticket Ratio
 tier: V0
-# Missing: accountable, SQL, tests
+responsible: Customer Success
 ```
-**Score**: 75 (100 - 10 for V0 - 5 for no accountable - 5 for no SQL - 5 for no tests)
+
+Score:
+
+```text
+100 - 10 - 5 - 5 = 80
+```
+
+The metric keeps ownership, but still loses points for being a V0 proxy with no SQL and no tests.
+
+### Example 3: Mixed pack
+
+Metric scores:
+
+```text
+[100, 85]
+```
+
+Intermediate values:
+
+```text
+average_metric_score = 92.5
+min_metric_score = 85
+```
+
+Pack score:
+
+```text
+pack_score = 0.7 * 92.5 + 0.3 * 85 = 90.25
+```
+
+Rounded result:
+
+```text
+90.25
+```
+
+This is why the pack score can be lower than the average metric score even when most metrics look strong.
 
 ---
 
-### 40-59: Early/Fragile
+## Relationship To Validation
 
-**Interpretation**: Useful for exploration, risky for commitments or targets.
+Validation and scoring are related, but they are not the same thing.
 
-**Characteristics**:
-- Multiple structural gaps
-- Definition may be unstable
-- No reproducibility guarantees
-- Owner unclear or tests missing
+Validation checks additional things that do not currently change the score, including:
+- missing `schema_version`
+- unknown `schema_version`
+- missing `requires`
+- missing metric `name`
+- duplicate metric IDs
+- malformed `metrics`
+- partial ratio SQL
+- lightweight SQL syntax warnings when `sqlparse` is available
 
-**Observed frequency**: 22% of production metrics (4/18 in Pleo case study)
-
-**Safe for**:
-- Ad-hoc analysis
-- One-time investigations
-- Prototyping dashboards
-
-**NOT safe for**:
-- Any decisions with significant consequences
-- Anything that will be referenced later
-- Cross-functional alignment
+That means:
+- a pack can validate with warnings and still score well
+- a pack can score well while still having useful info-level cleanup items
+- not every validation issue is a scoring deduction
 
 ---
 
-### Below 40: Not Safe for Decisions
+## Relationship To Suggestions
 
-**Interpretation**: Definition gaps dominate. High risk of misinterpretation.
+Suggestions are generated from the scored output plus the metric definitions.
 
-**Characteristics**:
-- Severe structural deficiencies
-- Cannot be reproduced
-- No owner
-- No validation
+The current scorer emits these gap types:
+- `tier_v0`
+- `missing_accountable`
+- `missing_sql`
+- `missing_tests`
 
-**Observed frequency**: Rare in production, common in draft/exploratory metrics
-
-**Recommendation**: Do not use. Fix critical gaps before relying on this metric.
-
----
-
-## Calibration Data
-
-### Distribution (Pleo Case Study, n=18 metrics, 6 months)
-
-| Percentile | Score | Interpretation |
-|------------|-------|----------------|
-| P90 | 87 | Top 10% - exceptionally well-defined |
-| P75 | 78 | Well-structured, some minor gaps |
-| P50 | 72 | Median - usable but improvements needed |
-| P25 | 58 | Early proxies or missing critical elements |
-| P10 | 45 | Definition gaps dominate |
-
-### By Tier
-
-| Tier | Average Score | Range | Count |
-|------|---------------|-------|-------|
-| V0 | 65 | 45-75 | 4 |
-| V1 | 82 | 70-95 | 14 |
-
-**Key Finding**: V1 metrics score 17 points higher on average, supporting the -10 deduction for V0 tier.
-
----
-
-## Validation Against Real Failures
-
-### Predictive Power Analysis
-
-**Question**: Do low scores predict metric failures in production?
-
-**Method**: Retrospective analysis of 18 Pleo metrics over 6 months, tracking:
-- Data quality incidents
-- Definition changes
-- Stakeholder confusion events
-- Debugging time spent
-
-**Results**:
-
-| Score Range | Failure Rate | Avg Debug Time | Sample Size |
-|-------------|--------------|----------------|-------------|
-| 80-100 | 5% (1/20 incidents) | 0.5 hours | 8 metrics |
-| 60-79 | 30% (3/10 incidents) | 2.1 hours | 6 metrics |
-| 40-59 | 60% (3/5 incidents) | 6.2 hours | 4 metrics |
-
-**Correlation**: r = -0.72, p < 0.01 (strong negative correlation between score and failure rate)
-
-**Conclusion**: Scoring system successfully predicts metric risk. Lower scores correlate with higher failure rates and longer debugging time.
-
----
-
-## Sensitivity Analysis
-
-### Impact of Changing Deduction Values
-
-What happens if we change the deduction amounts?
-
-| Scenario | V0 Deduction | Missing Accountable | Effect on Distribution |
-|----------|--------------|---------------------|------------------------|
-| Current | -10 | -5 | 44% decision-ready |
-| More strict | -15 | -10 | 28% decision-ready |
-| More lenient | -5 | -3 | 61% decision-ready |
-
-**Current values chosen to**:
-- Balance between catching real risks and avoiding false alarms
-- Reflect observed failure rates (V0 metrics fail 3x more often)
-- Encourage but not require perfection for V0 exploratory metrics
+The suggestion layer can also react to richer gap names, which makes it ready for future scoring expansion, but those richer gaps are not part of the active scoring contract today.
 
 ---
 
 ## Configuration
 
-Scoring parameters can be tuned in `mmf/config.py`:
+Default configuration is defined in [mmf/config.py](../mmf/config.py):
 
 ```python
-SCORING_CONFIG = {
-    "base_score": 100,
-    "deductions": {
+ScoringConfig(
+    base_score=100,
+    deductions={
         "v0_tier": 10,
         "missing_accountable": 5,
         "missing_sql": 5,
         "missing_tests": 5,
-        "ai_flag": 10,
     },
-    "thresholds": {
+    thresholds={
         "decision_ready": 80,
         "usable_with_caution": 60,
         "early_fragile": 40,
-    }
-}
+    },
+    pack_floor_weight=0.3,
+)
 ```
 
-**When to tune**:
-- After collecting calibration data from your own metrics
-- If failure correlation differs from observed baseline
-- If organizational risk tolerance differs
-
-**Not recommended to tune unless**:
-- You have 50+ metrics with known outcomes
-- You've validated correlation between scores and failures
-- You have product-specific risk tolerances that differ significantly
+If you change these values:
+- update the tests
+- update this document
+- re-check the app labels and threshold descriptions
 
 ---
 
-## Future Enhancements
+## Current Limits
 
-### Planned Improvements
+The current scoring model does not yet deduct for:
+- missing description
+- missing grain
+- missing unit
+- missing dependencies
+- deprecated status
 
-1. **Dynamic Weighting** (v2.0)
-   - Allow different deduction values per metric type
-   - Weight deductions by organizational priorities
-
-2. **Confidence Intervals** (v2.0)
-   - Add uncertainty ranges to scores
-   - Acknowledge scoring is heuristic, not precise
-
-3. **Decay Functions** (v3.0)
-   - Deduct points for metrics not updated in X months
-   - Reward metrics with proven stability over time
-
-4. **Composite Scores** (v3.0)
-   - Separate scores for "definition quality" vs "operational health"
-   - Roll up pack-level scores with variance metrics
-
----
-
-## References
-
-- Pleo Autonomous Finance Case Study (2026)
-- MMF Configuration: `mmf/config.py`
-- Validation Tests: `tests/test_scorer.py`
-
----
-
-## Changelog
-
-**v1.0** (2026-01-26)
-- Initial methodology documented
-- Deduction values based on Pleo case study
-- Validation against 18 production metrics
-
+Those may still appear in docs or suggestions discussions as future extensions, but they are not active scoring deductions in the current codebase.

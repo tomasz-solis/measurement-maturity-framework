@@ -10,33 +10,43 @@ pack:
   description: >
     Short description of what this pack covers and who it is for.
 
-# Optional: high-level goals this pack supports.
-# This is used for the strategy tree if you provide one.
-strategy:
-  company_goals:
-    # - id: total_arr
-    #   name: TOTAL ARR
-    # - id: nrr
-    #   name: NRR / RETENTION
+# Optional: strategy board shown in the app's Mermaid view.
+strategy_board:
+  # title: TEAM SUCCESS
+  # subtitle: What this group is trying to improve
+  # success_node_id: team_success
+  # company_goals_box:
+  #   title: Company Goals
+  #   goals:
+  #     - id: revenue_growth
+  #     - id: retention
+  # levers:
+  #   - id: growth
+  #     title: Growth Levers
+  #     style: growth
+  #     pillars:
+  #       - id: activation
+  #         label: Feature Activation
+  #         kpi_metric_id: example_metric_id
+  #         accountable: Growth Team
+  #   - id: trust
+  #     title: Trust Levers
+  #     style: trust
+  #     pillars:
+  #       - id: reliability
+  #         label: Reliability
+  #         kpi_metric_id: example_metric_id
+  #         accountable: Platform Team
 
-  group_goal:
-    # id: group_success
-    # name: GROUP SUCCESS
-    # description: The main outcome this group optimizes for.
-
-  levers:
-    # - id: growth
-    #   name: Growth Levers (Offense)
-    # - id: trust
-    #   name: Trust Levers (Defense)
-
-  # Optional mapping between levers and metrics.
-  # If present, it helps render a clean tree.
-  lever_metrics:
-    # growth:
-    #   - example_metric_id
-    # trust:
-    #   - example_metric_id
+# Optional: impact graph connecting the success node to company goals.
+impact_graph:
+  # nodes:
+  #   - id: revenue_growth
+  #     type: goal
+  #     label: Revenue Growth
+  # edges:
+  #   - from: team_success
+  #     to: revenue_growth
 
 metrics:
   - id: example_metric_id

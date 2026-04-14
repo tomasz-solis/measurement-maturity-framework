@@ -15,6 +15,7 @@ tier: V0
 status: active
 
 # Team or role accountable for correctness and follow-up
+# Both 'accountable' and 'responsible' are accepted
 responsible: Team / Squad / Role
 
 # Measurement details

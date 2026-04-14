@@ -4,13 +4,13 @@ This directory contains example metric packs showing how to apply the framework.
 
 ## Available Examples
 
-### accounting_pilot_metric_pack.yaml
+### generic_product_metric_pack.yaml
 
-Sample metric pack for an accounting product pilot covering:
-- Adoption metrics (integration depth)
-- Engagement metrics (real-time velocity)
-- Outcome metrics (manual intervention rate)
-- Health metrics (integration reliability)
+Sample metric pack for a generic product workflow covering:
+- Adoption metrics (feature activation)
+- Engagement metrics (weekly active rate)
+- Outcome metrics (time to first value)
+- Health metrics (workflow reliability)
 - Support metrics (ticket ratio)
 
 Demonstrates:
@@ -18,6 +18,8 @@ Demonstrates:
 - Strategy board visualization
 - Impact graph linking metrics to business goals
 - V0/V1 tier progression
+- Generic naming you can reuse without inheriting one company's domain
+- Current pack structure used by the app (`pack`, `strategy_board`, `impact_graph`, `metrics`)
 
 ### How to Use
 
