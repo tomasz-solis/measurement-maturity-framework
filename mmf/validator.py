@@ -1,4 +1,5 @@
-# mmf/validator.py
+"""Validation rules for metric packs."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -19,6 +20,8 @@ except ImportError:
 
 @dataclass
 class ValidationIssue:
+    """Single validation issue surfaced during pack review."""
+
     severity: str  # ERROR | WARNING | INFO
     code: str
     message: str
@@ -28,8 +31,10 @@ class ValidationIssue:
 
 @dataclass
 class ValidationResult:
+    """Validator output including the pack and all discovered issues."""
+
     ok: bool
-    pack: Dict[str, Any]
+    pack: Any
     issues: List[ValidationIssue] = field(default_factory=list)
 
 
@@ -39,6 +44,7 @@ class ValidationResult:
 
 
 def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
+    """Validate a metric pack and return issues without mutating the input."""
     issues: List[ValidationIssue] = []
 
     # ---- Pack-level checks ----
@@ -87,7 +93,7 @@ def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
                 "missing_metrics",
                 "Pack must define a list of metrics.",
                 "/metrics",
-                "pack.metrics",
+                "metrics",
             )
         )
         return ValidationResult(ok=False, pack=pack, issues=issues)
@@ -147,13 +153,14 @@ def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
                 )
             )
 
-        # Accountable (not blocking at V0)
-        if not metric.get("accountable"):
+        # Accountable / responsible (not blocking at V0)
+        has_owner = metric.get("accountable") or metric.get("responsible")
+        if not has_owner:
             issues.append(
                 _warning(
                     "missing_metric_accountable",
                     "No accountable team or role defined. "
-                    "Add 'accountable' to clarify ownership and escalation.",
+                    "Add 'accountable' (or 'responsible') to clarify ownership.",
                     f"/metrics/{idx}/accountable",
                     f"{mid}.accountable",
                 )
@@ -234,6 +241,7 @@ def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
 
 
 def _error(code: str, message: str, path: str, human: str) -> ValidationIssue:
+    """Build an error-level validation issue."""
     return ValidationIssue(
         severity="ERROR",
         code=code,
@@ -244,6 +252,7 @@ def _error(code: str, message: str, path: str, human: str) -> ValidationIssue:
 
 
 def _warning(code: str, message: str, path: str, human: str) -> ValidationIssue:
+    """Build a warning-level validation issue."""
     return ValidationIssue(
         severity="WARNING",
         code=code,
@@ -254,6 +263,7 @@ def _warning(code: str, message: str, path: str, human: str) -> ValidationIssue:
 
 
 def _info(code: str, message: str, path: str, human: str) -> ValidationIssue:
+    """Build an info-level validation issue."""
     return ValidationIssue(
         severity="INFO",
         code=code,
@@ -264,15 +274,7 @@ def _info(code: str, message: str, path: str, human: str) -> ValidationIssue:
 
 
 def _validate_sql_syntax(sql_text: str) -> bool:
-    """
-    Basic SQL syntax validation using sqlparse.
-    Returns True if SQL appears valid, False if syntax errors detected.
-
-    Note: This is a basic check. It does not validate:
-    - Table/column existence
-    - Database-specific syntax
-    - Query correctness
-    """
+    """Run a lightweight SQL syntax check using sqlparse when available."""
     if not SQLPARSE_AVAILABLE or not sql_text or not sql_text.strip():
         return True  # Assume valid if we can't validate
 

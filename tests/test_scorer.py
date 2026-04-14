@@ -83,6 +83,24 @@ class TestBasicScoring:
         )
         assert "tier_v0" in result_v0.metric_scores[0].gaps
 
+    def test_responsible_field_prevents_deduction(self):
+        """'responsible' should work the same as 'accountable' for scoring."""
+        pack = {
+            "metrics": [
+                {
+                    "id": "test",
+                    "name": "Test",
+                    "responsible": "Growth Team",
+                    "sql": {"value": "SELECT 1"},
+                    "tests": [{}],
+                }
+            ]
+        }
+        result = score_pack(pack)
+
+        assert "missing_accountable" not in result.metric_scores[0].gaps
+        assert result.pack_score == 100.0
+
 
 class TestSQLScoring:
     """Tests for SQL-related scoring."""
@@ -171,10 +189,11 @@ class TestPackScoring:
 
         assert result.pack_score == 0.0
         assert result.avg_metric_score == 0.0
+        assert result.min_metric_score == 0.0
         assert len(result.metric_scores) == 0
 
-    def test_pack_score_is_average(self):
-        """Pack score should be average of metric scores."""
+    def test_pack_score_uses_average_and_floor(self):
+        """Pack score should blend the average score with the weakest metric."""
         pack = {
             "metrics": [
                 # Perfect metric: 100
@@ -190,10 +209,43 @@ class TestPackScoring:
             ]
         }
         result = score_pack(pack)
+        config = ScoringConfig()
 
         expected_avg = (100.0 + 85.0) / 2
-        assert result.pack_score == expected_avg
+        expected_min = 85.0
+        expected_pack_score = round(
+            ((1 - config.pack_floor_weight) * expected_avg)
+            + (config.pack_floor_weight * expected_min),
+            2,
+        )
+
+        assert result.pack_score == expected_pack_score
         assert result.avg_metric_score == expected_avg
+        assert result.min_metric_score == expected_min
+        assert result.pack_score < result.avg_metric_score
+
+    def test_custom_floor_weight_can_fully_follow_weakest_metric(self, monkeypatch):
+        """A floor weight of 1.0 should make the pack score equal the weakest metric."""
+        custom_config = ScoringConfig(pack_floor_weight=1.0)
+        monkeypatch.setattr("mmf.scoring.load_config", lambda: custom_config)
+
+        pack = {
+            "metrics": [
+                {
+                    "id": "strong",
+                    "name": "Strong",
+                    "accountable": "T",
+                    "sql": {"value": "1"},
+                    "tests": [{}],
+                },
+                {"id": "weak", "name": "Weak"},
+            ]
+        }
+        result = score_pack(pack)
+
+        assert result.avg_metric_score == 92.5
+        assert result.min_metric_score == 85.0
+        assert result.pack_score == 85.0
 
     def test_multiple_metrics_scored_independently(self):
         """Each metric should be scored independently."""
@@ -220,6 +272,7 @@ class TestScoreResult:
 
         assert hasattr(result, "pack_score")
         assert hasattr(result, "avg_metric_score")
+        assert hasattr(result, "min_metric_score")
         assert hasattr(result, "metric_scores")
         assert isinstance(result.metric_scores, list)
 
@@ -333,6 +386,13 @@ class TestEdgeCases:
     def test_missing_status_defaults_to_active(self):
         """Missing status should default to 'active'."""
         pack = {"metrics": [{"id": "test", "name": "Test"}]}
+        result = score_pack(pack)
+
+        assert result.metric_scores[0].status == "active"
+
+    def test_null_status_defaults_to_active(self):
+        """Null status should also normalize to 'active'."""
+        pack = {"metrics": [{"id": "test", "name": "Test", "status": None}]}
         result = score_pack(pack)
 
         assert result.metric_scores[0].status == "active"

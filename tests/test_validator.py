@@ -11,7 +11,7 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 def load_fixture(filename: str) -> dict:
     """Load a YAML fixture file."""
-    with open(FIXTURES_DIR / filename) as f:
+    with open(FIXTURES_DIR / filename, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -46,6 +46,17 @@ class TestValidatorBasic:
         errors = [i for i in result.issues if i.severity == "ERROR"]
         assert len(errors) > 0
         assert any("metrics" in i.message.lower() for i in errors)
+
+    def test_missing_metrics_location_matches_pack_shape(self):
+        """Missing metrics should point to the top-level metrics field."""
+        pack = {"pack": {"id": "test", "name": "Test"}}
+        result = validate_metric_pack(pack)
+
+        assert result.ok is False
+        missing_metrics_issue = next(
+            issue for issue in result.issues if issue.code == "missing_metrics"
+        )
+        assert missing_metrics_issue.human_location == "metrics"
 
     def test_non_dict_pack_fails(self):
         """Non-dictionary input should fail validation."""
@@ -101,6 +112,26 @@ class TestMetricValidation:
         assert result.ok is True
         warnings = [i for i in result.issues if i.severity == "WARNING"]
         assert any("accountable" in i.message.lower() for i in warnings)
+
+    def test_responsible_field_accepted_as_ownership(self):
+        """'responsible' should satisfy the ownership check (no warning)."""
+        pack = {
+            "metrics": [{"id": "test", "name": "Test", "responsible": "Growth Team"}]
+        }
+        result = validate_metric_pack(pack)
+
+        warnings = [i for i in result.issues if i.severity == "WARNING"]
+        assert not any("accountable" in i.message.lower() for i in warnings)
+
+    def test_accountable_field_accepted_as_ownership(self):
+        """'accountable' should satisfy the ownership check (no warning)."""
+        pack = {
+            "metrics": [{"id": "test", "name": "Test", "accountable": "Growth Team"}]
+        }
+        result = validate_metric_pack(pack)
+
+        warnings = [i for i in result.issues if i.severity == "WARNING"]
+        assert not any("accountable" in i.message.lower() for i in warnings)
 
     def test_missing_sql_warns(self):
         """Missing SQL should produce warning."""

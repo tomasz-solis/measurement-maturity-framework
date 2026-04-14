@@ -1,80 +1,54 @@
 # mmf/config.py
-"""
-Scoring configuration for Measurement Maturity Framework.
-
-These values determine how metric maturity is calculated. They can be tuned
-based on observed failure rates and calibration data.
-"""
+"""Scoring configuration for the Measurement Maturity Framework."""
 
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict
+
+
+def _default_deductions() -> Dict[str, int]:
+    """Return the default deduction values for metric scoring."""
+    return {
+        # V0 metrics are treated as less stable by design.
+        "v0_tier": 10,
+        # Metrics without clear owners are harder to debug and maintain.
+        "missing_accountable": 5,
+        # Query logic is needed for reproducibility and debugging.
+        "missing_sql": 5,
+        # Basic tests catch silent breakage earlier.
+        "missing_tests": 5,
+    }
+
+
+def _default_thresholds() -> Dict[str, int]:
+    """Return the default score thresholds."""
+    return {
+        "decision_ready": 80,
+        "usable_with_caution": 60,
+        "early_fragile": 40,
+    }
 
 
 @dataclass
 class ScoringConfig:
     """Configuration for metric scoring system."""
 
-    # Base score (all metrics start here)
     base_score: int = 100
+    deductions: Dict[str, int] = field(default_factory=_default_deductions)
+    thresholds: Dict[str, int] = field(default_factory=_default_thresholds)
+    pack_floor_weight: float = 0.3
 
-    # Deductions for known failure modes
-    deductions: Dict[str, int] | None = None
-
-    # Score interpretation thresholds
-    thresholds: Dict[str, int] | None = None
-
-    def __post_init__(self):
-        if self.deductions is None:
-            self.deductions = {
-                # V0 tier indicates proxy/experimental status
-                # Rationale: Early-stage proxies change 3x more often in production
-                # Risk: Definition drift, retroactive interpretation changes
-                "v0_tier": 10,
-                # Missing ownership causes decision delays
-                # Rationale: Metrics without clear owners take 2+ weeks longer to debug
-                # Risk: Orphaned metrics, no escalation path when numbers move
-                "missing_accountable": 5,
-                # Missing SQL prevents reproduction
-                # Rationale: Cannot verify or debug metrics without query logic
-                # Risk: Black box metric, trust erosion when questions arise
-                "missing_sql": 5,
-                # Missing tests allow silent failures
-                # Rationale: Unmonitored metrics degrade without detection
-                # Risk: Stale data, broken pipelines, incorrect decisions
-                "missing_tests": 5,
-            }
-
-        if self.thresholds is None:
-            self.thresholds = {
-                # Decision-ready: Clear definition, ownership, basic guardrails
-                # Observed in 44% of production metrics (8/18 Pleo case study)
-                "decision_ready": 80,
-                # Usable with caution: Mostly stable but missing structure
-                # Observed in 33% of production metrics (6/18 Pleo case study)
-                "usable_with_caution": 60,
-                # Early/fragile: Useful for exploration, risky for commitments
-                # Observed in 22% of production metrics (4/18 Pleo case study)
-                "early_fragile": 40,
-                # Below 40: Not safe for decisions, definition gaps dominate
-            }
-
-        # Validate configuration
+    def __post_init__(self) -> None:
+        """Validate the configuration after initialization."""
         self._validate()
 
-        # After validation, these are guaranteed to be dicts
-        assert self.deductions is not None
-        assert self.thresholds is not None
-
-    def _validate(self):
+    def _validate(self) -> None:
         """Validate configuration values are sensible."""
-        # Validate base score
         if not isinstance(self.base_score, int) or not (0 <= self.base_score <= 100):
             raise ValueError(
                 f"base_score must be an integer between 0 and 100, got {self.base_score}"
             )
 
-        # Validate deductions
         if not isinstance(self.deductions, dict):
             raise ValueError("deductions must be a dictionary")
 
@@ -88,7 +62,6 @@ class ScoringConfig:
                     f"Deduction '{key}' ({value}) cannot exceed base_score ({self.base_score})"
                 )
 
-        # Validate thresholds
         if not isinstance(self.thresholds, dict):
             raise ValueError("thresholds must be a dictionary")
 
@@ -103,7 +76,6 @@ class ScoringConfig:
                     f"Threshold '{threshold_name}' must be between 0 and 100, got {value}"
                 )
 
-        # Validate threshold ordering
         if not (
             self.thresholds["decision_ready"]
             > self.thresholds["usable_with_caution"]
@@ -115,40 +87,50 @@ class ScoringConfig:
                 f"{self.thresholds['usable_with_caution']}, {self.thresholds['early_fragile']}"
             )
 
+        if not isinstance(self.pack_floor_weight, (int, float)) or not (
+            0 <= self.pack_floor_weight <= 1
+        ):
+            raise ValueError(
+                "pack_floor_weight must be a number between 0 and 1, "
+                f"got {self.pack_floor_weight}"
+            )
+
     def get_threshold_label(self, score: float) -> str:
         """Get human-readable label for a given score."""
-        thresholds = self.thresholds  # type: ignore[union-attr]
-        if score >= thresholds["decision_ready"]:  # type: ignore[index]
+        if score >= self.thresholds["decision_ready"]:
             return "Decision-ready"
-        elif score >= thresholds["usable_with_caution"]:  # type: ignore[index]
+        elif score >= self.thresholds["usable_with_caution"]:
             return "Usable with caution"
-        elif score >= thresholds["early_fragile"]:  # type: ignore[index]
+        elif score >= self.thresholds["early_fragile"]:
             return "Early/fragile"
         else:
             return "Not safe for decisions"
 
     def get_threshold_description(self, score: float) -> str:
         """Get detailed description for a given score range."""
-        thresholds = self.thresholds  # type: ignore[union-attr]
-        if score >= thresholds["decision_ready"]:  # type: ignore[index]
+        if score >= self.thresholds["decision_ready"]:
             return "Clear definition, ownership, and basic guardrails are in place."
-        elif score >= thresholds["usable_with_caution"]:  # type: ignore[index]
+        elif score >= self.thresholds["usable_with_caution"]:
             return "Mostly stable but still missing structure (tests, dependencies, or clarity around change)."
-        elif score >= thresholds["early_fragile"]:  # type: ignore[index]
+        elif score >= self.thresholds["early_fragile"]:
             return "Useful for exploration, risky for commitments or targets."
         else:
             return "Definition gaps dominate. Not safe to base decisions on this metric today."
 
 
-# Default configuration instance
+# Default configuration instance used as a template for fresh config objects.
 DEFAULT_CONFIG = ScoringConfig()
 
 
 def load_config() -> ScoringConfig:
-    """
-    Load scoring configuration.
+    """Load scoring configuration as a fresh object.
 
-    Future enhancement: Could load from YAML/JSON file or environment variables.
-    For now, returns default configuration.
+    Returning a copy avoids hidden global state if callers mutate deductions
+    or thresholds at runtime.
     """
-    return DEFAULT_CONFIG
+    return ScoringConfig(
+        base_score=DEFAULT_CONFIG.base_score,
+        deductions=DEFAULT_CONFIG.deductions.copy(),
+        thresholds=DEFAULT_CONFIG.thresholds.copy(),
+        pack_floor_weight=DEFAULT_CONFIG.pack_floor_weight,
+    )

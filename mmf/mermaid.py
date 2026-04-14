@@ -1,3 +1,5 @@
+"""Mermaid diagram generation for strategy boards."""
+
 from __future__ import annotations
 
 import re
@@ -5,6 +7,7 @@ from typing import Any, Dict, List, Tuple
 
 
 def build_strategy_mermaid(pack: Dict[str, Any]) -> str:
+    """Build a Mermaid flowchart for the pack's strategy board."""
     sb = pack.get("strategy_board") or {}
     ig = pack.get("impact_graph") or {}
     metrics_by_id = {
@@ -84,11 +87,26 @@ def build_strategy_mermaid(pack: Dict[str, Any]) -> str:
 
     growth_nodes: List[str] = []
     trust_nodes: List[str] = []
+    growth_groups: List[str] = []
+    trust_groups: List[str] = []
+    growth_group_count = 0
+    trust_group_count = 0
 
     for lever in levers:
         lever_style = (lever.get("style") or "").lower()  # "growth" | "trust"
         is_growth = lever_style == "growth"
-        subgraph_name = "Growth" if is_growth else "Trust"
+        if is_growth:
+            growth_group_count += 1
+            subgraph_name = (
+                "Growth" if growth_group_count == 1 else f"Growth{growth_group_count}"
+            )
+            growth_groups.append(subgraph_name)
+        else:
+            trust_group_count += 1
+            subgraph_name = (
+                "Trust" if trust_group_count == 1 else f"Trust{trust_group_count}"
+            )
+            trust_groups.append(subgraph_name)
         title = lever.get("title") or lever.get("id") or subgraph_name
 
         lines.append(f'  subgraph {subgraph_name}["{_esc(title)}"]')
@@ -185,12 +203,14 @@ def build_strategy_mermaid(pack: Dict[str, Any]) -> str:
     if trust_nodes:
         lines.append(f"  class {','.join(trust_nodes)} kpi_trust")
 
-    lines.append(
-        "  style Growth fill:#ffffff,stroke:#0288d1,stroke-width:1px,stroke-dasharray: 5 5,color:#01579b"
-    )
-    lines.append(
-        "  style Trust fill:#ffffff,stroke:#fbc02d,stroke-width:1px,stroke-dasharray: 5 5,color:#f57f17"
-    )
+    for group_name in growth_groups:
+        lines.append(
+            f"  style {group_name} fill:#ffffff,stroke:#0288d1,stroke-width:1px,stroke-dasharray: 5 5,color:#01579b"
+        )
+    for group_name in trust_groups:
+        lines.append(
+            f"  style {group_name} fill:#ffffff,stroke:#fbc02d,stroke-width:1px,stroke-dasharray: 5 5,color:#f57f17"
+        )
     lines.append(
         "  style Context fill:#f5f5f5,stroke:#bdbdbd,stroke-width:1px,color:#757575,stroke-dasharray: 5 5"
     )
@@ -210,6 +230,7 @@ def build_strategy_mermaid(pack: Dict[str, Any]) -> str:
 
 
 def _metric_name(metrics_by_id: Dict[str, Dict[str, Any]], metric_id: str) -> str:
+    """Resolve a metric ID to a display name."""
     if not metric_id:
         return ""
     m = metrics_by_id.get(metric_id) or {}
@@ -217,6 +238,7 @@ def _metric_name(metrics_by_id: Dict[str, Dict[str, Any]], metric_id: str) -> st
 
 
 def _goal_labels_from_impact_graph(impact_graph: Dict[str, Any]) -> Dict[str, str]:
+    """Extract goal labels from the impact graph for display."""
     out: Dict[str, str] = {}
     for n in impact_graph.get("nodes", []) or []:
         if n.get("type") == "goal" and n.get("id"):
@@ -227,6 +249,7 @@ def _goal_labels_from_impact_graph(impact_graph: Dict[str, Any]) -> Dict[str, st
 def _goal_to_goal_edges(
     impact_graph: Dict[str, Any], goal_ids: set[str]
 ) -> List[Tuple[str, str]]:
+    """Return only impact-graph edges where both nodes are goals."""
     edges = []
     for e in impact_graph.get("edges", []) or []:
         frm = e.get("from")
@@ -240,9 +263,11 @@ _NUM_PREFIX = re.compile(r"^\s*\d+\.\s*")
 
 
 def _strip_numeric_prefix(label: str) -> str:
+    """Remove numeric prefixes from pillar labels before re-numbering them."""
     return _NUM_PREFIX.sub("", label).strip()
 
 
 def _esc(text: str) -> str:
+    """Escape text for Mermaid labels."""
     # Escape quotes and remove angle brackets (HTML tags not allowed in v10+)
     return str(text).replace('"', "&quot;").replace("<", "").replace(">", "")

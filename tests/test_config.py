@@ -17,6 +17,7 @@ class TestConfigDefaults:
         assert config.base_score == 100
         assert isinstance(config.deductions, dict)
         assert isinstance(config.thresholds, dict)
+        assert config.pack_floor_weight == 0.3
 
     def test_default_deductions_present(self):
         """Default config should have all expected deductions"""
@@ -123,11 +124,25 @@ class TestConfigValidation:
                 "usable_with_caution": 70,
                 "early_fragile": 50,
             },
+            pack_floor_weight=0.4,
         )
 
         assert config.base_score == 100
         assert config.deductions["v0_tier"] == 15
         assert config.thresholds["decision_ready"] == 90
+        assert config.pack_floor_weight == 0.4
+
+    def test_invalid_pack_floor_weight_raises(self):
+        """Pack floor weight must stay within the 0-1 range."""
+        with pytest.raises(
+            ValueError, match="pack_floor_weight must be a number between 0 and 1"
+        ):
+            ScoringConfig(pack_floor_weight=1.2)
+
+        with pytest.raises(
+            ValueError, match="pack_floor_weight must be a number between 0 and 1"
+        ):
+            ScoringConfig(pack_floor_weight=-0.1)
 
 
 class TestThresholdLabels:
@@ -192,6 +207,15 @@ class TestConfigImmutability:
 
         assert config.deductions == original_deductions
         assert config.thresholds == original_thresholds
+
+    def test_load_config_returns_independent_objects(self):
+        """load_config should not hand out shared mutable state."""
+        first = load_config()
+        second = load_config()
+
+        first.thresholds["decision_ready"] = 95
+
+        assert second.thresholds["decision_ready"] == 80
 
 
 class TestEdgeCases:
