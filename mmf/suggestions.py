@@ -3,14 +3,17 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Set, Tuple
+import logging
+from typing import Any, Dict, List, Mapping, Set, Tuple
 
 from .config import ScoringConfig, load_config
 from .scoring import ScoreResult, MetricScore
 
+logger = logging.getLogger(__name__)
+
 
 def deterministic_suggestions(
-    pack: Dict[str, Any], score_result: ScoreResult
+    pack: Mapping[str, Any], score_result: ScoreResult
 ) -> Dict[str, List[Dict[str, str]]]:
     """Return deterministic, rules-based suggestions grouped per metric.
 
@@ -24,11 +27,19 @@ def deterministic_suggestions(
 
     Priority: 1 = do first, 2 = do next, 3 = nice to have.
     """
+    logger.debug(
+        "Generating suggestions for %d scored metric(s)",
+        len(score_result.metric_scores),
+    )
     config = load_config()
     metrics = pack.get("metrics", []) or []
-    metrics_by_id = {
-        m.get("id"): m for m in metrics if isinstance(m, dict) and m.get("id")
-    }
+    metrics_by_id: Dict[str, Dict[str, Any]] = {}
+    for metric in metrics:
+        if not isinstance(metric, dict):
+            continue
+        metric_id = metric.get("id")
+        if isinstance(metric_id, str) and metric_id:
+            metrics_by_id[metric_id] = metric
 
     score_by_id: Dict[str, MetricScore] = {
         ms.metric_id: ms for ms in score_result.metric_scores if ms.metric_id

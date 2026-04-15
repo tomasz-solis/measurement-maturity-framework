@@ -1,0 +1,472 @@
+        :root {
+          --mmf-bg: #eff2f7;
+          --mmf-surface: rgba(255, 255, 255, 0.78);
+          --mmf-surface-strong: #0d1015;
+          --mmf-ink: #10131a;
+          --mmf-muted: #646c79;
+          --mmf-line: rgba(16, 19, 26, 0.08);
+          --mmf-blue: #4f6dff;
+          --mmf-mint: #1ecf9b;
+          --mmf-amber: #d18a1f;
+          --mmf-red: #dd5b52;
+        }
+
+        [data-testid="stAppViewContainer"] {
+          background:
+            radial-gradient(circle at 0% 0%, rgba(79, 109, 255, 0.14), transparent 28%),
+            radial-gradient(circle at 100% 12%, rgba(30, 207, 155, 0.10), transparent 24%),
+            linear-gradient(180deg, #f7f8fb 0%, var(--mmf-bg) 100%);
+          color: var(--mmf-ink);
+        }
+
+        [data-testid="stHeader"] {
+          background: transparent;
+        }
+
+        [data-testid="stToolbar"] {
+          right: 1rem;
+        }
+
+        [data-testid="stMainBlockContainer"] {
+          max-width: 1260px;
+          padding-top: 2rem;
+          padding-bottom: 4rem;
+        }
+
+        [data-testid="stSidebar"] {
+          background:
+            radial-gradient(circle at top left, rgba(79, 109, 255, 0.22), transparent 30%),
+            linear-gradient(180deg, #0d1015 0%, #171b22 100%);
+          border-right: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        [data-testid="stSidebar"] h1,
+        [data-testid="stSidebar"] h2,
+        [data-testid="stSidebar"] h3,
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] li,
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] strong {
+          color: rgba(248, 250, 255, 0.96);
+        }
+
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] .stCaption {
+          color: rgba(233, 236, 244, 0.74) !important;
+        }
+
+        [data-testid="stSidebar"] .mmf-sidebar-tip {
+          color: rgba(245, 248, 255, 0.9) !important;
+          font-size: 0.95rem;
+          line-height: 1.55;
+          margin: 0.35rem 0 0;
+        }
+
+        [data-testid="stSidebar"] [data-testid="stFileUploader"] {
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 24px;
+          padding: 0.6rem;
+        }
+
+        [data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {
+          background: linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.10) 0%,
+            rgba(255, 255, 255, 0.05) 100%
+          ) !important;
+          border: 1px dashed rgba(255, 255, 255, 0.18) !important;
+          border-radius: 22px !important;
+        }
+
+        [data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] * {
+          color: rgba(243, 247, 255, 0.84) !important;
+        }
+
+        [data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button {
+          background: rgba(255, 255, 255, 0.10) !important;
+          color: #f8fbff !important;
+          border: 1px solid rgba(255, 255, 255, 0.16) !important;
+          border-radius: 999px !important;
+        }
+
+        [data-testid="stSidebar"] [data-testid="stFileUploaderDropzoneInstructions"] span,
+        [data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] small {
+          color: rgba(230, 235, 245, 0.66) !important;
+        }
+
+        [data-testid="stSidebar"] .stDownloadButton > button {
+          background: rgba(255, 255, 255, 0.08);
+          color: #f8fbff;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 999px;
+          min-height: 3rem;
+          font-weight: 650;
+          transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+        }
+
+        [data-testid="stSidebar"] .stDownloadButton > button:hover {
+          transform: translateY(-1px);
+          background: rgba(255, 255, 255, 0.14);
+          border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .mmf-sidebar-brand {
+          padding: 0.5rem 0 1.1rem;
+          margin-bottom: 0.6rem;
+        }
+
+        .mmf-sidebar-brand .kicker {
+          font-size: 0.74rem;
+          text-transform: uppercase;
+          letter-spacing: 0.2em;
+          color: rgba(240, 244, 255, 0.6);
+          margin-bottom: 0.45rem;
+          font-weight: 700;
+        }
+
+        .mmf-sidebar-brand h2 {
+          margin: 0;
+          font-size: 1.45rem;
+          line-height: 1.02;
+          letter-spacing: -0.04em;
+          font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+        }
+
+        .mmf-sidebar-brand p {
+          margin: 0.7rem 0 0;
+          color: rgba(237, 241, 249, 0.72);
+          line-height: 1.55;
+          font-size: 0.94rem;
+        }
+
+        .mmf-hero {
+          position: relative;
+          overflow: hidden;
+          border-radius: 36px;
+          padding: 2rem 2.2rem;
+          margin-bottom: 1.25rem;
+          background:
+            radial-gradient(circle at 15% 15%, rgba(92, 123, 255, 0.32), transparent 34%),
+            radial-gradient(circle at 85% 0%, rgba(30, 207, 155, 0.16), transparent 28%),
+            linear-gradient(135deg, #0d1015 0%, #171c24 52%, #0d1015 100%);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 30px 80px rgba(12, 16, 24, 0.22);
+          color: #f8fbff;
+        }
+
+        .mmf-hero::after {
+          content: "";
+          position: absolute;
+          inset: auto -8% -35% auto;
+          width: 240px;
+          height: 240px;
+          background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 70%);
+          pointer-events: none;
+        }
+
+        .mmf-kicker {
+          font-size: 0.76rem;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: rgba(244, 247, 255, 0.62);
+          margin-bottom: 0.7rem;
+          font-weight: 700;
+        }
+
+        .mmf-hero h1 {
+          font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+          font-size: clamp(2.1rem, 3.8vw, 4rem);
+          line-height: 0.95;
+          letter-spacing: -0.05em;
+          margin: 0 0 0.8rem;
+        }
+
+        .mmf-hero p {
+          max-width: 46rem;
+          font-size: 1rem;
+          line-height: 1.6;
+          color: rgba(242, 245, 252, 0.76);
+          margin: 0 0 1.2rem;
+        }
+
+        .mmf-pill-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.65rem;
+        }
+
+        .mmf-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          padding: 0.56rem 0.9rem;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.09);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          font-size: 0.82rem;
+          font-weight: 650;
+          color: #f8fbff;
+          backdrop-filter: blur(10px);
+        }
+
+        .mmf-pill--accent {
+          background: linear-gradient(135deg, rgba(79, 109, 255, 0.26), rgba(30, 207, 155, 0.2));
+        }
+
+        .mmf-grid-card {
+          background: var(--mmf-surface);
+          border: 1px solid var(--mmf-line);
+          border-radius: 28px;
+          padding: 1.15rem 1.2rem;
+          box-shadow: 0 12px 35px rgba(15, 18, 26, 0.06);
+          backdrop-filter: blur(10px);
+          min-height: 148px;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .mmf-grid-card--dark {
+          background: linear-gradient(180deg, #10141b 0%, #181d26 100%);
+          color: #f7f9ff;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 18px 45px rgba(13, 17, 24, 0.18);
+        }
+
+        .mmf-grid-card .eyebrow,
+        .mmf-grid-card--dark .eyebrow {
+          font-size: 0.74rem;
+          text-transform: uppercase;
+          letter-spacing: 0.18em;
+          color: rgba(92, 100, 116, 0.72);
+          margin-bottom: 0.65rem;
+          font-weight: 700;
+          min-height: 1.05rem;
+        }
+
+        .mmf-grid-card--dark .eyebrow {
+          color: rgba(240, 244, 255, 0.56);
+        }
+
+        .mmf-grid-card .value {
+          font-size: 1.9rem;
+          line-height: 1;
+          letter-spacing: -0.04em;
+          font-weight: 700;
+          margin-bottom: 0.55rem;
+          font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+          min-height: 2rem;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .mmf-grid-card .body {
+          color: #5d6574;
+          font-size: 0.95rem;
+          line-height: 1.5;
+          margin-top: auto;
+        }
+
+        .mmf-grid-card--dark .body {
+          color: rgba(238, 242, 252, 0.74);
+        }
+
+        .mmf-tone-good .value {
+          color: #14b47a;
+        }
+
+        .mmf-tone-watch .value {
+          color: var(--mmf-amber);
+        }
+
+        .mmf-tone-risk .value {
+          color: var(--mmf-red);
+        }
+
+        .mmf-tone-accent .value {
+          color: var(--mmf-blue);
+        }
+
+        .mmf-section-head {
+          margin: 1.2rem 0 0.85rem;
+        }
+
+        .mmf-section-head .label {
+          font-size: 0.76rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.18em;
+          color: #6a7281;
+          margin-bottom: 0.45rem;
+        }
+
+        .mmf-section-head h2 {
+          margin: 0;
+          font-size: 1.7rem;
+          letter-spacing: -0.04em;
+          font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+        }
+
+        .mmf-section-head p {
+          margin: 0.4rem 0 0;
+          color: #626a78;
+          max-width: 46rem;
+          line-height: 1.6;
+        }
+
+        .mmf-card-row {
+          display: grid;
+          grid-template-columns: repeat(var(--mmf-card-cols, 3), minmax(0, 1fr));
+          gap: 1rem;
+          align-items: stretch;
+          margin: 0 0 0.25rem;
+        }
+
+        .mmf-threshold-band {
+          display: flex;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+          margin: 0.8rem 0 1rem;
+        }
+
+        .mmf-threshold {
+          flex: 1 1 220px;
+          padding: 0.95rem 1rem;
+          border-radius: 22px;
+          background: rgba(255, 255, 255, 0.74);
+          border: 1px solid rgba(16, 19, 26, 0.07);
+          box-shadow: 0 10px 30px rgba(15, 18, 26, 0.05);
+        }
+
+        .mmf-threshold strong {
+          display: block;
+          font-size: 0.95rem;
+          margin-bottom: 0.2rem;
+        }
+
+        .mmf-threshold span {
+          color: #636b79;
+          font-size: 0.84rem;
+        }
+
+        .mmf-threshold.is-active {
+          background: linear-gradient(135deg, rgba(79, 109, 255, 0.16), rgba(30, 207, 155, 0.08));
+          border-color: rgba(79, 109, 255, 0.25);
+        }
+
+        .mmf-empty-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 1rem;
+          margin-top: 1rem;
+        }
+
+        .mmf-empty-card {
+          background: rgba(255, 255, 255, 0.76);
+          border: 1px solid rgba(16, 19, 26, 0.08);
+          border-radius: 24px;
+          padding: 1.2rem;
+          min-height: 190px;
+          box-shadow: 0 12px 30px rgba(15, 18, 26, 0.05);
+        }
+
+        .mmf-empty-card h3 {
+          margin: 0.25rem 0 0.5rem;
+          font-size: 1.05rem;
+        }
+
+        .mmf-empty-card p {
+          margin: 0;
+          color: #616877;
+          line-height: 1.55;
+        }
+
+        .mmf-empty-card .index {
+          font-size: 0.8rem;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: #73819a;
+          font-weight: 700;
+        }
+
+        [data-testid="stMetric"] {
+          background: rgba(255, 255, 255, 0.78);
+          border: 1px solid rgba(16, 19, 26, 0.08);
+          padding: 1rem 1.15rem;
+          border-radius: 26px;
+          box-shadow: 0 12px 35px rgba(15, 18, 26, 0.05);
+        }
+
+        [data-testid="stMetricLabel"] {
+          color: #6a7180;
+          text-transform: uppercase;
+          letter-spacing: 0.16em;
+          font-size: 0.72rem;
+          font-weight: 700;
+        }
+
+        [data-testid="stMetricValue"] {
+          font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+          letter-spacing: -0.04em;
+          font-size: 2rem;
+          color: #10131a;
+        }
+
+        .stAlert {
+          border-radius: 22px;
+          border: 1px solid rgba(16, 19, 26, 0.08);
+          box-shadow: 0 10px 28px rgba(15, 18, 26, 0.05);
+        }
+
+        [data-testid="stExpander"] {
+          background: rgba(255, 255, 255, 0.72);
+          border: 1px solid rgba(16, 19, 26, 0.08);
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow: 0 12px 35px rgba(15, 18, 26, 0.05);
+        }
+
+        [data-testid="stExpander"] details summary p {
+          font-weight: 650;
+          color: #12151d;
+        }
+
+        [data-testid="stDataFrame"] {
+          border-radius: 26px;
+          overflow: hidden;
+          border: 1px solid rgba(16, 19, 26, 0.08);
+          box-shadow: 0 14px 34px rgba(15, 18, 26, 0.06);
+          background: rgba(255, 255, 255, 0.8);
+        }
+
+        .stCodeBlock,
+        [data-testid="stCode"] {
+          border-radius: 24px;
+          border: 1px solid rgba(16, 19, 26, 0.08);
+          overflow: hidden;
+        }
+
+        hr {
+          border-color: rgba(16, 19, 26, 0.08);
+          margin: 1.3rem 0;
+        }
+
+        .mmf-footer {
+          color: #6a7281;
+          font-size: 0.87rem;
+          margin-top: 0.6rem;
+        }
+
+        @media (max-width: 900px) {
+          .mmf-hero {
+            padding: 1.5rem 1.35rem;
+            border-radius: 30px;
+          }
+
+          .mmf-empty-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .mmf-card-row {
+            grid-template-columns: 1fr;
+          }
+        }

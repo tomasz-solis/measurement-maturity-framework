@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any, Dict, List, TypedDict, cast
 
 try:
     import sqlparse
@@ -12,10 +13,25 @@ try:
 except ImportError:
     SQLPARSE_AVAILABLE = False
 
+logger = logging.getLogger(__name__)
+
 
 # -------------------------
 # Public data structures
 # -------------------------
+
+
+class ValidatedPack(TypedDict, total=False):
+    """Shape of a metric pack after successful parsing.
+
+    All keys are optional because packs may omit strategy fields.
+    Callers (scoring, suggestions) should use .get() defensively.
+    """
+
+    pack: Dict[str, Any]
+    metrics: List[Dict[str, Any]]
+    strategy_board: Dict[str, Any]
+    impact_graph: Dict[str, Any]
 
 
 @dataclass
@@ -34,7 +50,7 @@ class ValidationResult:
     """Validator output including the pack and all discovered issues."""
 
     ok: bool
-    pack: Any
+    pack: ValidatedPack
     issues: List[ValidationIssue] = field(default_factory=list)
 
 
@@ -45,13 +61,15 @@ class ValidationResult:
 
 def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
     """Validate a metric pack and return issues without mutating the input."""
+    metric_count = len(pack.get("metrics") or []) if isinstance(pack, dict) else 0
+    logger.debug("Validating pack with %d metric(s)", metric_count)
     issues: List[ValidationIssue] = []
 
     # ---- Pack-level checks ----
     if not isinstance(pack, dict):
         return ValidationResult(
             ok=False,
-            pack=pack,
+            pack=cast(ValidatedPack, {}),
             issues=[
                 ValidationIssue(
                     severity="ERROR",
@@ -96,7 +114,11 @@ def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
                 "metrics",
             )
         )
-        return ValidationResult(ok=False, pack=pack, issues=issues)
+        return ValidationResult(
+            ok=False,
+            pack=cast(ValidatedPack, pack),
+            issues=issues,
+        )
 
     # Check duplicate metric IDs
     seen_ids = set()
@@ -230,7 +252,7 @@ def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
 
     return ValidationResult(
         ok=not has_errors,
-        pack=pack,
+        pack=cast(ValidatedPack, pack),
         issues=issues,
     )
 

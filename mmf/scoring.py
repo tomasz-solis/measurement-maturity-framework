@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 from .config import ScoringConfig, load_config
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -31,11 +34,15 @@ class ScoreResult:
     metric_scores: List[MetricScore]
 
 
-def score_pack(pack: Dict[str, Any]) -> ScoreResult:
+def score_pack(pack: Mapping[str, Any]) -> ScoreResult:
     """Score a metric pack and return both pack-level and metric-level results."""
+    metrics = pack.get("metrics", [])
+    logger.debug(
+        "Scoring pack with %d metric(s)",
+        len(metrics) if isinstance(metrics, list) else 0,
+    )
 
     config = load_config()
-    metrics = pack.get("metrics", [])
     metric_scores: List[MetricScore] = []
 
     for metric in metrics:
@@ -69,19 +76,20 @@ def _score_metric(metric: Dict[str, Any], config: ScoringConfig) -> MetricScore:
     tier = metric.get("tier")
     status = metric.get("status") or "active"
 
-    # Tier expectations
     deductions = config.deductions
+
+    # Tier stability — V0 proxies carry instability risk on top of any other gaps
     if (tier or "").upper() == "V0":
         base -= deductions["v0_tier"]
         gaps.append("tier_v0")
 
-    # Accountable / responsible
+    # Ownership — no accountable team means slower debugging and weaker follow-up
     has_owner = metric.get("accountable") or metric.get("responsible")
     if not has_owner:
         base -= deductions["missing_accountable"]
         gaps.append("missing_accountable")
 
-    # SQL
+    # SQL — without query logic the metric can't be reproduced or inspected
     sql = metric.get("sql") or {}
     has_value_sql = bool(sql.get("value"))
     has_ratio_sql = bool(sql.get("numerator")) and bool(sql.get("denominator"))
@@ -89,13 +97,27 @@ def _score_metric(metric: Dict[str, Any], config: ScoringConfig) -> MetricScore:
         base -= deductions["missing_sql"]
         gaps.append("missing_sql")
 
-    # Tests
+    # Tests — without basic checks, silent breakage goes undetected
     if not metric.get("tests"):
         base -= deductions["missing_tests"]
         gaps.append("missing_tests")
 
-    score = max(0, min(100, base))
+    # Description — intent should be readable without opening the SQL
+    if not metric.get("description"):
+        base -= deductions.get("missing_description", 0)
+        gaps.append("missing_description")
 
+    # Grain — what one row of the output represents
+    if not metric.get("grain"):
+        base -= deductions.get("missing_grain", 0)
+        gaps.append("missing_grain")
+
+    # Unit — how to interpret the value (count, percent, currency, etc.)
+    if not metric.get("unit"):
+        base -= deductions.get("missing_unit", 0)
+        gaps.append("missing_unit")
+
+    score = max(0, min(100, base))
     why = _build_why(score=score, gaps=gaps)
 
     return MetricScore(
@@ -115,19 +137,29 @@ def _build_why(score: float, gaps: List[str]) -> str:
     if score >= 95 and not gaps:
         return "Well-defined and production-ready."
 
-    parts: List[str] = []
-
+    # Safety gaps first (higher deduction), then completeness gaps
+    critical_parts: List[str] = []
     if "tier_v0" in gaps:
-        parts.append("it’s a V0 proxy")
+        critical_parts.append("it's a V0 proxy")
     if "missing_accountable" in gaps:
-        parts.append("no accountable team is listed")
+        critical_parts.append("no accountable team is listed")
     if "missing_sql" in gaps:
-        parts.append("no SQL is included yet")
+        critical_parts.append("no SQL is included yet")
     if "missing_tests" in gaps:
-        parts.append("no tests are defined")
+        critical_parts.append("no tests are defined")
 
-    if not parts:
+    completeness_parts: List[str] = []
+    if "missing_description" in gaps:
+        completeness_parts.append("no description is set")
+    if "missing_grain" in gaps:
+        completeness_parts.append("grain is unspecified")
+    if "missing_unit" in gaps:
+        completeness_parts.append("unit is missing")
+
+    all_parts = critical_parts + completeness_parts
+
+    if not all_parts:
         return "Minor maturity gaps."
 
     # Short, readable, not judgemental
-    return "Good start, but " + ", ".join(parts) + "."
+    return "Good start, but " + ", ".join(all_parts) + "."
