@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "measurement-maturity-framework"
+version = "0.1.0"
+description = "Deterministic metric pack auditor for product analytics teams"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "streamlit>=1.44.0",
+    "PyYAML>=6.0",
+    "sqlparse>=0.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.7.0",
+    "flake8>=6.1.0",
+    "mypy>=1.5.0",
+    "types-PyYAML>=6.0.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/tomasz-solis/measurement-maturity-framework"
+"Bug Tracker" = "https://github.com/tomasz-solis/measurement-maturity-framework/issues"
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = false
+ignore_missing_imports = true

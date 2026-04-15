@@ -1,0 +1,9 @@
+# Development tools — install separately:
+#   pip install -r requirements-dev.txt
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.3.1
+black>=23.7.0
+flake8>=6.1.0
+mypy>=1.5.0
+types-PyYAML>=6.0.12
