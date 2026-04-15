@@ -10,6 +10,7 @@ import streamlit as st
 import yaml  # type: ignore[import-untyped]
 
 from mmf.config import load_config
+from mmf.streamlit_compat import render_dataframe
 from mmf.validator import validate_metric_pack
 from mmf.scoring import score_pack
 from mmf.suggestions import deterministic_suggestions
@@ -187,7 +188,7 @@ def _render_validation_section(
             }
             for i in issues_sorted
         ]
-        st.dataframe(rows, width="stretch", hide_index=True)
+        render_dataframe(rows, hide_index=True)
     else:
         st.caption("No issues found.")
 
@@ -273,7 +274,7 @@ def _render_scoring_section(
         }
         for ms in score_result.metric_scores
     ]
-    st.dataframe(metric_rows, width="stretch", hide_index=True)
+    render_dataframe(metric_rows, hide_index=True)
 
 
 def _render_suggestions_section(

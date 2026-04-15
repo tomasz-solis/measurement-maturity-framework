@@ -12,6 +12,8 @@ from typing import Any, Dict, Optional
 import streamlit as st
 import yaml  # type: ignore[import-untyped]
 
+from .streamlit_compat import render_download_button
+
 
 def repo_root() -> Path:
     """Return the repository root directory for template and example lookup.
@@ -104,22 +106,20 @@ def render_sidebar_downloads(dl: Dict[str, Optional[str]]) -> None:
     st.markdown("---")
     st.subheader("Downloads")
 
-    st.download_button(
+    render_download_button(
         label="Download metric template (YAML)",
         data=(dl["metric_template"] or "").encode("utf-8"),
         file_name="metric_template.yaml",
         mime="text/yaml",
-        width="stretch",
     )
 
     pack_template = dl.get("pack_template")
     if pack_template:
-        st.download_button(
+        render_download_button(
             label="Download pack template (YAML)",
             data=pack_template.encode("utf-8"),
             file_name="metric_pack_template.yaml",
             mime="text/yaml",
-            width="stretch",
         )
     else:
         st.caption(
@@ -129,12 +129,11 @@ def render_sidebar_downloads(dl: Dict[str, Optional[str]]) -> None:
 
     example_pack = dl.get("example_pack")
     if example_pack:
-        st.download_button(
+        render_download_button(
             label="Download example pack (YAML)",
             data=example_pack.encode("utf-8"),
             file_name=dl["example_pack_filename"] or "example_metric_pack.yaml",
             mime="text/yaml",
-            width="stretch",
         )
     else:
         st.caption(
@@ -154,10 +153,9 @@ def render_sidebar_downloads(dl: Dict[str, Optional[str]]) -> None:
 
 def render_normalized_download(normalized_yaml_text: str) -> None:
     """Render the post-upload normalized YAML download button."""
-    st.download_button(
+    render_download_button(
         label="Download normalized YAML",
         data=normalized_yaml_text.encode("utf-8"),
         file_name="normalized_metric_pack.yaml",
         mime="text/yaml",
-        width="stretch",
     )
