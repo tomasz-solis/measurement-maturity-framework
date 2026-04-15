@@ -7,16 +7,33 @@ from typing import Dict
 
 
 def _default_deductions() -> Dict[str, int]:
-    """Return the default deduction values for metric scoring."""
+    """Return the default deduction values for metric scoring.
+
+    Values reflect relative risk contributions, not arbitrary constants.
+
+    V0 tier (-10): the largest deduction because tier instability is
+    additive to any other gap. A V0 metric may change definition mid-quarter,
+    making trend analysis unreliable regardless of whether SQL or tests exist.
+
+    Missing accountable/SQL/tests (-5 each): equal weight because each
+    represents one independent dimension of verifiability. Missing ownership
+    is a process gap; missing SQL is a reproducibility gap; missing tests is
+    a monitoring gap. All three matter for decision-readiness, none dominates
+    the others.
+
+    See SCORING_METHODOLOGY.md for full rationale and sensitivity analysis.
+    """
     return {
-        # V0 metrics are treated as less stable by design.
         "v0_tier": 10,
-        # Metrics without clear owners are harder to debug and maintain.
         "missing_accountable": 5,
-        # Query logic is needed for reproducibility and debugging.
         "missing_sql": 5,
-        # Basic tests catch silent breakage earlier.
         "missing_tests": 5,
+        # Softer deductions: structural completeness, not safety-critical.
+        # These penalise metrics that are harder to interpret or maintain,
+        # without blocking a pack that is otherwise well-defined.
+        "missing_description": 3,
+        "missing_grain": 2,
+        "missing_unit": 2,
     }
 
 

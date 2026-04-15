@@ -27,6 +27,9 @@ class TestConfigDefaults:
         assert "missing_accountable" in config.deductions
         assert "missing_sql" in config.deductions
         assert "missing_tests" in config.deductions
+        assert "missing_description" in config.deductions
+        assert "missing_grain" in config.deductions
+        assert "missing_unit" in config.deductions
 
     def test_default_thresholds_present(self):
         """Default config should have all required thresholds"""

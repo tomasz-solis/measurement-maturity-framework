@@ -1,7 +1,7 @@
-"""
-Measurement Maturity Framework — metric definition auditor.
+"""Measurement Maturity Framework core package.
 
-Validates, scores, and generates suggestions for YAML metric packs.
+The root package exposes the core validation, scoring, and suggestion helpers.
+Streamlit-specific rendering helpers live in ``mmf.ui``.
 """
 
 from .config import ScoringConfig, load_config

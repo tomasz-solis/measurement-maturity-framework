@@ -5,9 +5,12 @@
 ```
 measurement-maturity-framework/
 ├── app.py                          # Main Streamlit application
-├── requirements.txt                # All dependencies (production + dev tools)
+├── requirements.txt                # Runtime dependencies
+├── requirements-dev.txt            # Formatters, linters, and test tools
+├── pyproject.toml                  # Tooling and packaging metadata
 ├── pytest.ini                      # Test configuration
 ├── README.md                       # Main documentation
+├── SCORING_METHODOLOGY.md          # Scoring rationale and examples
 └── .gitignore                      # Git ignore rules
 ```
 
@@ -21,7 +24,12 @@ mmf/                                # Core framework library
 ├── scoring.py                      # Maturity scoring
 ├── suggestions.py                  # Improvement suggestions
 ├── mermaid.py                      # Diagram generation
-└── streamlit_mermaid.py            # Streamlit integration
+├── streamlit_mermaid.py            # Streamlit integration
+├── ui.py                           # Stable UI import surface
+├── components.py                   # Streamlit result components
+├── layout.py                       # HTML/CSS layout helpers
+├── sidebar.py                      # Sidebar downloads and helpers
+└── theme.css                       # App theme styles
 ```
 
 ## Tests
@@ -50,14 +58,6 @@ templates/                          # Starter templates
 examples/                           # Example metric packs
 ├── README.md                       # Examples overview
 └── generic_product_metric_pack.yaml # Generic sample pack
-```
-
-## Documentation
-
-```
-docs/                               # Framework documentation
-├── README.md                       # Docs index / navigation
-└── SCORING_METHODOLOGY.md          # Detailed scoring rationale
 ```
 
 ## CI/CD
@@ -90,7 +90,8 @@ These are in `.gitignore` and should NOT be committed:
 
 **Install dependencies:**
 ```bash
-pip install -r requirements.txt              # All dependencies (includes dev tools)
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
 **Run the app:**
@@ -107,9 +108,9 @@ pytest -v                           # Verbose output
 
 **Code quality:**
 ```bash
-black mmf/ tests/                   # Format code
-flake8 mmf/ tests/                  # Lint code
-mypy mmf/                           # Type check
+black app.py mmf/ tests/            # Format code
+flake8 app.py mmf/ tests/           # Lint code
+mypy app.py mmf/                    # Type check
 ```
 
 ---
@@ -127,7 +128,7 @@ mypy mmf/                           # Type check
 
 **Changing scoring rules:**
 - Edit `mmf/config.py` (deductions, thresholds)
-- Update `docs/SCORING_METHODOLOGY.md` with rationale
+- Update `SCORING_METHODOLOGY.md` with rationale
 - Add tests to `tests/test_scorer.py`
 
 **Private examples:**

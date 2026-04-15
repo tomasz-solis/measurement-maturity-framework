@@ -14,6 +14,25 @@ The point is simple: many metric problems are structural before they are analyti
 
 ---
 
+## Why This Exists
+
+Most metric problems are structural before they are analytical. A team debating DAU methodology is often missing something more basic: nobody owns the metric, the SQL isn't written down anywhere, and the first time anyone notices the number is wrong is when it surfaces in a board deck.
+
+This tool surfaces those gaps early — while fixing them is cheap. It doesn't generate metrics, choose KPIs, or validate business logic. It checks whether a metric definition has the structural properties that make it safe to rely on.
+
+---
+
+## Try The UI
+
+> **Tip:** Deploy to [Streamlit Cloud](https://streamlit.io/cloud) in under 5 minutes for a live link — the app is a single `streamlit run app.py` away.
+
+If you want a quick feel for the app:
+- run `streamlit run app.py`
+- upload `examples/generic_product_metric_pack.yaml`
+- review the validation, scoring, suggestions, and strategy tree sections
+
+---
+
 ## What It Is
 
 - A review layer for YAML metric definitions
@@ -124,6 +143,9 @@ Every metric starts at `100`, then loses points for specific structural gaps:
 | missing `accountable` / `responsible` | -5 |
 | missing SQL | -5 |
 | missing tests | -5 |
+| missing `description` | -3 |
+| missing `grain` | -2 |
+| missing `unit` | -2 |
 
 The score is clamped to `0-100`.
 
@@ -165,6 +187,9 @@ The current scorer emits gaps for:
 - missing ownership
 - missing SQL
 - missing tests
+- missing description
+- missing grain
+- missing unit
 
 The suggestion layer can also handle richer gap types if future scoring rules add them, but those are not part of the current scoring contract.
 
@@ -186,7 +211,11 @@ The visualization is optional. Packs without strategy metadata still validate, s
 ### 1. Install dependencies
 
 ```bash
+# Runtime (pinned for reproducibility)
 pip install -r requirements.txt
+
+# Dev tools (formatters, linters, test runner)
+pip install -r requirements-dev.txt
 ```
 
 ### 2. Run the app
@@ -219,8 +248,8 @@ streamlit run app.py
 - [mmf/mermaid.py](mmf/mermaid.py): strategy diagram generation
 
 Documentation:
-- [docs/README.md](docs/README.md)
-- [docs/SCORING_METHODOLOGY.md](docs/SCORING_METHODOLOGY.md)
+- [SCORING_METHODOLOGY.md](SCORING_METHODOLOGY.md)
+- [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)
 - [examples/README.md](examples/README.md)
 
 Working assets:

@@ -1,14 +1,14 @@
 # Scoring Methodology
 
 **Version**: 1.1  
-**Last Updated**: 2026-04-14  
+**Last Updated**: 2026-04-15  
 **Status**: Active
 
 This document describes the scoring logic that is actually implemented in the repo today.
 
 If this file and the code ever disagree, the code is the source of truth:
-- [mmf/config.py](../mmf/config.py)
-- [mmf/scoring.py](../mmf/scoring.py)
+- [mmf/config.py](mmf/config.py)
+- [mmf/scoring.py](mmf/scoring.py)
 
 ---
 
@@ -33,10 +33,13 @@ Points are deducted for the following gaps:
 
 | Check | Deduction | Why it matters |
 |---|---:|---|
-| `tier: V0` | -10 | Early proxies are less stable by definition. |
-| missing `accountable` or `responsible` | -5 | No clear owner means slower debugging and weaker follow-up. |
-| missing SQL | -5 | Without query logic, the metric cannot be reproduced or inspected. |
-| missing tests | -5 | Without basic checks, breakage is easier to miss. |
+| `tier: V0` | -10 | Instability risk is additive to any other gap — a V0 metric may change definition mid-quarter, making trends unreliable. |
+| missing `accountable` or `responsible` | -5 | No owner means slower debugging, weaker follow-up, and higher risk of the metric drifting past its shelf life. |
+| missing SQL | -5 | Without query logic the metric can't be independently reproduced or inspected. |
+| missing tests | -5 | Without basic checks, silent breakage goes undetected until it surfaces in a dashboard. |
+| missing `description` | -3 | A metric without a description forces readers to reverse-engineer intent from naming alone. |
+| missing `grain` | -2 | Without grain, a reader can't tell what one row represents, making aggregation decisions ambiguous. |
+| missing `unit` | -2 | Without unit, value interpretation is a guess (is 0.12 a ratio, a percent, or a count?). |
 
 Formula:
 
@@ -46,13 +49,82 @@ metric_score = clamp(
     - v0_tier_deduction
     - missing_accountable_deduction
     - missing_sql_deduction
-    - missing_tests_deduction,
+    - missing_tests_deduction
+    - missing_description_deduction
+    - missing_grain_deduction
+    - missing_unit_deduction,
     0,
     100
 )
 ```
 
 Default base score is `100`.
+
+---
+
+## Weight Rationale
+
+The deduction values reflect relative risk contributions, not arbitrary constants.
+
+### V0 tier: -10
+
+V0 gets the largest deduction because tier instability is additive to every
+other gap. A V0 metric can change definition mid-quarter. That makes trend
+analysis unreliable even if SQL and tests exist today — the number it tracked
+last month may not be comparable to the number it tracks this month. The -10
+reflects that risk to historical comparability, not just current completeness.
+
+### Missing accountable/SQL/tests: -5 each
+
+These carry equal weight because they represent three independent failure modes:
+
+- **Ownership gap**: the metric may be correct today but becomes unreliable
+  when upstream tables change and nobody knows they're responsible for updating
+  the definition.
+- **SQL gap**: without query logic, the number can't be reproduced,
+  audited, or handed off to another team.
+- **Test gap**: without basic checks (not_null, range bounds), breakage
+  is discovered in a board deck rather than a data pipeline alert.
+
+Each is worth -5 because each represents one dimension of verifiability.
+None dominates the others — a metric with SQL but no owner is as risky in
+practice as one with an owner but no SQL.
+
+### Missing description/grain/unit: -3, -2, -2
+
+These are softer deductions. They penalise metrics that are harder to
+interpret or maintain, without blocking a pack that is otherwise well-defined.
+A metric without a description but with SQL, tests, and an owner is still
+usable — it's just harder to onboard new teammates to.
+
+The asymmetry (description = -3, grain/unit = -2) reflects that missing
+intent is a bigger interpretability risk than missing formatting metadata.
+
+---
+
+## Sensitivity Analysis
+
+The table below shows how the pack score changes as `pack_floor_weight` varies,
+for a representative two-metric pack with scores of `[100, 85]`.
+
+| pack_floor_weight | Pack score | Interpretation |
+|---|---|---|
+| 0.0 | 92.50 | Pure average — ignores the weakest metric entirely |
+| 0.1 | 91.75 | |
+| 0.2 | 91.00 | |
+| **0.3** | **90.25** | **Default — 70% average, 30% floor** |
+| 0.4 | 89.50 | |
+| 0.5 | 88.75 | Blend approaches 50/50 |
+| 1.0 | 85.00 | Full min — pack score equals weakest metric |
+
+The default 0.3 is a conservative choice. A pack is often used as one decision
+surface, and a single fragile metric can distort the broader story in ways that
+pure averages hide. Full-min (1.0) overpunishes packs where one metric is
+intentionally a V0 proxy while the rest are production-ready.
+
+A future calibration study could derive an optimal floor weight from a labelled
+dataset of historical metric quality outcomes. The current value is a principled
+starting point, not an empirically optimised parameter.
 
 ---
 
@@ -90,7 +162,7 @@ Why do this:
 
 ## Thresholds
 
-Current thresholds come from [mmf/config.py](../mmf/config.py):
+Current thresholds come from [mmf/config.py](mmf/config.py):
 
 | Range | Label |
 |---|---|
@@ -154,8 +226,11 @@ Recommendation:
 ```yaml
 id: active_accounts
 name: Active Accounts
+description: Daily active accounts with at least one qualifying event.
 tier: V1
 accountable: Growth Team
+grain: account_day
+unit: count
 sql:
   value: |
     SELECT COUNT(DISTINCT account_id) FROM account_activity
@@ -181,10 +256,10 @@ responsible: Customer Success
 Score:
 
 ```text
-100 - 10 - 5 - 5 = 80
+100 - 10 - 5 - 5 - 3 - 2 - 2 = 73
 ```
 
-The metric keeps ownership, but still loses points for being a V0 proxy with no SQL and no tests.
+The metric keeps ownership, but still loses points for being a V0 proxy with no SQL, no tests, and missing basic interpretability fields.
 
 ### Example 3: Mixed pack
 
@@ -247,6 +322,9 @@ The current scorer emits these gap types:
 - `missing_accountable`
 - `missing_sql`
 - `missing_tests`
+- `missing_description`
+- `missing_grain`
+- `missing_unit`
 
 The suggestion layer can also react to richer gap names, which makes it ready for future scoring expansion, but those richer gaps are not part of the active scoring contract today.
 
@@ -254,7 +332,7 @@ The suggestion layer can also react to richer gap names, which makes it ready fo
 
 ## Configuration
 
-Default configuration is defined in [mmf/config.py](../mmf/config.py):
+Default configuration is defined in [mmf/config.py](mmf/config.py):
 
 ```python
 ScoringConfig(
@@ -264,6 +342,9 @@ ScoringConfig(
         "missing_accountable": 5,
         "missing_sql": 5,
         "missing_tests": 5,
+        "missing_description": 3,
+        "missing_grain": 2,
+        "missing_unit": 2,
     },
     thresholds={
         "decision_ready": 80,
@@ -283,11 +364,11 @@ If you change these values:
 
 ## Current Limits
 
-The current scoring model does not yet deduct for:
-- missing description
-- missing grain
-- missing unit
-- missing dependencies
-- deprecated status
+The current scoring model does not deduct for:
 
-Those may still appear in docs or suggestions discussions as future extensions, but they are not active scoring deductions in the current codebase.
+- deprecated status (surfaced as a suggestion only)
+- missing upstream dependencies (`requires`)
+
+These may appear in suggestions but are not active scoring deductions.
+`missing_description`, `missing_grain`, and `missing_unit` are now active
+deductions (see the table above).
