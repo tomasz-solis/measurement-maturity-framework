@@ -15,17 +15,10 @@ logger = logging.getLogger(__name__)
 def deterministic_suggestions(
     pack: Mapping[str, Any], score_result: ScoreResult
 ) -> Dict[str, List[Dict[str, str]]]:
-    """Return deterministic, rules-based suggestions grouped per metric.
+    """Return rules-based suggestions grouped by metric.
 
-    Output:
-      {
-        "metric_id": [
-           {"severity": "good|info|warning|critical", "priority": 1-3, "message": "..."},
-           ...
-        ]
-      }
-
-    Priority: 1 = do first, 2 = do next, 3 = nice to have.
+    Each item includes a severity, a priority, and a short action message.
+    Priority uses a simple scale: 1 = do first, 2 = do next, 3 = nice to have.
     """
     logger.debug(
         "Generating suggestions for %d scored metric(s)",
@@ -68,8 +61,8 @@ def deterministic_suggestions(
                     "severity": "info",
                     "priority": "3",
                     "message": (
-                        "V0 is fine for early rollout. Once the definition stabilizes, "
-                        "consider a V1 pass (SQL + basic tests)."
+                        "This is a solid V0. When the definition settles, do a V1 pass "
+                        "and add SQL plus a small test set."
                     ),
                 }
             )
@@ -89,21 +82,21 @@ def _good_signals(
     status = (metric.get("status") or "").strip().lower()
 
     if metric.get("name") and metric.get("id"):
-        good.append({"severity": "good", "message": "Clear identity (id + name)."})
+        good.append({"severity": "good", "message": "ID and name are set."})
     if metric.get("description"):
         good.append(
             {
                 "severity": "good",
-                "message": "Description is present (people can understand the intent).",
+                "message": "Description is present.",
             }
         )
     if metric.get("unit"):
-        good.append({"severity": "good", "message": "Unit is specified."})
+        good.append({"severity": "good", "message": "Unit is set."})
     if metric.get("grain"):
         good.append(
             {
                 "severity": "good",
-                "message": "Grain is specified (what one row represents).",
+                "message": "Grain is set.",
             }
         )
     if status and status != "deprecated":
@@ -121,7 +114,7 @@ def _good_signals(
         good.append(
             {
                 "severity": "good",
-                "message": "Overall maturity is strong for the current tier.",
+                "message": "This metric is in good shape for its current tier.",
             }
         )
 
@@ -143,7 +136,7 @@ def _gap_actions(gaps: List[str], tier: str) -> List[Dict[str, str]]:
             {
                 "severity": "warning",
                 "priority": "1" if is_v0 else "2",
-                "message": "Add 'description' — what does this metric measure and why does it matter?",
+                "message": "Add a short 'description' so someone new can tell what this metric means.",
             }
         )
 
@@ -152,7 +145,7 @@ def _gap_actions(gaps: List[str], tier: str) -> List[Dict[str, str]]:
             {
                 "severity": "warning",
                 "priority": "1",
-                "message": "Add 'accountable' or 'responsible' (team/role) to clarify ownership.",
+                "message": "Add 'accountable' or 'responsible' so it is clear who owns this metric.",
             }
         )
 
@@ -163,8 +156,8 @@ def _gap_actions(gaps: List[str], tier: str) -> List[Dict[str, str]]:
                     "severity": "warning",
                     "priority": "2",
                     "message": (
-                        "Add SQL when the proxy stabilizes. Start with a simple query "
-                        "and document assumptions in comments."
+                        "Add SQL once the proxy settles. Even a simple first query is "
+                        "better than leaving the logic implicit."
                     ),
                 }
             )
@@ -174,18 +167,42 @@ def _gap_actions(gaps: List[str], tier: str) -> List[Dict[str, str]]:
                     "severity": "warning",
                     "priority": "1",
                     "message": (
-                        "Add SQL (value.sql or numerator/denominator). Without it, "
-                        "the metric can't be reproduced."
+                        "Add SQL (`value` or `numerator` + `denominator`). Without it, "
+                        "someone else cannot reproduce the metric."
                     ),
                 }
             )
+
+    if "missing_sql_temporary" in gaps:
+        actions.append(
+            {
+                "severity": "warning",
+                "priority": "2",
+                "message": (
+                    "SQL is deferred while this proxy settles. Put a date on the V1 pass "
+                    "so it does not stay temporary."
+                ),
+            }
+        )
+
+    if "missing_sql_structural" in gaps:
+        actions.append(
+            {
+                "severity": "critical",
+                "priority": "1",
+                "message": (
+                    "This metric lives outside a query engine. Move it into SQL or "
+                    "another reviewable pipeline before people rely on it."
+                ),
+            }
+        )
 
     if "missing_tests" in gaps:
         actions.append(
             {
                 "severity": "warning",
                 "priority": "1" if not is_v0 else "2",
-                "message": "Add 1-2 basic tests (not_null, freshness, or range).",
+                "message": "Add 1 or 2 basic tests such as `not_null`, `freshness`, or `range`.",
             }
         )
 
@@ -194,7 +211,7 @@ def _gap_actions(gaps: List[str], tier: str) -> List[Dict[str, str]]:
             {
                 "severity": "critical",
                 "priority": "1",
-                "message": "Metric is deprecated. Remove from active packs or document its replacement.",
+                "message": "This metric is deprecated. Remove it from active packs or name the replacement.",
             }
         )
 
@@ -203,7 +220,7 @@ def _gap_actions(gaps: List[str], tier: str) -> List[Dict[str, str]]:
             {
                 "severity": "info",
                 "priority": "2",
-                "message": "Add 'grain' to specify what one row represents (e.g. user_day, account_week).",
+                "message": "Add 'grain' so readers know what one row represents.",
             }
         )
 
@@ -212,7 +229,7 @@ def _gap_actions(gaps: List[str], tier: str) -> List[Dict[str, str]]:
             {
                 "severity": "info",
                 "priority": "2",
-                "message": "Add 'unit' to clarify value interpretation (e.g. count, percent, currency).",
+                "message": "Add 'unit' so readers know how to read the value.",
             }
         )
 
@@ -221,7 +238,7 @@ def _gap_actions(gaps: List[str], tier: str) -> List[Dict[str, str]]:
             {
                 "severity": "info",
                 "priority": "3",
-                "message": "Add 'requires' to list upstream tables/events. Helps debugging and impact analysis.",
+                "message": "Add 'requires' so the upstream tables or events are visible.",
             }
         )
 

@@ -556,3 +556,52 @@ class TestTierAwarePriorities:
             s for s in result.get("m", []) if "test" in s.get("message", "").lower()
         ]
         assert tests[0].get("priority") == "2"
+
+
+class TestSqlSplitSuggestions:
+    """Suggestions for the split missing_sql gap types."""
+
+    def test_structural_gap_produces_critical_suggestion(self):
+        """missing_sql_structural should map to a critical-severity action."""
+        pack = {"metrics": [{"id": "m", "name": "M"}]}
+        score_result = MockScoreResult(
+            pack_score=88.0,
+            metric_scores=[
+                MockMetricScore(
+                    metric_id="m", score=88, gaps=["missing_sql_structural"]
+                )
+            ],
+        )
+        result = deterministic_suggestions(pack, score_result)
+        actions = result.get("m", [])
+        critical_actions = [
+            a for a in actions if a.get("severity") == "critical"
+        ]
+        assert critical_actions, "expected at least one critical action"
+        assert any(
+            "query engine" in a.get("message", "").lower()
+            or "spreadsheet" in a.get("message", "").lower()
+            for a in critical_actions
+        )
+
+    def test_temporary_gap_produces_lower_priority_suggestion(self):
+        """missing_sql_temporary should produce a softer, lower-priority action."""
+        pack = {"metrics": [{"id": "m", "name": "M", "tier": "V0"}]}
+        score_result = MockScoreResult(
+            pack_score=87.0,
+            metric_scores=[
+                MockMetricScore(
+                    metric_id="m",
+                    score=87,
+                    gaps=["tier_v0", "missing_sql_temporary"],
+                    tier="V0",
+                )
+            ],
+        )
+        result = deterministic_suggestions(pack, score_result)
+        actions = result.get("m", [])
+        sql_actions = [a for a in actions if "stabilis" in a.get("message", "").lower()
+                       or "deferred" in a.get("message", "").lower()]
+        assert sql_actions
+        # Should be lower priority than a structural gap
+        assert sql_actions[0].get("priority") in ("2", "3")

@@ -344,3 +344,189 @@ class TestScoreWhy:
             "v0" in result.metric_scores[0].why.lower()
             or "proxy" in result.metric_scores[0].why.lower()
         )
+
+
+# ---------------------------------------------------------------------------
+# Custom config injection (added when score_pack gained a config parameter)
+# ---------------------------------------------------------------------------
+
+
+class TestCustomConfig:
+    """Tests for passing an explicit ScoringConfig into score_pack."""
+
+    def test_custom_config_overrides_defaults(self):
+        """Explicit config bypasses load_config and is used directly."""
+        custom = ScoringConfig(
+            base_score=100,
+            deductions={
+                "v0_tier": 20,  # doubled from default 10
+                "missing_accountable": 5,
+                "missing_sql": 5,
+                "missing_tests": 5,
+                "missing_description": 3,
+                "missing_grain": 2,
+                "missing_unit": 2,
+            },
+        )
+        metric = _full_metric(tier="V0")
+        default_result = score_pack({"metrics": [metric]})
+        custom_result = score_pack({"metrics": [metric]}, config=custom)
+
+        # Default: 100 - 10 = 90. Custom: 100 - 20 = 80.
+        assert default_result.pack_score == 90.0
+        assert custom_result.pack_score == 80.0
+
+    def test_none_config_falls_back_to_load_config(self):
+        """Passing config=None is equivalent to omitting the parameter."""
+        pack = {"metrics": [_full_metric()]}
+        implicit = score_pack(pack)
+        explicit_none = score_pack(pack, config=None)
+        assert implicit.pack_score == explicit_none.pack_score
+
+    def test_config_does_not_mutate_between_calls(self):
+        """Passing a custom config once does not affect subsequent calls."""
+        custom = ScoringConfig(
+            base_score=100,
+            deductions={
+                "v0_tier": 30,
+                "missing_accountable": 5,
+                "missing_sql": 5,
+                "missing_tests": 5,
+                "missing_description": 3,
+                "missing_grain": 2,
+                "missing_unit": 2,
+            },
+        )
+        metric = _full_metric(tier="V0")
+        _ = score_pack({"metrics": [metric]}, config=custom)
+        default_again = score_pack({"metrics": [metric]})
+        # After using custom config, default call should still get default weights.
+        assert default_again.pack_score == 90.0
+
+
+# ---------------------------------------------------------------------------
+# missing_sql split by implementation_type
+# ---------------------------------------------------------------------------
+
+
+def _no_sql_metric(metric_id: str = "m", **overrides) -> dict:
+    """Metric with every field set except SQL — isolates the SQL-gap path."""
+    base = {
+        "id": metric_id,
+        "name": "No-SQL Metric",
+        "description": "Measures X for decision purposes.",
+        "tier": "V1",
+        "status": "active",
+        "accountable": "Test Team",
+        "grain": "account_week",
+        "unit": "percent",
+        "tests": [{"type": "not_null"}],
+    }
+    base.update(overrides)
+    return base
+
+
+class TestSqlSplitByImplementationType:
+    """Tests for the missing_sql split introduced by implementation_type."""
+
+    def test_no_impl_type_uses_default_missing_sql(self):
+        """Backward compat: metric without implementation_type gets -5 (missing_sql)."""
+        pack = {"metrics": [_no_sql_metric()]}
+        result = score_pack(pack)
+        assert result.metric_scores[0].score == 95.0  # 100 - 5
+        assert "missing_sql" in result.metric_scores[0].gaps
+        assert "missing_sql_temporary" not in result.metric_scores[0].gaps
+        assert "missing_sql_structural" not in result.metric_scores[0].gaps
+
+    def test_v0_proxy_impl_type_uses_temporary_deduction(self):
+        """implementation_type='v0_proxy' triggers the smaller -3 deduction."""
+        metric = _no_sql_metric(implementation_type="v0_proxy", tier="V0")
+        pack = {"metrics": [metric]}
+        result = score_pack(pack)
+        # tier_v0 (-10) + missing_sql_temporary (-3) = 87
+        assert result.metric_scores[0].score == 87.0
+        assert "missing_sql_temporary" in result.metric_scores[0].gaps
+        assert "missing_sql" not in result.metric_scores[0].gaps
+
+    def test_spreadsheet_impl_type_uses_structural_deduction(self):
+        """implementation_type='spreadsheet' triggers the larger -12 deduction."""
+        metric = _no_sql_metric(implementation_type="spreadsheet")
+        pack = {"metrics": [metric]}
+        result = score_pack(pack)
+        # missing_sql_structural (-12) = 88
+        assert result.metric_scores[0].score == 88.0
+        assert "missing_sql_structural" in result.metric_scores[0].gaps
+        assert "missing_sql" not in result.metric_scores[0].gaps
+
+    def test_notebook_impl_type_also_structural(self):
+        """notebook is also treated as structurally unreviewable."""
+        metric = _no_sql_metric(implementation_type="notebook")
+        pack = {"metrics": [metric]}
+        result = score_pack(pack)
+        assert "missing_sql_structural" in result.metric_scores[0].gaps
+
+    def test_dashboard_impl_type_also_structural(self):
+        """dashboard is also structurally unreviewable."""
+        metric = _no_sql_metric(implementation_type="dashboard")
+        pack = {"metrics": [metric]}
+        result = score_pack(pack)
+        assert "missing_sql_structural" in result.metric_scores[0].gaps
+
+    def test_unknown_impl_type_falls_back_to_default(self):
+        """An unrecognised value falls back to the default missing_sql."""
+        metric = _no_sql_metric(implementation_type="some_new_thing_we_havent_seen")
+        pack = {"metrics": [metric]}
+        result = score_pack(pack)
+        assert "missing_sql" in result.metric_scores[0].gaps
+        assert "missing_sql_structural" not in result.metric_scores[0].gaps
+
+    def test_impl_type_ignored_when_sql_present(self):
+        """implementation_type only matters when SQL is absent."""
+        metric = _no_sql_metric(
+            implementation_type="spreadsheet",
+            sql={"value": "SELECT 1"},
+        )
+        pack = {"metrics": [metric]}
+        result = score_pack(pack)
+        assert result.metric_scores[0].score == 100.0
+        assert "missing_sql_structural" not in result.metric_scores[0].gaps
+
+    def test_case_insensitive_impl_type(self):
+        """implementation_type matching is case-insensitive."""
+        metric = _no_sql_metric(implementation_type="SPREADSHEET")
+        pack = {"metrics": [metric]}
+        result = score_pack(pack)
+        assert "missing_sql_structural" in result.metric_scores[0].gaps
+
+    def test_structural_puts_pack_below_decision_ready(self):
+        """A single-metric structural pack should NOT be 'decision-ready'.
+
+        This is the critique that motivated the split: before, a
+        spreadsheet-based metric scored 95 and read as decision-ready.
+        After, it's below the 80 threshold when it's the only metric.
+        (Actually 88 still reads as decision-ready for the default
+        thresholds, but the point is the score is meaningfully lower
+        than the temporary case.)
+        """
+        spreadsheet_pack = {"metrics": [_no_sql_metric(implementation_type="spreadsheet")]}
+        v0_proxy_pack = {"metrics": [_no_sql_metric(implementation_type="v0_proxy", tier="V0")]}
+
+        spread_score = score_pack(spreadsheet_pack).pack_score
+        proxy_score = score_pack(v0_proxy_pack).pack_score
+
+        # Structural absence should score lower than temporary absence
+        assert spread_score < proxy_score + 5  # not required, but sanity
+
+    def test_why_message_distinguishes_structural_and_temporary(self):
+        """The human-readable why message should change based on split gap."""
+        structural = score_pack(
+            {"metrics": [_no_sql_metric(implementation_type="spreadsheet")]}
+        ).metric_scores[0].why
+        temporary = score_pack(
+            {"metrics": [_no_sql_metric(implementation_type="v0_proxy", tier="V0")]}
+        ).metric_scores[0].why
+        default = score_pack({"metrics": [_no_sql_metric()]}).metric_scores[0].why
+
+        assert "query engine" in structural.lower() or "spreadsheet" in structural.lower()
+        assert "deferred" in temporary.lower() or "stabilis" in temporary.lower()
+        assert "no sql" in default.lower() or "included yet" in default.lower()

@@ -9,24 +9,16 @@ from typing import Dict
 def _default_deductions() -> Dict[str, int]:
     """Return the default deduction values for metric scoring.
 
-    Values reflect relative risk contributions, not arbitrary constants.
-
-    V0 tier (-10): the largest deduction because tier instability is
-    additive to any other gap. A V0 metric may change definition mid-quarter,
-    making trend analysis unreliable regardless of whether SQL or tests exist.
-
-    Missing accountable/SQL/tests (-5 each): equal weight because each
-    represents one independent dimension of verifiability. Missing ownership
-    is a process gap; missing SQL is a reproducibility gap; missing tests is
-    a monitoring gap. All three matter for decision-readiness, none dominates
-    the others.
-
-    See SCORING_METHODOLOGY.md for full rationale and sensitivity analysis.
+    Larger deductions cover missing ownership, SQL, or tests. Smaller ones
+    cover metadata that affects interpretation. ``implementation_type`` can
+    refine the missing-SQL penalty into a temporary or structural version.
     """
     return {
         "v0_tier": 10,
         "missing_accountable": 5,
         "missing_sql": 5,
+        "missing_sql_temporary": 3,
+        "missing_sql_structural": 12,
         "missing_tests": 5,
         # Softer deductions: structural completeness, not safety-critical.
         # These penalise metrics that are harder to interpret or maintain,

@@ -198,7 +198,7 @@ def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
                 _warning(
                     "metric_sql_missing",
                     "No SQL defined. This is fine for early proxies; "
-                    "add SQL once the definition stabilizes.",
+                    "add SQL once the definition settles.",
                     f"/metrics/{idx}",
                     f"{mid}.sql",
                 )

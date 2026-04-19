@@ -34,15 +34,29 @@ class ScoreResult:
     metric_scores: List[MetricScore]
 
 
-def score_pack(pack: Mapping[str, Any]) -> ScoreResult:
-    """Score a metric pack and return both pack-level and metric-level results."""
+def score_pack(
+    pack: Mapping[str, Any],
+    config: Optional[ScoringConfig] = None,
+) -> ScoreResult:
+    """Score a metric pack and return both pack-level and metric-level results.
+
+    Parameters
+    ----------
+    pack
+        The metric pack to score.
+    config
+        Optional scoring configuration. Defaults to ``load_config()``.
+        Pass an explicit config when running robustness analyses or
+        calibration studies that need to vary deductions independently.
+    """
     metrics = pack.get("metrics", [])
     logger.debug(
         "Scoring pack with %d metric(s)",
         len(metrics) if isinstance(metrics, list) else 0,
     )
 
-    config = load_config()
+    if config is None:
+        config = load_config()
     metric_scores: List[MetricScore] = []
 
     for metric in metrics:
@@ -89,13 +103,32 @@ def _score_metric(metric: Dict[str, Any], config: ScoringConfig) -> MetricScore:
         base -= deductions["missing_accountable"]
         gaps.append("missing_accountable")
 
-    # SQL — without query logic the metric can't be reproduced or inspected
+    # SQL — without query logic the metric can't be reproduced or inspected.
+    # When the metric declares implementation_type, we refine the deduction:
+    # spreadsheet/notebook/dashboard/other signal structural unreviewability
+    # (larger deduction); v0_proxy signals the SQL is just not written yet
+    # (smaller deduction). Without implementation_type, the default
+    # missing_sql applies — this keeps older packs backward-compatible.
     sql = metric.get("sql") or {}
     has_value_sql = bool(sql.get("value"))
     has_ratio_sql = bool(sql.get("numerator")) and bool(sql.get("denominator"))
     if not (has_value_sql or has_ratio_sql):
-        base -= deductions["missing_sql"]
-        gaps.append("missing_sql")
+        impl_type = (metric.get("implementation_type") or "").strip().lower()
+        if impl_type in {"spreadsheet", "notebook", "dashboard", "other"}:
+            base -= deductions.get(
+                "missing_sql_structural",
+                deductions["missing_sql"],
+            )
+            gaps.append("missing_sql_structural")
+        elif impl_type == "v0_proxy":
+            base -= deductions.get(
+                "missing_sql_temporary",
+                deductions["missing_sql"],
+            )
+            gaps.append("missing_sql_temporary")
+        else:
+            base -= deductions["missing_sql"]
+            gaps.append("missing_sql")
 
     # Tests — without basic checks, silent breakage goes undetected
     if not metric.get("tests"):
@@ -143,7 +176,14 @@ def _build_why(score: float, gaps: List[str]) -> str:
         critical_parts.append("it's a V0 proxy")
     if "missing_accountable" in gaps:
         critical_parts.append("no accountable team is listed")
-    if "missing_sql" in gaps:
+    if "missing_sql_structural" in gaps:
+        critical_parts.append(
+            "the implementation is outside a query engine "
+            "(spreadsheet, notebook, or dashboard)"
+        )
+    elif "missing_sql_temporary" in gaps:
+        critical_parts.append("SQL is deferred while the proxy settles")
+    elif "missing_sql" in gaps:
         critical_parts.append("no SQL is included yet")
     if "missing_tests" in gaps:
         critical_parts.append("no tests are defined")

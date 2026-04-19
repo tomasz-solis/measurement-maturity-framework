@@ -1,6 +1,6 @@
 # Metric pack template
 # A pack is a collection of metrics plus an optional strategy tree.
-# Keep it generic — this should work across teams.
+# Keep it generic so other teams can reuse the shape.
 
 pack:
   id: example_pack_id

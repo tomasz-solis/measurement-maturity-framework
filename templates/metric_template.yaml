@@ -1,6 +1,6 @@
 # Metric definition template
-# Use this as a starting point for new metrics.
-# V0 metrics can be incomplete by design; add SQL, tests, and dependencies as they stabilize.
+# Start here when you need a new metric.
+# V0 metrics can be incomplete on purpose. Add SQL, tests, and dependencies as they settle.
 
 id: example_metric_id
 name: Example Metric Name
@@ -14,7 +14,7 @@ tier: V0
 # active | draft | deprecated
 status: active
 
-# Team or role accountable for correctness and follow-up
+# Team or role responsible for keeping this metric healthy
 # Both 'accountable' and 'responsible' are accepted
 responsible: Team / Squad / Role
 
@@ -22,7 +22,7 @@ responsible: Team / Squad / Role
 unit: count            # e.g. count | percent | currency | hours
 grain: account_day     # e.g. user_day, account_week, org_month
 
-# Optional but recommended once the metric is used for decisions
+# Optional, but worth filling in once people rely on the metric
 requires:
   # - warehouse.schema.source_table
   # - upstream_event_name
@@ -41,7 +41,7 @@ sql:
   #   SELECT COUNT(*) FROM ...
 
 # Data quality and sanity checks
-# Optional early; add once teams rely on the metric.
+# Optional early; add once the metric starts to matter in reviews or dashboards.
 tests:
   # - type: not_null
   #   field: value
