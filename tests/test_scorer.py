@@ -508,8 +508,12 @@ class TestSqlSplitByImplementationType:
         thresholds, but the point is the score is meaningfully lower
         than the temporary case.)
         """
-        spreadsheet_pack = {"metrics": [_no_sql_metric(implementation_type="spreadsheet")]}
-        v0_proxy_pack = {"metrics": [_no_sql_metric(implementation_type="v0_proxy", tier="V0")]}
+        spreadsheet_pack = {
+            "metrics": [_no_sql_metric(implementation_type="spreadsheet")]
+        }
+        v0_proxy_pack = {
+            "metrics": [_no_sql_metric(implementation_type="v0_proxy", tier="V0")]
+        }
 
         spread_score = score_pack(spreadsheet_pack).pack_score
         proxy_score = score_pack(v0_proxy_pack).pack_score
@@ -519,14 +523,22 @@ class TestSqlSplitByImplementationType:
 
     def test_why_message_distinguishes_structural_and_temporary(self):
         """The human-readable why message should change based on split gap."""
-        structural = score_pack(
-            {"metrics": [_no_sql_metric(implementation_type="spreadsheet")]}
-        ).metric_scores[0].why
-        temporary = score_pack(
-            {"metrics": [_no_sql_metric(implementation_type="v0_proxy", tier="V0")]}
-        ).metric_scores[0].why
+        structural = (
+            score_pack({"metrics": [_no_sql_metric(implementation_type="spreadsheet")]})
+            .metric_scores[0]
+            .why
+        )
+        temporary = (
+            score_pack(
+                {"metrics": [_no_sql_metric(implementation_type="v0_proxy", tier="V0")]}
+            )
+            .metric_scores[0]
+            .why
+        )
         default = score_pack({"metrics": [_no_sql_metric()]}).metric_scores[0].why
 
-        assert "query engine" in structural.lower() or "spreadsheet" in structural.lower()
+        assert (
+            "query engine" in structural.lower() or "spreadsheet" in structural.lower()
+        )
         assert "deferred" in temporary.lower() or "stabilis" in temporary.lower()
         assert "no sql" in default.lower() or "included yet" in default.lower()

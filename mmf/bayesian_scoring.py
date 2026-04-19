@@ -64,7 +64,6 @@ import numpy as np
 from .config import ScoringConfig, load_config
 from .scoring import ScoreResult, score_pack
 
-
 # Prior configuration. Separated from ScoringConfig deliberately — rule-based
 # weights and Bayesian priors evolve independently.
 SCALE = 20.0

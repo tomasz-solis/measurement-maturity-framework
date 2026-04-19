@@ -47,9 +47,7 @@ class TestSidebarExamples:
             "Spreadsheet pipeline example",
         ]
 
-    def test_render_sidebar_examples_renders_only_example_downloads(
-        self, monkeypatch
-    ):
+    def test_render_sidebar_examples_renders_only_example_downloads(self, monkeypatch):
         """The sidebar should render one download button per example pack."""
         examples = [
             sidebar.SidebarExample(

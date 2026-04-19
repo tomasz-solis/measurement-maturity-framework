@@ -574,9 +574,7 @@ class TestSqlSplitSuggestions:
         )
         result = deterministic_suggestions(pack, score_result)
         actions = result.get("m", [])
-        critical_actions = [
-            a for a in actions if a.get("severity") == "critical"
-        ]
+        critical_actions = [a for a in actions if a.get("severity") == "critical"]
         assert critical_actions, "expected at least one critical action"
         assert any(
             "query engine" in a.get("message", "").lower()
@@ -600,8 +598,12 @@ class TestSqlSplitSuggestions:
         )
         result = deterministic_suggestions(pack, score_result)
         actions = result.get("m", [])
-        sql_actions = [a for a in actions if "stabilis" in a.get("message", "").lower()
-                       or "deferred" in a.get("message", "").lower()]
+        sql_actions = [
+            a
+            for a in actions
+            if "stabilis" in a.get("message", "").lower()
+            or "deferred" in a.get("message", "").lower()
+        ]
         assert sql_actions
         # Should be lower priority than a structural gap
         assert sql_actions[0].get("priority") in ("2", "3")
