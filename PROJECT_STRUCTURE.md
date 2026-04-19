@@ -1,136 +1,55 @@
 # Project Structure
 
-## Core Files
+This repo is small enough that the important parts fit on one page.
 
-```
-measurement-maturity-framework/
-├── app.py                          # Main Streamlit application
-├── requirements.txt                # Runtime dependencies
-├── requirements-dev.txt            # Formatters, linters, and test tools
-├── pyproject.toml                  # Tooling and packaging metadata
-├── pytest.ini                      # Test configuration
-├── README.md                       # Main documentation
-├── SCORING_METHODOLOGY.md          # Scoring rationale and examples
-└── .gitignore                      # Git ignore rules
-```
+## Top level
 
-## Source Code
+- `app.py`: Streamlit entry point.
+- `mmf/`: package code for validation, scoring, suggestions, and UI helpers.
+- `tests/`: unit and integration tests.
+- `templates/`: starter YAML files for new metrics and packs.
+- `examples/`: reusable sample packs for the app sidebar and docs.
+- `case_studies/`: reconstructed real-world failures used to show MMF's scope.
+- `analysis/`: notebooks and scripts for calibration and robustness work.
+- `README.md`: product-level overview.
+- `SCORING_METHODOLOGY.md`: scoring rules and rationale.
 
-```
-mmf/                                # Core framework library
-├── __init__.py
-├── config.py                       # Scoring configuration
-├── validator.py                    # YAML validation logic
-├── scoring.py                      # Maturity scoring
-├── suggestions.py                  # Improvement suggestions
-├── mermaid.py                      # Diagram generation
-├── streamlit_mermaid.py            # Streamlit integration
-├── ui.py                           # Stable UI import surface
-├── components.py                   # Streamlit result components
-├── layout.py                       # HTML/CSS layout helpers
-├── sidebar.py                      # Sidebar downloads and helpers
-└── theme.css                       # App theme styles
-```
+## Package layout
+
+- `mmf/validator.py`: schema and structural checks.
+- `mmf/scoring.py`: metric-level and pack-level scoring.
+- `mmf/suggestions.py`: deterministic next-step suggestions.
+- `mmf/mermaid.py`: strategy graph generation.
+- `mmf/layout.py`, `mmf/components.py`, `mmf/sidebar.py`: Streamlit rendering helpers.
+- `mmf/config.py`: default deductions, thresholds, and config validation.
 
 ## Tests
 
-```
-tests/                              # Test suite
-├── __init__.py
-├── test_validator.py               # Validator tests
-├── test_scorer.py                  # Scorer tests
-├── test_suggestions.py             # Suggestion tests
-├── test_integration.py             # End-to-end pipeline tests
-├── test_mermaid.py                 # Strategy tree tests
-└── fixtures/                       # Test data
-    ├── minimal_pack.yaml
-    ├── empty_pack.yaml
-    └── invalid_pack.yaml
-```
+- `tests/test_validator.py`: validator behavior.
+- `tests/test_scorer.py`: scoring contract and edge cases.
+- `tests/test_suggestions.py`: deterministic suggestion text and priorities.
+- `tests/test_integration.py`: end-to-end pack flow.
+- `tests/test_mermaid.py`: strategy graph output.
+- `tests/test_bayesian_scoring.py`: robustness layer checks.
 
-## Templates and Examples
+Note: the repo now uses synthetic fixtures under `tests/fixtures/synthetic_packs/` for much of the scoring analysis. If you update docs or tests, check that the fixture paths still match reality.
 
-```
-templates/                          # Starter templates
-├── metric_template.yaml            # Single metric template
-└── metric_pack_template.yaml       # Full pack template
+## Quick commands
 
-examples/                           # Example metric packs
-├── README.md                       # Examples overview
-└── generic_product_metric_pack.yaml # Generic sample pack
-```
-
-## CI/CD
-
-```
-.github/                            # GitHub Actions workflows
-└── workflows/
-    ├── test.yml                    # Run tests on push/PR
-    └── lint.yml                    # Code quality checks
-```
-
-**What to commit:**
-- Commit `.github/` - These are your CI/CD automation workflows
-- They run automatically on GitHub when you push code
-- test.yml: Runs pytest on Python 3.10, 3.11, 3.12
-- lint.yml: Runs black, flake8, mypy for code quality
-
-## Ignored Files
-
-These are in `.gitignore` and should NOT be committed:
-- `venv/` - Virtual environment (local only)
-- `__pycache__/` - Python bytecode cache
-- `.DS_Store` - macOS metadata
-- `.env` - API keys and secrets
-- `scratch/`, `tmp/` - Temporary files
-
----
-
-## Quick Reference
-
-**Install dependencies:**
 ```bash
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
-```
-
-**Run the app:**
-```bash
 streamlit run app.py
+pytest
+black app.py mmf/ tests/
+flake8 app.py mmf/ tests/
+mypy app.py mmf/
 ```
 
-**Run tests:**
-```bash
-pytest                              # All tests
-pytest tests/test_validator.py     # Specific test file
-pytest -v                           # Verbose output
-```
+## Where to make changes
 
-**Code quality:**
-```bash
-black app.py mmf/ tests/            # Format code
-flake8 app.py mmf/ tests/           # Lint code
-mypy app.py mmf/                    # Type check
-```
-
----
-
-## What Goes Where
-
-**Adding a new metric pack example:**
-- Add to `examples/` directory
-- The app prefers `generic_product_metric_pack.yaml` for the sidebar download
-- If that file is missing, it falls back to the first `*.yaml` file it finds
-
-**Adding new validation logic:**
-- Edit `mmf/validator.py`
-- Add tests to `tests/test_validator.py`
-
-**Changing scoring rules:**
-- Edit `mmf/config.py` (deductions, thresholds)
-- Update `SCORING_METHODOLOGY.md` with rationale
-- Add tests to `tests/test_scorer.py`
-
-**Private examples:**
-- Keep reusable examples at the top level of `examples/`
-- If you need local company-specific packs, place them under a gitignored path and keep them out of the canonical docs
+- New validation rule: update `mmf/validator.py` and add tests in `tests/test_validator.py`.
+- New scoring rule: update `mmf/config.py`, `mmf/scoring.py`, and the relevant tests.
+- New suggestion behavior: update `mmf/suggestions.py` and its tests.
+- New example pack: add it under `examples/`. The sidebar prefers `generic_product_metric_pack.yaml`.
+- New case study or analysis artifact: keep it under `case_studies/` or `analysis/`, not mixed into the app code.

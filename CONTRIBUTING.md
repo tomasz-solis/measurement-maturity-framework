@@ -1,68 +1,30 @@
 # Contributing
 
-## What to Commit
+Keep changes small, tested, and easy to read.
 
-**Always commit:**
-- Source code (`mmf/`, `tests/`, `app.py`)
-- Configuration (`.github/`, `pytest.ini`, `requirements*.txt`)
-- Documentation (`README.md`, `docs/`, `PROJECT_STRUCTURE.md`)
-- Templates (`templates/`)
-- Examples (`examples/`)
+## Local setup
 
-**Never commit:**
-- Virtual environments (`venv/`)
-- Python cache (`__pycache__/`, `*.pyc`)
-- Secrets (`.env`)
-- OS files (`.DS_Store`)
-- Temporary files (`scratch/`, `tmp/`)
-
-See [.gitignore](.gitignore) for the complete list.
-
-## Development Workflow
-
-**1. Set up environment:**
 ```bash
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
-**2. Make changes:**
-- Edit source files
-- Add tests for new features
-- Update documentation
+## Before you call work done
 
-**3. Run quality checks:**
 ```bash
-# Format code
-black mmf/ tests/ app.py
-
-# Check style
-flake8 mmf/ tests/ app.py
-
-# Type check
-mypy mmf/
-
-# Run tests
-pytest -v
+black app.py mmf/ tests/
+flake8 app.py mmf/ tests/
+mypy app.py mmf/
+pytest
 ```
 
-**4. Commit:**
-```bash
-git add <files>
-git commit -m "description"
-git push
-```
+## A few repo-specific notes
 
-## CI/CD
+- If you change scoring rules, update both the tests and `SCORING_METHODOLOGY.md`.
+- If you change templates or examples, make sure the app sidebar still points to the right files.
+- Keep reusable examples in `examples/`. Put one-off analysis material in `analysis/` or `case_studies/`.
+- Check `.gitignore` before adding new generated files. This repo already tends to collect notebook output and local cache files.
 
-The `.github/workflows/` directory contains GitHub Actions that run automatically:
-
-- **test.yml** - Runs pytest on Python 3.10, 3.11, 3.12 (Ubuntu + macOS)
-- **lint.yml** - Runs black, flake8, mypy for code quality
-
-These run on every push and pull request. Fix any failures before merging.
-
-## Project Structure
-
-See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for detailed explanation of directories and files.
+For a quick map of the repo, see [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md).

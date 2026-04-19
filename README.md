@@ -18,13 +18,27 @@ The point is simple: many metric problems are structural before they are analyti
 
 Most metric problems are structural before they are analytical. A team debating DAU methodology is often missing something more basic: nobody owns the metric, the SQL isn't written down anywhere, and the first time anyone notices the number is wrong is when it surfaces in a board deck.
 
-This tool surfaces those gaps early — while fixing them is cheap. It doesn't generate metrics, choose KPIs, or validate business logic. It checks whether a metric definition has the structural properties that make it safe to rely on.
+This tool surfaces those gaps early, while they are still cheap to fix. It does not generate metrics, choose KPIs, or validate business logic. It checks whether a metric definition has the structural properties that make it safe to rely on.
+
+---
+
+## Evidence
+
+Three side studies check whether the framework holds up beyond the unit tests.
+
+**Bayesian robustness analysis** ([`analysis/bayesian_robustness.ipynb`](analysis/bayesian_robustness.ipynb)). The deduction weights in `mmf/config.py` are hand-set, not estimated from data. The notebook perturbs those weights within a plausible range and checks whether the pack scores move much. Across 27 synthetic packs spanning the realistic quality space, the Spearman rank correlation between rule-based scores and Bayesian posterior means is 0.9992, with maximum absolute score divergence of 0.43 points. In practice, the ranking barely moves under reasonable weight uncertainty.
+
+**Weight calibration attempt** ([`analysis/weight_calibration.ipynb`](analysis/weight_calibration.ipynb)). The project author ranked the same 27 synthetic packs twice, a few minutes apart, and got test-retest reliability of 0.97. Claude ranked the same packs independently. A ridge regression then fit weights to match the average ranking. MMF's default weights agree with that small consensus at 0.95; fitted weights reach 0.99. The main signal is that `missing_sql` likely deserves more weight, `missing_owner` a bit more, and `tier_v0` a bit less. Because the study is still small and methodologically narrow, the magnitude changes have not shipped as defaults.
+
+**Retrospective case studies** ([`case_studies/`](case_studies/README.md)). Three public metric failures (Netflix's 2019 "view" redefinition, Facebook's 2014-2016 video watch time inflation, and Uber's MAPC at IPO) are reconstructed as YAML packs and scored. Most of them are misses, and that is useful. They show the boundary of the framework: MMF audits structural gaps, not logic bugs or executive framing choices. The case-study work also helped motivate the current `missing_sql` split between `missing_sql_temporary` and `missing_sql_structural`.
+
+All three pieces are reproducible: the notebooks regenerate via `python analysis/build_notebook.py` and `python analysis/build_calibration_notebook.py`, and each case study runs from its own YAML through the standard `score_pack()` path.
 
 ---
 
 ## Try The UI
 
-> **Tip:** Deploy to [Streamlit Cloud](https://streamlit.io/cloud) in under 5 minutes for a live link — the app is a single `streamlit run app.py` away.
+> **Tip:** If you want a shareable link, this app is simple to deploy on [Streamlit Cloud](https://streamlit.io/cloud).
 
 If you want a quick feel for the app:
 - run `streamlit run app.py`
@@ -141,11 +155,15 @@ Every metric starts at `100`, then loses points for specific structural gaps:
 |---|---:|
 | `tier: V0` | -10 |
 | missing `accountable` / `responsible` | -5 |
-| missing SQL | -5 |
+| missing SQL (default) | -5 |
+| missing SQL with `implementation_type: v0_proxy` | -3 |
+| missing SQL with `implementation_type: spreadsheet`/`notebook`/`dashboard`/`other` | -12 |
 | missing tests | -5 |
 | missing `description` | -3 |
 | missing `grain` | -2 |
 | missing `unit` | -2 |
+
+The three `missing SQL` rows are mutually exclusive. A metric with missing SQL fires exactly one of them, selected by the optional `implementation_type` field. The split exists because "SQL will come soon for this V0 proxy" and "this metric is implemented in a spreadsheet" are different problems that happen to look the same at the surface. See [SCORING_METHODOLOGY.md](SCORING_METHODOLOGY.md) for the full rationale.
 
 The score is clamped to `0-100`.
 
@@ -226,7 +244,7 @@ streamlit run app.py
 
 ### 3. Open a pack
 
-- Download the generic example pack from the sidebar
+- Download one of the example packs from the sidebar
 - Or use the templates in `templates/`
 - Or upload your own YAML
 
