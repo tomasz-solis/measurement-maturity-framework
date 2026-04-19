@@ -1,0 +1,23 @@
+{
+  "fitted_scaled": {
+    "v0": 6.31,
+    "owner": 7.53,
+    "sql": 10.0,
+    "tests": 3.75,
+    "description": 2.01,
+    "grain": 3.97,
+    "unit": 2.74
+  },
+  "mmf_baseline": {
+    "v0": 10,
+    "owner": 5,
+    "sql": 5,
+    "tests": 5,
+    "description": 3,
+    "grain": 2,
+    "unit": 2
+  },
+  "fit_method": "Ridge regression (alpha=1, positive=True) on consensus rank of user+Claude, features are gap counts per metric",
+  "consensus_definition": "mean(user_rank, claude_rank)",
+  "n_packs": 27
+}

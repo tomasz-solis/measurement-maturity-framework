@@ -1,0 +1,42 @@
+{
+  "test_retest": {
+    "spearman_rho": 0.9737484737484736,
+    "kendall_tau": 0.891737891737892,
+    "interpretation": "single rater self-consistency across two attempts"
+  },
+  "pairwise_agreement": {
+    "user_consensus_vs_claude": {
+      "spearman": 0.9824401702644668
+    },
+    "user_consensus_vs_mmf": {
+      "spearman": 0.9469986363713301
+    },
+    "claude_vs_mmf": {
+      "spearman": 0.9523664566105228
+    }
+  },
+  "fitted_weights": {
+    "v0": 5.35,
+    "owner": 7.43,
+    "sql": 10.0,
+    "tests": 3.89,
+    "description": 2.98,
+    "grain": 3.88,
+    "unit": 2.89
+  },
+  "mmf_baseline_weights": {
+    "v0": 10,
+    "owner": 5,
+    "sql": 5,
+    "tests": 5,
+    "description": 3,
+    "grain": 2,
+    "unit": 2
+  },
+  "method": "Ridge regression (alpha=1.0, positive=True) on consensus rank of (user_v1, user_v2, Claude). Features are gap counts per metric.",
+  "n_packs": 27,
+  "predictive_spearman": {
+    "mmf": 0.952817235111505,
+    "fitted": 0.9926717557251908
+  }
+}
