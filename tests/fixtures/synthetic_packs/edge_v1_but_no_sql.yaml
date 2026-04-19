@@ -1,0 +1,56 @@
+pack:
+  id: edge_v1_but_no_sql
+  name: "Synthetic \u2014 edge_v1_but_no_sql"
+  version: 0.1.0
+  schema_version: '1.0'
+metrics:
+- id: edge_v1_but_no_sql_m1
+  name: Metric 1 (edge_v1_but_no_sql)
+  status: active
+  tier: V1
+  accountable: Growth Team
+  tests:
+  - type: not_null
+  description: Synthetic metric 1 for calibration.
+  grain: account_day
+  unit: percent
+- id: edge_v1_but_no_sql_m2
+  name: Metric 2 (edge_v1_but_no_sql)
+  status: active
+  tier: V1
+  accountable: Platform Team
+  tests:
+  - type: not_null
+  description: Synthetic metric 2 for calibration.
+  grain: user_week
+  unit: count
+- id: edge_v1_but_no_sql_m3
+  name: Metric 3 (edge_v1_but_no_sql)
+  status: active
+  tier: V1
+  accountable: Growth Team
+  tests:
+  - type: not_null
+  description: Synthetic metric 3 for calibration.
+  grain: event
+  unit: percent
+- id: edge_v1_but_no_sql_m4
+  name: Metric 4 (edge_v1_but_no_sql)
+  status: active
+  tier: V1
+  accountable: Growth Team
+  tests:
+  - type: not_null
+  description: Synthetic metric 4 for calibration.
+  grain: user_week
+  unit: percent
+- id: edge_v1_but_no_sql_m5
+  name: Metric 5 (edge_v1_but_no_sql)
+  status: active
+  tier: V1
+  accountable: Product Team
+  tests:
+  - type: not_null
+  description: Synthetic metric 5 for calibration.
+  grain: event
+  unit: ratio

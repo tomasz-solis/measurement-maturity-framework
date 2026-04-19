@@ -1,0 +1,26 @@
+pack:
+  id: edge_everything_missing_except_ids
+  name: "Synthetic \u2014 edge_everything_missing_except_ids"
+  version: 0.1.0
+  schema_version: '1.0'
+metrics:
+- id: edge_everything_missing_except_ids_m1
+  name: Metric 1 (edge_everything_missing_except_ids)
+  status: active
+  tier: V1
+- id: edge_everything_missing_except_ids_m2
+  name: Metric 2 (edge_everything_missing_except_ids)
+  status: active
+  tier: V1
+- id: edge_everything_missing_except_ids_m3
+  name: Metric 3 (edge_everything_missing_except_ids)
+  status: active
+  tier: V1
+- id: edge_everything_missing_except_ids_m4
+  name: Metric 4 (edge_everything_missing_except_ids)
+  status: active
+  tier: V1
+- id: edge_everything_missing_except_ids_m5
+  name: Metric 5 (edge_everything_missing_except_ids)
+  status: active
+  tier: V1

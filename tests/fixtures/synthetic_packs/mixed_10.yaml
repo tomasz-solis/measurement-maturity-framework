@@ -1,0 +1,76 @@
+pack:
+  id: mixed_10
+  name: "Synthetic \u2014 mixed_10"
+  version: 0.1.0
+  schema_version: '1.0'
+metrics:
+- id: mixed_10_m1
+  name: Metric 1 (mixed_10)
+  status: active
+  tier: V1
+  accountable: Product Team
+  sql:
+    value: SELECT COUNT(*) FROM events_1
+  description: Synthetic metric 1 for calibration.
+  grain: event
+- id: mixed_10_m2
+  name: Metric 2 (mixed_10)
+  status: active
+  tier: V1
+  sql:
+    value: SELECT COUNT(*) FROM events_2
+  tests:
+  - type: not_null
+  grain: account_day
+- id: mixed_10_m3
+  name: Metric 3 (mixed_10)
+  status: active
+  tier: V1
+  sql:
+    value: SELECT COUNT(*) FROM events_3
+  tests:
+  - type: not_null
+  description: Synthetic metric 3 for calibration.
+- id: mixed_10_m4
+  name: Metric 4 (mixed_10)
+  status: active
+  tier: V0
+  description: Synthetic metric 4 for calibration.
+  grain: account_day
+  unit: count
+- id: mixed_10_m5
+  name: Metric 5 (mixed_10)
+  status: active
+  tier: V0
+  tests:
+  - type: not_null
+  grain: event
+  unit: ratio
+- id: mixed_10_m6
+  name: Metric 6 (mixed_10)
+  status: active
+  tier: V1
+  accountable: Growth Team
+  sql:
+    value: SELECT COUNT(*) FROM events_6
+  description: Synthetic metric 6 for calibration.
+  grain: account_day
+  unit: ratio
+- id: mixed_10_m7
+  name: Metric 7 (mixed_10)
+  status: active
+  tier: V1
+  sql:
+    value: SELECT COUNT(*) FROM events_7
+  description: Synthetic metric 7 for calibration.
+  grain: account_day
+- id: mixed_10_m8
+  name: Metric 8 (mixed_10)
+  status: active
+  tier: V0
+  accountable: Growth Team
+  sql:
+    value: SELECT COUNT(*) FROM events_8
+  description: Synthetic metric 8 for calibration.
+  grain: account_day
+  unit: count

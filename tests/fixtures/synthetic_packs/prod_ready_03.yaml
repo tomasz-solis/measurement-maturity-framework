@@ -1,0 +1,54 @@
+pack:
+  id: prod_ready_03
+  name: "Synthetic \u2014 prod_ready_03"
+  version: 0.1.0
+  schema_version: '1.0'
+metrics:
+- id: prod_ready_03_m1
+  name: Metric 1 (prod_ready_03)
+  status: active
+  tier: V1
+  accountable: Growth Team
+  sql:
+    value: SELECT COUNT(*) FROM events_1
+  tests:
+  - type: not_null
+  description: Synthetic metric 1 for calibration.
+  grain: account_day
+  unit: ratio
+- id: prod_ready_03_m2
+  name: Metric 2 (prod_ready_03)
+  status: active
+  tier: V1
+  accountable: Platform Team
+  sql:
+    value: SELECT COUNT(*) FROM events_2
+  tests:
+  - type: not_null
+  description: Synthetic metric 2 for calibration.
+  grain: account_day
+  unit: percent
+- id: prod_ready_03_m3
+  name: Metric 3 (prod_ready_03)
+  status: active
+  tier: V1
+  accountable: Growth Team
+  sql:
+    value: SELECT COUNT(*) FROM events_3
+  tests:
+  - type: not_null
+  description: Synthetic metric 3 for calibration.
+  grain: user_week
+  unit: percent
+- id: prod_ready_03_m4
+  name: Metric 4 (prod_ready_03)
+  status: active
+  tier: V0
+  accountable: Growth Team
+  sql:
+    value: SELECT COUNT(*) FROM events_4
+  tests:
+  - type: not_null
+  description: Synthetic metric 4 for calibration.
+  grain: event
+  unit: ratio

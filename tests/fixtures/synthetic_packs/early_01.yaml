@@ -1,0 +1,34 @@
+pack:
+  id: early_01
+  name: "Synthetic \u2014 early_01"
+  version: 0.1.0
+  schema_version: '1.0'
+metrics:
+- id: early_01_m1
+  name: Metric 1 (early_01)
+  status: active
+  tier: V0
+  accountable: Growth Team
+  grain: user_week
+  unit: percent
+- id: early_01_m2
+  name: Metric 2 (early_01)
+  status: active
+  tier: V0
+  accountable: Platform Team
+  sql:
+    value: SELECT COUNT(*) FROM events_2
+  unit: ratio
+- id: early_01_m3
+  name: Metric 3 (early_01)
+  status: active
+  tier: V0
+  accountable: Platform Team
+  grain: account_day
+  unit: percent
+- id: early_01_m4
+  name: Metric 4 (early_01)
+  status: active
+  tier: V0
+  description: Synthetic metric 4 for calibration.
+  unit: percent

@@ -1,0 +1,55 @@
+pack:
+  id: mixed_09
+  name: "Synthetic \u2014 mixed_09"
+  version: 0.1.0
+  schema_version: '1.0'
+metrics:
+- id: mixed_09_m1
+  name: Metric 1 (mixed_09)
+  status: active
+  tier: V0
+  accountable: Growth Team
+  sql:
+    value: SELECT COUNT(*) FROM events_1
+- id: mixed_09_m2
+  name: Metric 2 (mixed_09)
+  status: active
+  tier: V1
+  accountable: Platform Team
+  sql:
+    value: SELECT COUNT(*) FROM events_2
+  description: Synthetic metric 2 for calibration.
+  unit: ratio
+- id: mixed_09_m3
+  name: Metric 3 (mixed_09)
+  status: active
+  tier: V1
+  tests:
+  - type: not_null
+  description: Synthetic metric 3 for calibration.
+  unit: count
+- id: mixed_09_m4
+  name: Metric 4 (mixed_09)
+  status: active
+  tier: V0
+  accountable: Platform Team
+  sql:
+    value: SELECT COUNT(*) FROM events_4
+- id: mixed_09_m5
+  name: Metric 5 (mixed_09)
+  status: active
+  tier: V0
+  sql:
+    value: SELECT COUNT(*) FROM events_5
+  grain: account_day
+  unit: count
+- id: mixed_09_m6
+  name: Metric 6 (mixed_09)
+  status: active
+  tier: V0
+  accountable: Product Team
+  tests:
+  - type: not_null
+  description: Synthetic metric 6 for calibration.
+  grain: user_week
+  unit: ratio

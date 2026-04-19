@@ -1,0 +1,56 @@
+pack:
+  id: edge_v1_but_no_tests
+  name: "Synthetic \u2014 edge_v1_but_no_tests"
+  version: 0.1.0
+  schema_version: '1.0'
+metrics:
+- id: edge_v1_but_no_tests_m1
+  name: Metric 1 (edge_v1_but_no_tests)
+  status: active
+  tier: V1
+  accountable: Product Team
+  sql:
+    value: SELECT COUNT(*) FROM events_1
+  description: Synthetic metric 1 for calibration.
+  grain: account_day
+  unit: ratio
+- id: edge_v1_but_no_tests_m2
+  name: Metric 2 (edge_v1_but_no_tests)
+  status: active
+  tier: V1
+  accountable: Product Team
+  sql:
+    value: SELECT COUNT(*) FROM events_2
+  description: Synthetic metric 2 for calibration.
+  grain: event
+  unit: count
+- id: edge_v1_but_no_tests_m3
+  name: Metric 3 (edge_v1_but_no_tests)
+  status: active
+  tier: V1
+  accountable: Platform Team
+  sql:
+    value: SELECT COUNT(*) FROM events_3
+  description: Synthetic metric 3 for calibration.
+  grain: event
+  unit: ratio
+- id: edge_v1_but_no_tests_m4
+  name: Metric 4 (edge_v1_but_no_tests)
+  status: active
+  tier: V1
+  accountable: Platform Team
+  sql:
+    value: SELECT COUNT(*) FROM events_4
+  description: Synthetic metric 4 for calibration.
+  grain: account_day
+  unit: percent
+- id: edge_v1_but_no_tests_m5
+  name: Metric 5 (edge_v1_but_no_tests)
+  status: active
+  tier: V1
+  accountable: Platform Team
+  sql:
+    value: SELECT COUNT(*) FROM events_5
+  description: Synthetic metric 5 for calibration.
+  grain: account_day
+  unit: count

@@ -1,0 +1,18 @@
+pack:
+  id: edge_single_perfect
+  name: "Synthetic \u2014 edge_single_perfect"
+  version: 0.1.0
+  schema_version: '1.0'
+metrics:
+- id: edge_single_perfect_m1
+  name: Metric 1 (edge_single_perfect)
+  status: active
+  tier: V1
+  accountable: Growth Team
+  sql:
+    value: SELECT COUNT(*) FROM events_1
+  tests:
+  - type: not_null
+  description: Synthetic metric 1 for calibration.
+  grain: account_day
+  unit: percent

@@ -1,0 +1,10 @@
+pack:
+  id: edge_single_worst
+  name: "Synthetic \u2014 edge_single_worst"
+  version: 0.1.0
+  schema_version: '1.0'
+metrics:
+- id: edge_single_worst_m1
+  name: Metric 1 (edge_single_worst)
+  status: active
+  tier: V0

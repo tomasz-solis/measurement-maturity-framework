@@ -1,0 +1,66 @@
+pack:
+  id: edge_all_v0_but_documented
+  name: "Synthetic \u2014 edge_all_v0_but_documented"
+  version: 0.1.0
+  schema_version: '1.0'
+metrics:
+- id: edge_all_v0_but_documented_m1
+  name: Metric 1 (edge_all_v0_but_documented)
+  status: active
+  tier: V0
+  accountable: Growth Team
+  sql:
+    value: SELECT COUNT(*) FROM events_1
+  tests:
+  - type: not_null
+  description: Synthetic metric 1 for calibration.
+  grain: event
+  unit: count
+- id: edge_all_v0_but_documented_m2
+  name: Metric 2 (edge_all_v0_but_documented)
+  status: active
+  tier: V0
+  accountable: Product Team
+  sql:
+    value: SELECT COUNT(*) FROM events_2
+  tests:
+  - type: not_null
+  description: Synthetic metric 2 for calibration.
+  grain: account_day
+  unit: count
+- id: edge_all_v0_but_documented_m3
+  name: Metric 3 (edge_all_v0_but_documented)
+  status: active
+  tier: V0
+  accountable: Growth Team
+  sql:
+    value: SELECT COUNT(*) FROM events_3
+  tests:
+  - type: not_null
+  description: Synthetic metric 3 for calibration.
+  grain: event
+  unit: percent
+- id: edge_all_v0_but_documented_m4
+  name: Metric 4 (edge_all_v0_but_documented)
+  status: active
+  tier: V0
+  accountable: Growth Team
+  sql:
+    value: SELECT COUNT(*) FROM events_4
+  tests:
+  - type: not_null
+  description: Synthetic metric 4 for calibration.
+  grain: user_week
+  unit: ratio
+- id: edge_all_v0_but_documented_m5
+  name: Metric 5 (edge_all_v0_but_documented)
+  status: active
+  tier: V0
+  accountable: Platform Team
+  sql:
+    value: SELECT COUNT(*) FROM events_5
+  tests:
+  - type: not_null
+  description: Synthetic metric 5 for calibration.
+  grain: user_week
+  unit: ratio

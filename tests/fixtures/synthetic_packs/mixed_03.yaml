@@ -1,0 +1,87 @@
+pack:
+  id: mixed_03
+  name: "Synthetic \u2014 mixed_03"
+  version: 0.1.0
+  schema_version: '1.0'
+metrics:
+- id: mixed_03_m1
+  name: Metric 1 (mixed_03)
+  status: active
+  tier: V0
+  accountable: Growth Team
+  sql:
+    value: SELECT COUNT(*) FROM events_1
+  tests:
+  - type: not_null
+  description: Synthetic metric 1 for calibration.
+  grain: event
+  unit: percent
+- id: mixed_03_m2
+  name: Metric 2 (mixed_03)
+  status: active
+  tier: V1
+  accountable: Platform Team
+  tests:
+  - type: not_null
+  description: Synthetic metric 2 for calibration.
+  grain: account_day
+- id: mixed_03_m3
+  name: Metric 3 (mixed_03)
+  status: active
+  tier: V0
+  accountable: Product Team
+  sql:
+    value: SELECT COUNT(*) FROM events_3
+  description: Synthetic metric 3 for calibration.
+  grain: event
+  unit: ratio
+- id: mixed_03_m4
+  name: Metric 4 (mixed_03)
+  status: active
+  tier: V1
+  accountable: Platform Team
+  tests:
+  - type: not_null
+  grain: event
+  unit: count
+- id: mixed_03_m5
+  name: Metric 5 (mixed_03)
+  status: active
+  tier: V1
+  accountable: Product Team
+  sql:
+    value: SELECT COUNT(*) FROM events_5
+  tests:
+  - type: not_null
+  description: Synthetic metric 5 for calibration.
+  grain: user_week
+  unit: ratio
+- id: mixed_03_m6
+  name: Metric 6 (mixed_03)
+  status: active
+  tier: V1
+  accountable: Growth Team
+  tests:
+  - type: not_null
+  description: Synthetic metric 6 for calibration.
+  grain: user_week
+- id: mixed_03_m7
+  name: Metric 7 (mixed_03)
+  status: active
+  tier: V1
+  accountable: Platform Team
+  tests:
+  - type: not_null
+  description: Synthetic metric 7 for calibration.
+  grain: user_week
+  unit: percent
+- id: mixed_03_m8
+  name: Metric 8 (mixed_03)
+  status: active
+  tier: V0
+  accountable: Growth Team
+  tests:
+  - type: not_null
+  description: Synthetic metric 8 for calibration.
+  grain: event
+  unit: ratio

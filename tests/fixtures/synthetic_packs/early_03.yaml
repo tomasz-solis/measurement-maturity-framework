@@ -1,0 +1,26 @@
+pack:
+  id: early_03
+  name: "Synthetic \u2014 early_03"
+  version: 0.1.0
+  schema_version: '1.0'
+metrics:
+- id: early_03_m1
+  name: Metric 1 (early_03)
+  status: active
+  tier: V0
+  accountable: Product Team
+  description: Synthetic metric 1 for calibration.
+  grain: account_day
+  unit: percent
+- id: early_03_m2
+  name: Metric 2 (early_03)
+  status: active
+  tier: V0
+  accountable: Platform Team
+  grain: account_day
+  unit: ratio
+- id: early_03_m3
+  name: Metric 3 (early_03)
+  status: active
+  tier: V0
+  unit: ratio

@@ -1,0 +1,29 @@
+pack:
+  id: early_05
+  name: "Synthetic \u2014 early_05"
+  version: 0.1.0
+  schema_version: '1.0'
+metrics:
+- id: early_05_m1
+  name: Metric 1 (early_05)
+  status: active
+  tier: V0
+- id: early_05_m2
+  name: Metric 2 (early_05)
+  status: active
+  tier: V0
+  grain: event
+- id: early_05_m3
+  name: Metric 3 (early_05)
+  status: active
+  tier: V0
+  grain: event
+  unit: percent
+- id: early_05_m4
+  name: Metric 4 (early_05)
+  status: active
+  tier: V0
+- id: early_05_m5
+  name: Metric 5 (early_05)
+  status: active
+  tier: V0
