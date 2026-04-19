@@ -1,0 +1,118 @@
+# Spreadsheet Pipeline - Metric Pack
+#
+# Example pack for a team that built their reporting in spreadsheets before
+# moving to a proper data warehouse. Some metrics have been migrated to SQL;
+# others are still running out of Excel or Google Sheets pipelines.
+#
+# The pack illustrates the missing_sql_structural deduction: a metric
+# implemented in a spreadsheet scores lower than one with temporarily-missing
+# SQL, because a spreadsheet pipeline is irreducibly hard to review,
+# reproduce, or hand off.
+
+pack:
+  id: spreadsheet_pipeline_pack
+  name: Spreadsheet Pipeline Pack
+  version: 0.1.0
+  schema_version: "1.0"
+  description: >
+    A pack mid-migration from spreadsheet reporting to a SQL-backed warehouse.
+    Two metrics are already on SQL; two are still running out of spreadsheet
+    pipelines. The score gap between them shows why the migration matters.
+
+metrics:
+  # --- Revenue (migrated to SQL) ---
+  - id: monthly_recurring_revenue
+    name: Monthly Recurring Revenue
+    description: >
+      Sum of normalised monthly contract value across all active paying
+      accounts. Excludes one-off professional services fees and credits.
+      Revenue recognition follows the accounting team's documented policy.
+    tier: V1
+    status: active
+    accountable: Finance
+    unit: currency_usd
+    grain: account_month
+    requires:
+      - warehouse.billing.subscriptions
+      - warehouse.billing.adjustments
+    sql:
+      value: |
+        SELECT
+          DATE_TRUNC('month', period_start) AS month,
+          account_id,
+          SUM(normalised_monthly_value) AS mrr
+        FROM warehouse.billing.subscriptions
+        LEFT JOIN warehouse.billing.adjustments USING (subscription_id)
+        WHERE status = 'active'
+          AND period_start <= CURRENT_DATE
+          AND (period_end IS NULL OR period_end > CURRENT_DATE)
+        GROUP BY 1, 2
+    tests:
+      - type: not_null
+      - type: range
+        field: mrr
+        min: 0
+      - type: freshness
+        max_age_hours: 24
+
+  # --- Churn (migrated to SQL) ---
+  - id: monthly_churn_rate
+    name: Monthly Churn Rate
+    description: >
+      Percentage of paying accounts at the start of a month that cancel
+      or lapse by month end. Calculated on account count, not revenue.
+    tier: V1
+    status: active
+    accountable: Finance
+    unit: percent
+    grain: account_month
+    requires:
+      - warehouse.billing.subscriptions
+    sql:
+      numerator: |
+        SELECT COUNT(DISTINCT account_id)
+        FROM warehouse.billing.subscriptions
+        WHERE status IN ('cancelled', 'lapsed')
+          AND cancelled_at >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+          AND cancelled_at < DATE_TRUNC('month', CURRENT_DATE)
+      denominator: |
+        SELECT COUNT(DISTINCT account_id)
+        FROM warehouse.billing.subscriptions
+        WHERE status = 'active'
+          AND period_start < DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+    tests:
+      - type: not_null
+      - type: range
+        field: value
+        min: 0
+        max: 100
+
+  # --- Pipeline value (still in spreadsheet) ---
+  - id: weighted_pipeline_value
+    name: Weighted Pipeline Value
+    description: >
+      Sum of open opportunity values weighted by the sales team's stage-level
+      close probability. Updated weekly by the revenue operations team from
+      the CRM export, adjusted in a shared Google Sheet, then pasted into
+      the weekly revenue deck.
+    tier: V1
+    status: active
+    accountable: Revenue Operations
+    unit: currency_usd
+    grain: account_week
+    implementation_type: spreadsheet
+
+  # --- Logo retention (still in spreadsheet) ---
+  - id: logo_retention_rate
+    name: Logo Retention Rate
+    description: >
+      Percentage of accounts present at the start of a cohort year that
+      are still active at year end. Calculated annually from a manually
+      maintained cohort tracking sheet in Excel. The sheet is owned by
+      the CS team and updated each January.
+    tier: V1
+    status: active
+    accountable: Customer Success
+    unit: percent
+    grain: account_year
+    implementation_type: spreadsheet

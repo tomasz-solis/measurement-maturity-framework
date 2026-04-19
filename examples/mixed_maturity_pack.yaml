@@ -1,0 +1,132 @@
+# Mixed Maturity - Metric Pack
+#
+# Example pack for a team mid-way through formalising their metrics.
+# Three production-ready V1 metrics sit alongside one V0 proxy that
+# the team is still stabilising. The pack score lands below the average
+# metric score because the floor weight pulls it down — that's the
+# intended behaviour for a pack where one metric isn't ready.
+
+pack:
+  id: mixed_maturity_pack
+  name: Mixed Maturity Pack
+  version: 0.1.0
+  schema_version: "1.0"
+  description: >
+    A realistic mid-stage pack: most metrics are well-defined, but one
+    V0 proxy is still being worked on. Useful for showing how a single
+    fragile metric affects the overall pack score.
+
+metrics:
+  # --- Retention (V1, production-ready) ---
+  - id: monthly_retention_rate
+    name: Monthly Retention Rate
+    description: >
+      Percentage of accounts active in a given month that are also active
+      the following month. Measures whether users find enough value to
+      return, independent of new acquisition.
+    tier: V1
+    status: active
+    accountable: Growth Team
+    unit: percent
+    grain: account_month
+    requires:
+      - warehouse.product.account_activity
+    sql:
+      numerator: |
+        SELECT COUNT(DISTINCT a1.account_id)
+        FROM warehouse.product.account_activity a1
+        JOIN warehouse.product.account_activity a2
+          ON a1.account_id = a2.account_id
+          AND a2.month_start = DATEADD(month, 1, a1.month_start)
+        WHERE a1.month_start = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+      denominator: |
+        SELECT COUNT(DISTINCT account_id)
+        FROM warehouse.product.account_activity
+        WHERE month_start = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+    tests:
+      - type: not_null
+      - type: range
+        field: value
+        min: 0
+        max: 100
+      - type: freshness
+        max_age_hours: 48
+
+  # --- Feature adoption (V1, production-ready) ---
+  - id: feature_adoption_rate
+    name: Feature Adoption Rate
+    description: >
+      Percentage of live accounts that use the target feature at least
+      once in a rolling 30-day window. Tracks whether accounts discover
+      and use the feature after it ships.
+    tier: V1
+    status: active
+    accountable: Product Team
+    unit: percent
+    grain: account_month
+    requires:
+      - warehouse.product.account_status
+      - warehouse.product.feature_events
+    sql:
+      numerator: |
+        SELECT COUNT(DISTINCT account_id)
+        FROM warehouse.product.feature_events
+        WHERE event_name = 'feature_used'
+          AND occurred_at >= CURRENT_DATE - INTERVAL '30 days'
+      denominator: |
+        SELECT COUNT(DISTINCT account_id)
+        FROM warehouse.product.account_status
+        WHERE lifecycle_state = 'live'
+          AND snapshot_date = CURRENT_DATE
+    tests:
+      - type: not_null
+      - type: range
+        field: value
+        min: 0
+        max: 100
+
+  # --- Support load (V1, production-ready) ---
+  - id: support_contact_rate
+    name: Support Contact Rate
+    description: >
+      Percentage of active accounts that open at least one support ticket
+      in a week. A rising rate signals product friction or reliability
+      problems that adoption metrics may not surface immediately.
+    tier: V1
+    status: active
+    accountable: Customer Success
+    unit: percent
+    grain: account_week
+    requires:
+      - warehouse.product.account_status
+      - warehouse.support.tickets
+    sql:
+      numerator: |
+        SELECT COUNT(DISTINCT account_id)
+        FROM warehouse.support.tickets
+        WHERE created_at >= DATE_TRUNC('week', CURRENT_DATE)
+      denominator: |
+        SELECT COUNT(DISTINCT account_id)
+        FROM warehouse.product.account_status
+        WHERE lifecycle_state = 'live'
+          AND snapshot_date = CURRENT_DATE
+    tests:
+      - type: not_null
+      - type: range
+        field: value
+        min: 0
+        max: 100
+
+  # --- NPS proxy (V0, still stabilising) ---
+  - id: nps_proxy_score
+    name: NPS Proxy Score (V0)
+    description: >
+      Approximation of net promoter sentiment derived from in-app survey
+      responses. The survey methodology and scoring model are still being
+      validated against a longer-running external NPS programme. Treat as
+      directional until the definitions are locked.
+    tier: V0
+    status: active
+    responsible: Research Team
+    unit: score
+    grain: account_month

@@ -52,7 +52,7 @@ def validation_signal(issues: List[Any]) -> Tuple[str, str, str]:
     if warning_count:
         return (
             "Warnings present",
-            f"{warning_count} structural risk(s) still visible.",
+            f"{warning_count} warning(s) still worth fixing.",
             "watch",
         )
     return "Schema clean", "No structural issues found in this pass.", "good"
@@ -84,9 +84,9 @@ def render_sidebar_intro() -> None:
         """
         <div class="mmf-sidebar-brand">
           <div class="kicker">Measurement Maturity</div>
-          <h2>Decision Design Layer</h2>
-          <p>Upload a metric pack, pull down templates, and tighten the review
-             loop before a number starts steering decisions.</p>
+          <h2>Metric Pack Review</h2>
+          <p>Upload a pack, grab an example, and review the structure before a
+             number starts steering decisions.</p>
         </div>
         """,
         unsafe_allow_html=True,

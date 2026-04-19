@@ -26,20 +26,24 @@ from .layout import (
     threshold_band_html,
 )
 from .sidebar import (
+    load_sidebar_examples,
     load_sidebar_downloads,
     render_normalized_download,
+    render_sidebar_examples,
     render_sidebar_downloads,
 )
 
 __all__ = [
     "inject_theme_css",
     "issue_counts",
+    "load_sidebar_examples",
     "load_sidebar_downloads",
     "render_empty_state_cards",
     "render_footer",
     "render_hero",
     "render_normalized_download",
     "render_section_header",
+    "render_sidebar_examples",
     "render_sidebar_downloads",
     "render_sidebar_intro",
     "render_stat_card_row",

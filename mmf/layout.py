@@ -114,7 +114,7 @@ def threshold_band_html(
         (
             "Decision-ready",
             f"{int(t_ready)}-100",
-            "Clear definition, ownership, and guardrails are in place.",
+            "Clear definition, ownership, and basic guardrails are in place.",
         ),
         (
             "Usable with caution",
@@ -124,7 +124,7 @@ def threshold_band_html(
         (
             "Early/fragile",
             f"{int(t_early)}-{int(t_caution - 1)}",
-            "Helpful for exploration, but still too fragile for strong commitments.",
+            "Useful for exploration, but still too fragile for strong commitments.",
         ),
         (
             "Not safe for decisions",
@@ -153,9 +153,9 @@ def render_empty_state_cards() -> None:
         <div class="mmf-empty-grid">
           <div class="mmf-empty-card">
             <div class="index">Signal 01</div>
-            <h3>Validate the structure first</h3>
-            <p>Check ownership, definitions, SQL shape, and tests before the pack
-               becomes a dashboard dependency.</p>
+            <h3>Check the structure first</h3>
+            <p>Review ownership, definitions, SQL shape, and tests before the pack
+               turns into a dashboard dependency.</p>
           </div>
           <div class="mmf-empty-card">
             <div class="index">Signal 02</div>
@@ -165,7 +165,7 @@ def render_empty_state_cards() -> None:
           </div>
           <div class="mmf-empty-card">
             <div class="index">Signal 03</div>
-            <h3>See the strategy chain</h3>
+            <h3>See the strategy path</h3>
             <p>Map how local metrics roll up into levers and business goals so
                weak links stay visible.</p>
           </div>

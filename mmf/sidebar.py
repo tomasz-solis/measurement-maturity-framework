@@ -1,4 +1,4 @@
-"""Sidebar logic: file discovery, template loading, and download buttons.
+"""Sidebar logic: example discovery and download buttons.
 
 These helpers are separated from the main render loop so the sidebar
 setup can be tested and reasoned about independently.
@@ -6,13 +6,40 @@ setup can be tested and reasoned about independently.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Optional, Sequence
 
 import streamlit as st
-import yaml  # type: ignore[import-untyped]
 
 from .streamlit_compat import render_download_button
+
+
+@dataclass(frozen=True)
+class SidebarExample:
+    """Represent one example pack that can be downloaded from the sidebar."""
+
+    label: str
+    file_name: str
+    content: bytes
+    description: str
+
+
+_EXAMPLE_METADATA: dict[str, tuple[str, str]] = {
+    "generic_product_metric_pack.yaml": (
+        "Generic product example",
+        "A full reference pack spanning adoption, engagement, outcome, reliability, and support.",
+    ),
+    "mixed_maturity_pack.yaml": (
+        "Mixed maturity example",
+        "Shows how one weaker V0 metric can drag a mostly strong pack downward.",
+    ),
+    "spreadsheet_pipeline_pack.yaml": (
+        "Spreadsheet pipeline example",
+        "Highlights the structural SQL gap for metrics that still depend on spreadsheet pipelines.",
+    ),
+}
+_PREFERRED_EXAMPLE_ORDER = tuple(_EXAMPLE_METADATA)
 
 
 def repo_root() -> Path:
@@ -35,116 +62,97 @@ def read_text_if_exists(path: Path) -> Optional[str]:
     return None
 
 
-def find_first_yaml_in_dir(dir_path: Path) -> Optional[Path]:
-    """Return the first YAML file found in a directory, sorted alphabetically."""
-    if not dir_path.exists() or not dir_path.is_dir():
-        return None
-    candidates = sorted(list(dir_path.glob("*.yaml")) + list(dir_path.glob("*.yml")))
-    return candidates[0] if candidates else None
+def _example_sort_key(path: Path) -> tuple[int, str]:
+    """Return a stable sort key that keeps the most useful examples first."""
+    try:
+        return (_PREFERRED_EXAMPLE_ORDER.index(path.name), path.name)
+    except ValueError:
+        return (len(_PREFERRED_EXAMPLE_ORDER), path.name)
 
 
-def default_metric_template_yaml() -> str:
-    """Return a built-in metric template when the repo template file is missing."""
-    template: Dict[str, Any] = {
-        "id": "my_metric_id",
-        "name": "My metric name",
-        "description": "One sentence on what this measures and why it matters.",
-        "tier": "V0",
-        "status": "active",
-        "responsible": "Team / role",
-        "unit": "count",
-        "grain": "one row per ...",
-        "requires": [],
-        "sql": {},
-        "tests": [],
-    }
-    return yaml.safe_dump(
-        template,
-        sort_keys=False,
-        allow_unicode=True,
-        width=100,
-        default_flow_style=False,
-    )
+def _example_label_and_description(file_name: str) -> tuple[str, str]:
+    """Return sidebar copy for a known example pack, with a safe fallback."""
+    if file_name in _EXAMPLE_METADATA:
+        return _EXAMPLE_METADATA[file_name]
+
+    stem = file_name.rsplit(".", 1)[0].replace("_", " ").strip()
+    label = stem.title() or file_name
+    description = "Example pack from ./examples."
+    return label, description
 
 
-def load_sidebar_downloads() -> Dict[str, Optional[str]]:
-    """Load downloadable templates and the preferred example pack.
-
-    Returns a dict with keys:
-      - metric_template: YAML string for the single-metric template
-      - pack_template: YAML string for the full pack template (may be None)
-      - example_pack: YAML string for the example pack (may be None)
-      - example_pack_filename: filename for the example pack download
-    """
+def load_sidebar_examples() -> list[SidebarExample]:
+    """Load the example packs that should be exposed in the sidebar."""
     root = repo_root()
-
-    template_path = root / "templates" / "metric_template.yaml"
-    metric_template = (
-        read_text_if_exists(template_path) or default_metric_template_yaml()
-    )
-
-    pack_template_path = root / "templates" / "metric_pack_template.yaml"
-    pack_template = read_text_if_exists(pack_template_path)
-
     examples_dir = root / "examples"
-    preferred = examples_dir / "generic_product_metric_pack.yaml"
-    example_path = (
-        preferred if preferred.exists() else find_first_yaml_in_dir(examples_dir)
+    if not examples_dir.exists() or not examples_dir.is_dir():
+        return []
+
+    example_paths = sorted(
+        [*examples_dir.glob("*.yaml"), *examples_dir.glob("*.yml")],
+        key=_example_sort_key,
     )
-    example_pack = read_text_if_exists(example_path) if example_path else None
 
-    return {
-        "metric_template": metric_template,
-        "pack_template": pack_template,
-        "example_pack": example_pack,
-        "example_pack_filename": example_path.name if example_path else None,
-    }
+    examples: list[SidebarExample] = []
+    for path in example_paths:
+        text = read_text_if_exists(path)
+        if text is None:
+            continue
+
+        label, description = _example_label_and_description(path.name)
+        examples.append(
+            SidebarExample(
+                label=label,
+                file_name=path.name,
+                content=text.encode("utf-8"),
+                description=description,
+            )
+        )
+
+    return examples
 
 
-def render_sidebar_downloads(dl: Dict[str, Optional[str]]) -> None:
-    """Render the static download buttons (templates, example pack)."""
+def render_sidebar_examples(examples: Sequence[SidebarExample]) -> None:
+    """Render the sidebar section that exposes downloadable example packs."""
     st.markdown("---")
-    st.subheader("Downloads")
+    st.subheader("Example Packs")
 
-    render_download_button(
-        label="Download metric template (YAML)",
-        data=(dl["metric_template"] or "").encode("utf-8"),
-        file_name="metric_template.yaml",
-        mime="text/yaml",
-    )
-
-    pack_template = dl.get("pack_template")
-    if pack_template:
-        render_download_button(
-            label="Download pack template (YAML)",
-            data=pack_template.encode("utf-8"),
-            file_name="metric_pack_template.yaml",
-            mime="text/yaml",
+    if not examples:
+        st.markdown(
+            (
+                '<p class="mmf-sidebar-note">'
+                "No example packs found in ./examples "
+                "(add one there to expose it in the app)."
+                "</p>"
+            ),
+            unsafe_allow_html=True,
         )
     else:
-        st.caption(
-            "No pack template found in ./templates "
-            "(add templates/metric_pack_template.yaml to enable this download)."
+        st.markdown(
+            (
+                '<p class="mmf-sidebar-note">'
+                "Download one of the repo examples, then upload it here or adapt it locally."
+                "</p>"
+            ),
+            unsafe_allow_html=True,
         )
-
-    example_pack = dl.get("example_pack")
-    if example_pack:
-        render_download_button(
-            label="Download example pack (YAML)",
-            data=example_pack.encode("utf-8"),
-            file_name=dl["example_pack_filename"] or "example_metric_pack.yaml",
-            mime="text/yaml",
-        )
-    else:
-        st.caption(
-            "No example pack found in ./examples " "(add one to enable this download)."
-        )
+        for example in examples:
+            render_download_button(
+                label=f"Download {example.label}",
+                data=example.content,
+                file_name=example.file_name,
+                mime="text/yaml",
+            )
+            st.markdown(
+                f'<p class="mmf-sidebar-example-copy">{example.description}</p>',
+                unsafe_allow_html=True,
+            )
 
     st.markdown("---")
     st.markdown(
         (
             '<p class="mmf-sidebar-tip">'
-            "Tip: keep IDs stable. It makes trends and governance easier later."
+            "Tip: keep IDs stable. It makes change tracking much easier later."
             "</p>"
         ),
         unsafe_allow_html=True,
@@ -159,3 +167,13 @@ def render_normalized_download(normalized_yaml_text: str) -> None:
         file_name="normalized_metric_pack.yaml",
         mime="text/yaml",
     )
+
+
+def load_sidebar_downloads() -> list[SidebarExample]:
+    """Backward-compatible alias for loading sidebar examples."""
+    return load_sidebar_examples()
+
+
+def render_sidebar_downloads(examples: Sequence[SidebarExample]) -> None:
+    """Backward-compatible alias for rendering sidebar examples."""
+    render_sidebar_examples(examples)

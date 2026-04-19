@@ -29,15 +29,15 @@ from mmf.ui import (
     issue_counts,
     suggestion_group_icon,
     render_sidebar_intro,
-    load_sidebar_downloads,
-    render_sidebar_downloads,
+    load_sidebar_examples,
+    render_sidebar_examples,
     render_normalized_download,
 )
 
-APP_TITLE = "Measurement Maturity Framework — YAML Auditor"
+APP_TITLE = "Measurement Maturity Framework | Metric Pack Auditor"
 FOOTER_TEXT = (
-    "Deterministic checks. No silent edits. "
-    "Schema-valid ≠ decision-ready. Treat suggestions as a checklist, not a verdict."
+    "Rules-based checks. No silent edits. "
+    "Schema-valid does not mean decision-ready. Use the suggestions as a checklist, not a verdict."
 )
 MAX_UPLOAD_BYTES = 1_000_000  # 1 MB
 
@@ -109,17 +109,17 @@ def _render_validation_section(
     render_section_header(
         "Signal 01",
         "Validation",
-        "Structural checks first. Scoring still runs when issues exist, but this section "
-        "tells you how much trust to place in the inputs.",
+        "Check the structure first. Scoring still runs when issues exist, but this section "
+        "tells you how much trust to place in the input.",
     )
 
     if validation.ok:
         st.success(
-            "Schema checks passed (this does not mean the pack is decision-ready)."
+            "Schema checks passed. That does not mean the pack is ready to use without review."
         )
     else:
         st.error(
-            "Schema errors found. Fix these first — scoring still runs, but results may be misleading."
+            "Schema errors found. Fix these first. Scoring still runs, but the results may be misleading."
         )
 
     counts = issue_counts(issues)
@@ -209,7 +209,7 @@ def _render_scoring_section(
     render_section_header(
         "Signal 02",
         "Scoring",
-        "This score reflects decision safety, not business performance. The pack score "
+        "This score is about metric safety, not business performance. The pack score "
         "blends the average metric quality with the weakest metric in the set.",
     )
 
@@ -288,8 +288,8 @@ def _render_suggestions_section(
     render_section_header(
         "Signal 03",
         "Suggestions",
-        "The framework stays deterministic here too. Suggestions are grouped by metric "
-        "so the next move is obvious instead of buried in a long checklist.",
+        "Suggestions stay rules-based too. They are grouped by metric so the next step "
+        "is easy to see.",
     )
 
     render_stat_card_row(
@@ -354,8 +354,8 @@ def _render_strategy_section(normalized_pack: Mapping[str, Any]) -> None:
     render_section_header(
         "Signal 04",
         "Strategy Tree",
-        "A visual check for how the pack rolls up into levers and business outcomes. "
-        "It helps spot where one weak metric can distort the bigger story.",
+        "An optional view of how the pack rolls up into levers and business outcomes. "
+        "It helps show where one weak metric can distort the bigger picture.",
     )
 
     build_strategy = _try_get_strategy_mermaid_builder()
@@ -396,20 +396,20 @@ def main() -> None:
     )
     inject_theme_css()
 
-    dl = load_sidebar_downloads()
+    sidebar_examples = load_sidebar_examples()
 
     with st.sidebar:
         render_sidebar_intro()
         st.header("Inputs")
         uploaded = st.file_uploader("Upload a metric-pack YAML", type=["yaml", "yml"])
-        render_sidebar_downloads(dl)
+        render_sidebar_examples(sidebar_examples)
 
     if not uploaded:
         render_hero(
-            "Audit metric packs before they shape decisions.",
-            "Structured review for teams that want clearer metrics, calmer governance, "
-            "and fewer surprises once a KPI makes it into a dashboard or target.",
-            ["Deterministic review", "No silent edits", "Strategy tree included"],
+            "Review metric packs before they steer decisions.",
+            "A quick pass for teams that want clearer metrics and fewer surprises once "
+            "a KPI shows up in a dashboard or target.",
+            ["Rules-based review", "No silent edits", "Optional strategy tree"],
         )
         render_empty_state_cards()
         render_footer(FOOTER_TEXT)
@@ -458,8 +458,8 @@ def main() -> None:
 
     render_hero(
         pack_name,
-        "A compact review pass across structure, decision risk, and strategy shape. "
-        "The weakest metric still matters, so the page keeps it visible throughout.",
+        "One review pass across structure, decision risk, and strategy. "
+        "The weakest metric stays visible so it does not get hidden by stronger ones.",
         [
             f"{metric_count} metric(s)",
             f"Version {pack_version}",
