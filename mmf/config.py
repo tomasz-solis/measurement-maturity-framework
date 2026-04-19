@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Dict
 
 
-def _default_deductions() -> Dict[str, int]:
+def _default_deductions() -> Dict[str, float]:
     """Return the default deduction values for metric scoring.
 
     Larger deductions cover missing ownership, SQL, or tests. Smaller ones
@@ -43,7 +43,7 @@ class ScoringConfig:
     """Configuration for metric scoring system."""
 
     base_score: int = 100
-    deductions: Dict[str, int] = field(default_factory=_default_deductions)
+    deductions: Dict[str, float] = field(default_factory=_default_deductions)
     thresholds: Dict[str, int] = field(default_factory=_default_thresholds)
     pack_floor_weight: float = 0.3
 

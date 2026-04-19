@@ -84,7 +84,7 @@ def score_pack(
 def _score_metric(metric: Dict[str, Any], config: ScoringConfig) -> MetricScore:
     """Score a single metric definition."""
 
-    base = config.base_score
+    base = float(config.base_score)
     gaps: List[str] = []
 
     tier = metric.get("tier")
@@ -150,7 +150,7 @@ def _score_metric(metric: Dict[str, Any], config: ScoringConfig) -> MetricScore:
         base -= deductions.get("missing_unit", 0)
         gaps.append("missing_unit")
 
-    score = max(0, min(100, base))
+    score = max(0.0, min(100.0, base))
     why = _build_why(score=score, gaps=gaps)
 
     return MetricScore(
