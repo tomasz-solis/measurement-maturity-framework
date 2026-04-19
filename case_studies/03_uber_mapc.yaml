@@ -1,0 +1,71 @@
+# Reconstructed metric pack — Uber "Monthly Active Platform Consumers" (MAPC)
+#
+# DISCLAIMER: Reconstruction based on Uber's April 2019 S-1 filing, which
+# publicly defined MAPC as "the number of unique consumers who completed a
+# Ridesharing or New Mobility ride or received an Uber Eats meal on our
+# platform at least once in a given month, averaged over each month in the
+# quarter."
+#
+# The metric itself is real and public. The SQL and internal metadata are
+# reconstruction — this is what a measurement spec matching Uber's public
+# definition might have looked like.
+
+pack:
+  id: uber_mapc_ipo
+  name: Uber — MAPC (S-1 April 2019)
+  version: "1.0.0"
+  schema_version: "1.0"
+  description: >
+    Reconstructed metric pack for MAPC, Uber's headline user metric at IPO.
+    MAPC aggregates rideshare, new mobility, and Uber Eats into a single
+    unique-user count.
+
+metrics:
+  - id: mapc
+    name: Monthly Active Platform Consumers
+    description: >
+      Unique consumers who completed a Ridesharing ride, a New Mobility ride,
+      OR received an Uber Eats meal in a given month, averaged over each
+      month in the quarter. A consumer using multiple offerings in the same
+      month is counted once.
+    tier: V1
+    status: active
+    accountable: Corporate FP&A — Investor Metrics
+    unit: count
+    grain: quarter
+    requires:
+      - warehouse.mobility.completed_rides
+      - warehouse.mobility.new_mobility_rides
+      - warehouse.eats.completed_orders
+      - warehouse.platform.consumer_registry
+    sql:
+      value: |
+        WITH monthly_active AS (
+          SELECT DATE_TRUNC('month', ride_completed_at) AS month, consumer_id
+          FROM warehouse.mobility.completed_rides
+          UNION
+          SELECT DATE_TRUNC('month', ride_completed_at), consumer_id
+          FROM warehouse.mobility.new_mobility_rides
+          UNION
+          SELECT DATE_TRUNC('month', order_delivered_at), consumer_id
+          FROM warehouse.eats.completed_orders
+        ),
+        monthly_unique AS (
+          SELECT month, COUNT(DISTINCT consumer_id) AS unique_consumers
+          FROM monthly_active
+          GROUP BY 1
+        )
+        SELECT
+          DATE_TRUNC('quarter', month) AS quarter,
+          AVG(unique_consumers) AS mapc
+        FROM monthly_unique
+        WHERE month >= CURRENT_DATE - INTERVAL '3 months'
+        GROUP BY 1
+    tests:
+      - type: not_null
+        field: mapc
+      - type: range
+        field: mapc
+        min: 0
+      - type: freshness
+        max_age_hours: 168  # weekly reload is fine for a quarterly metric

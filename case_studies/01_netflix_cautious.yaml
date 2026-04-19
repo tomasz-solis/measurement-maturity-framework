@@ -1,0 +1,63 @@
+# Reconstructed — what a cautious analyst expecting possible definition
+# drift WOULD have written for Netflix's "view" metric pre-2019.
+#
+# The difference from 01_netflix_actual.yaml is a single field: `tier: V0`
+# instead of `tier: V1`. V0 is MMF's way of flagging a metric as "this
+# definition may change." MMF applies a -10 score penalty for V0 tier
+# to reflect that instability.
+#
+# A V0 tag would have signalled to any downstream consumer (earnings
+# preparer, dashboard designer, board-deck builder) that this number
+# was a working proxy rather than a stable commitment metric.
+#
+# No SQL or metadata changes — only the tier.
+
+pack:
+  id: netflix_viewership_2019_cautious
+  name: Netflix Viewership — With V0 tagging
+  version: "1.0.0"
+  schema_version: "1.0"
+  description: >
+    Same metric as 01_netflix_actual.yaml, but tagged V0 to reflect
+    awareness that the "view" definition had shifted before (Bird Box
+    2018) and could shift again.
+
+metrics:
+  - id: title_views
+    name: Title Views
+    description: >
+      Household accounts that watched at least 70% of a title's total
+      runtime. Used in quarterly earnings letters and top-10 rankings.
+      Excludes trailers and autoplayed next-episode flows.
+
+      NOTE: definition stability is not guaranteed. Previous redefinitions
+      (Bird Box 2018 specific definition) suggest this is subject to
+      product-marketing pressure. Treat as a V0 proxy until a stable
+      long-term definition is committed to.
+    tier: V0  # <<< only change from actual reconstruction
+    status: active
+    accountable: Product Analytics — Viewership
+    unit: count
+    grain: title_week
+    requires:
+      - warehouse.playback.session_events
+      - warehouse.catalog.title_metadata
+    sql:
+      value: |
+        SELECT
+          title_id,
+          DATE_TRUNC('week', watched_at) AS week_start,
+          COUNT(DISTINCT account_id) AS title_views
+        FROM warehouse.playback.session_events s
+        JOIN warehouse.catalog.title_metadata t USING (title_id)
+        WHERE s.minutes_watched / t.total_runtime_minutes >= 0.70
+          AND s.watched_at >= CURRENT_DATE - INTERVAL '7 days'
+        GROUP BY 1, 2
+    tests:
+      - type: not_null
+        field: title_views
+      - type: freshness
+        max_age_hours: 24
+      - type: range
+        field: title_views
+        min: 0

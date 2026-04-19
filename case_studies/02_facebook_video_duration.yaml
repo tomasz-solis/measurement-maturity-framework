@@ -1,0 +1,64 @@
+# Reconstructed metric pack — Facebook "Average Video Watch Time" (2014-2016)
+#
+# DISCLAIMER: Reconstruction for illustrative purposes. Facebook does not
+# publish its internal metric specs. The SQL below reflects what the public
+# record (WSJ September 2016, subsequent lawsuit discovery) indicates about
+# the bug: average watch time was calculated as total_time / count_of_views
+# where count_of_views was filtered to views longer than 3 seconds, while
+# the numerator included all seconds watched across users.
+#
+# Reported inflation: 60-80% per Facebook's own September 2016 disclosure;
+# 150-900% per the 2018 amended class-action complaint. Settled 2019 for $40M.
+#
+# The point of this pack: run MMF against it and observe that every
+# structural check passes — because the bug is in the SQL's *logic*, not
+# in its *existence*.
+
+pack:
+  id: facebook_video_watch_time_2015
+  name: Facebook — Average Video Watch Time (pre-2016 correction)
+  version: "1.0.0"
+  schema_version: "1.0"
+  description: >
+    Reconstructed metric pack illustrating Facebook's "Average Duration of
+    Video Viewed" metric as it existed from approximately 2014 to September
+    2016, with the filter-in-denominator bug that inflated reported averages.
+
+metrics:
+  - id: avg_video_watch_time
+    name: Average Duration of Video Viewed
+    description: >
+      Reported to advertisers as the average number of seconds a user spent
+      watching a video ad on Facebook. Used by advertisers to compare the
+      engagement performance of video creative versus other ad formats.
+    tier: V1
+    status: active
+    accountable: Ads Platform — Measurement
+    unit: seconds
+    grain: ad_day
+    requires:
+      - warehouse.ads.video_impressions
+      - warehouse.ads.video_playback_events
+    sql:
+      value: |
+        -- Reconstructed per public reporting on the 2016 disclosure.
+        -- The bug: denominator filters to views > 3s, numerator does not.
+        SELECT
+          ad_id,
+          DATE_TRUNC('day', impression_at) AS day,
+          SUM(seconds_viewed) * 1.0 /
+            COUNT(DISTINCT CASE
+              WHEN seconds_viewed > 3 THEN impression_id
+            END) AS avg_video_watch_time
+        FROM warehouse.ads.video_playback_events
+        WHERE impression_at >= CURRENT_DATE - INTERVAL '1 day'
+        GROUP BY 1, 2
+    tests:
+      - type: not_null
+        field: avg_video_watch_time
+      - type: range
+        field: avg_video_watch_time
+        min: 0
+        max: 3600
+      - type: freshness
+        max_age_hours: 6

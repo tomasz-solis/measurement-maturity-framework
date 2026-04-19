@@ -1,0 +1,59 @@
+# Reconstructed metric pack — Netflix "view count" pre-2019 redefinition
+#
+# DISCLAIMER: This is a reconstruction for illustrative purposes. Netflix
+# does not publish its internal metric specs. The YAML below is what a
+# plausibly-competent analytics team MIGHT have written at Netflix in early
+# 2019, before the December 2019 redefinition of "view" from "70% watched"
+# to "2 minutes watched" which inflated reported viewership by ~35%.
+#
+# The public record (Netflix Q4 2019 shareholder letter, covered by WSJ,
+# Hollywood Reporter, Variety) confirms the definition change. The SQL and
+# internal metadata below are illustrative of what the measurement spec
+# could have looked like.
+#
+# Purpose: run MMF against this YAML and see what it flags (or doesn't).
+
+pack:
+  id: netflix_viewership_2019
+  name: Netflix Viewership — Pre-2019 Redefinition
+  version: "1.0.0"
+  schema_version: "1.0"
+  description: >
+    Reconstructed metric pack illustrating Netflix's "view" metric as it
+    was likely defined internally in early 2019 (70% threshold), before
+    the Q4 2019 redefinition to a 2-minute threshold.
+
+metrics:
+  - id: title_views
+    name: Title Views
+    description: >
+      Household accounts that watched at least 70% of a title's total
+      runtime. Used in quarterly earnings letters and top-10 rankings.
+      Excludes trailers and autoplayed next-episode flows.
+    tier: V1
+    status: active
+    accountable: Product Analytics — Viewership
+    unit: count
+    grain: title_week
+    requires:
+      - warehouse.playback.session_events
+      - warehouse.catalog.title_metadata
+    sql:
+      value: |
+        SELECT
+          title_id,
+          DATE_TRUNC('week', watched_at) AS week_start,
+          COUNT(DISTINCT account_id) AS title_views
+        FROM warehouse.playback.session_events s
+        JOIN warehouse.catalog.title_metadata t USING (title_id)
+        WHERE s.minutes_watched / t.total_runtime_minutes >= 0.70
+          AND s.watched_at >= CURRENT_DATE - INTERVAL '7 days'
+        GROUP BY 1, 2
+    tests:
+      - type: not_null
+        field: title_views
+      - type: freshness
+        max_age_hours: 24
+      - type: range
+        field: title_views
+        min: 0
