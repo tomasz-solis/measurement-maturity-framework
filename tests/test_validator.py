@@ -1,18 +1,35 @@
 """Tests for mmf.validator module."""
 
-import yaml
-from pathlib import Path
-
 from mmf.validator import validate_metric_pack
 
-# Test fixtures directory
-FIXTURES_DIR = Path(__file__).parent / "fixtures"
+
+def _minimal_pack() -> dict:
+    """Return a minimal pack that should validate without errors."""
+    return {
+        "pack": {"id": "minimal", "name": "Minimal Pack", "schema_version": "1.0"},
+        "metrics": [
+            {
+                "id": "signup_rate",
+                "name": "Signup Rate",
+                "accountable": "Growth Team",
+                "sql": {"value": "SELECT 1"},
+                "tests": [{"type": "not_null"}],
+            }
+        ],
+    }
 
 
-def load_fixture(filename: str) -> dict:
-    """Load a YAML fixture file."""
-    with open(FIXTURES_DIR / filename, encoding="utf-8") as f:
-        return yaml.safe_load(f)
+def _empty_pack() -> dict:
+    """Return an empty but structurally valid pack."""
+    return {
+        "pack": {"id": "empty", "name": "Empty Pack", "schema_version": "1.0"},
+        "metrics": [],
+    }
+
+
+def _invalid_pack() -> dict:
+    """Return a pack that should fail because `metrics` is missing."""
+    return {"pack": {"id": "invalid", "name": "Invalid Pack", "schema_version": "1.0"}}
 
 
 class TestValidatorBasic:
@@ -20,7 +37,7 @@ class TestValidatorBasic:
 
     def test_minimal_pack_validates(self):
         """A minimal but complete pack should validate successfully."""
-        pack = load_fixture("minimal_pack.yaml")
+        pack = _minimal_pack()
         result = validate_metric_pack(pack)
 
         assert result.ok is True
@@ -31,7 +48,7 @@ class TestValidatorBasic:
 
     def test_empty_pack_validates(self):
         """Pack with no metrics should validate (edge case)."""
-        pack = load_fixture("empty_pack.yaml")
+        pack = _empty_pack()
         result = validate_metric_pack(pack)
 
         # Empty pack is technically valid
@@ -39,7 +56,7 @@ class TestValidatorBasic:
 
     def test_invalid_pack_fails(self):
         """Pack missing 'metrics' field should fail validation."""
-        pack = load_fixture("invalid_pack.yaml")
+        pack = _invalid_pack()
         result = validate_metric_pack(pack)
 
         assert result.ok is False

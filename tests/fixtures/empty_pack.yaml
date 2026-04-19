@@ -1,7 +1,0 @@
-pack:
-  id: empty_test_pack
-  name: Empty Test Pack
-  version: 0.1.0
-  schema_version: "1.0"
-
-metrics: []

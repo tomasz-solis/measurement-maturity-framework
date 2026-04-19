@@ -1,6 +1,0 @@
-pack:
-  id: invalid_test_pack
-  name: Invalid Test Pack
-  version: 0.1.0
-
-# Missing metrics field entirely

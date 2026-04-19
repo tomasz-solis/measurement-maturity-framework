@@ -1,20 +1,37 @@
 """End-to-end pipeline tests: YAML → validate → score → suggest."""
 
-from pathlib import Path
-
-import yaml
-
 from mmf.validator import validate_metric_pack
 from mmf.scoring import score_pack
 from mmf.suggestions import deterministic_suggestions
 
-FIXTURES_DIR = Path(__file__).parent / "fixtures"
+
+def _minimal_pack() -> dict:
+    """Return a minimal pack that exercises the full pipeline."""
+    return {
+        "pack": {"id": "minimal", "name": "Minimal Pack", "schema_version": "1.0"},
+        "metrics": [
+            {
+                "id": "signup_rate",
+                "name": "Signup Rate",
+                "accountable": "Growth Team",
+                "sql": {"value": "SELECT 1"},
+                "tests": [{"type": "not_null"}],
+            }
+        ],
+    }
 
 
-def load_fixture(filename: str) -> dict:
-    """Load a YAML fixture file for end-to-end pipeline tests."""
-    with open(FIXTURES_DIR / filename, encoding="utf-8") as f:
-        return yaml.safe_load(f)
+def _empty_pack() -> dict:
+    """Return an empty but valid pack."""
+    return {
+        "pack": {"id": "empty", "name": "Empty Pack", "schema_version": "1.0"},
+        "metrics": [],
+    }
+
+
+def _invalid_pack() -> dict:
+    """Return a pack that should fail validation but not crash the pipeline."""
+    return {"pack": {"id": "invalid", "name": "Invalid Pack", "schema_version": "1.0"}}
 
 
 class TestFullPipeline:
@@ -22,7 +39,7 @@ class TestFullPipeline:
 
     def test_minimal_pack_pipeline(self):
         """Minimal valid pack should complete the full pipeline without errors."""
-        pack = load_fixture("minimal_pack.yaml")
+        pack = _minimal_pack()
         validation = validate_metric_pack(pack)
         assert validation.ok
 
@@ -35,7 +52,7 @@ class TestFullPipeline:
 
     def test_empty_pack_pipeline(self):
         """Empty pack should complete without errors."""
-        pack = load_fixture("empty_pack.yaml")
+        pack = _empty_pack()
         validation = validate_metric_pack(pack)
         assert validation.ok
 
@@ -47,7 +64,7 @@ class TestFullPipeline:
 
     def test_invalid_pack_pipeline(self):
         """Invalid pack should fail validation but not crash scoring."""
-        pack = load_fixture("invalid_pack.yaml")
+        pack = _invalid_pack()
         validation = validate_metric_pack(pack)
         assert not validation.ok
 
