@@ -1,7 +1,7 @@
 """HTML/CSS layout helpers for the MMF Streamlit app.
 
 All functions here produce HTML or inject CSS. None of them depend on
-Streamlit session state or uploaded data — they only take plain Python
+Streamlit session state or uploaded data - they only take plain Python
 arguments and call st.markdown / st.write.
 """
 

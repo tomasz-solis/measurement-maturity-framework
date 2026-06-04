@@ -305,7 +305,7 @@ class TestEdgeCases:
 
     def test_unicode_in_names(self):
         """Unicode characters should be handled correctly."""
-        pack = {"metrics": [{"id": "test", "name": "Test Metric 测试 🚀"}]}
+        pack = {"metrics": [{"id": "test", "name": "Test Metric 测试"}]}
         result = validate_metric_pack(pack)
 
         # Should not crash

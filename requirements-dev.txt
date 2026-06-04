@@ -1,4 +1,4 @@
-# Development tools — install separately:
+# Development tools - install separately:
 #   pip install -r requirements-dev.txt
 pytest>=7.4.0
 pytest-cov>=4.1.0
@@ -8,7 +8,7 @@ flake8>=6.1.0
 mypy>=1.5.0
 types-PyYAML>=6.0.12
 
-# Analysis path — required to run analysis/build_notebook.py,
+# Analysis path - required to run analysis/build_notebook.py,
 # analysis/bayesian_robustness.ipynb, and the Bayesian test suite.
 # Not required at runtime for the app or the mmf library.
 numpy>=1.26.0

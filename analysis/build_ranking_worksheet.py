@@ -28,7 +28,7 @@ OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
 
 
 def _describe_metric(metric: dict) -> dict:
-    """Return a structural description of a single metric — no MMF score."""
+    """Return a structural description of a single metric - no MMF score."""
     sql = metric.get("sql") or {}
     has_value_sql = bool(sql.get("value"))
     has_ratio_sql = bool(sql.get("numerator")) and bool(sql.get("denominator"))

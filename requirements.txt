@@ -1,4 +1,4 @@
-# Runtime — pinned to ensure reproducible installs.
+# Runtime - pinned to ensure reproducible installs.
 # To upgrade: test with the new version, then update the pin here.
 streamlit==1.44.0
 PyYAML==6.0.2

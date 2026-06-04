@@ -367,5 +367,5 @@ def _strip_numeric_prefix(label: str) -> str:
 
 
 def _esc(text: str) -> str:
-    """Escape text for Mermaid labels — removes angle brackets, escapes quotes."""
+    """Escape text for Mermaid labels - removes angle brackets, escapes quotes."""
     return str(text).replace('"', "&quot;").replace("<", "").replace(">", "")

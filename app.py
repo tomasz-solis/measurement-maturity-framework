@@ -172,11 +172,11 @@ def _render_validation_section(
         def _icon(sev: str) -> str:
             s = sev.lower()
             if s == "error":
-                return "🔴 ERROR"
+                return "ERROR"
             if s == "warning":
-                return "🟡 WARNING"
+                return "WARNING"
             if s == "info":
-                return "🔵 INFO"
+                return "INFO"
             return sev
 
         rows = [
@@ -215,17 +215,17 @@ def _render_scoring_section(
 
     pack_score = score_result.pack_score
     if pack_score >= t_ready:
-        pack_icon, pack_label = "🟢", "Decision-ready"
+        pack_label = "Decision-ready"
     elif pack_score >= t_caution:
-        pack_icon, pack_label = "🟡", "Usable with caution"
+        pack_label = "Usable with caution"
     elif pack_score >= t_early:
-        pack_icon, pack_label = "🟠", "Early/fragile"
+        pack_label = "Early/fragile"
     else:
-        pack_icon, pack_label = "🔴", "Not safe for decisions"
+        pack_label = "Not safe for decisions"
 
     col_a, col_b, col_c = st.columns(3)
     col_a.metric(
-        f"{pack_icon} Pack Score",
+        "Pack Score",
         f"{pack_score:.2f}",
         help=(
             f"{pack_label} "
@@ -255,12 +255,12 @@ def _render_scoring_section(
 
     def _score_label(score: float) -> str:
         if score >= t_ready:
-            return "🟢 Good"
+            return "Good"
         if score >= t_caution:
-            return "🟡 Watch"
+            return "Watch"
         if score >= t_early:
-            return "🟠 Fragile"
-        return "🔴 Risk"
+            return "Fragile"
+        return "Risk"
 
     metric_rows = [
         {
@@ -268,7 +268,7 @@ def _render_scoring_section(
             "Signal": _score_label(ms.score),
             "Score": int(ms.score),
             "Status": ms.status,
-            "Tier": ms.tier or "—",
+            "Tier": ms.tier or " - ",
             "ID": ms.metric_id,
             "Why": ms.why,
         }
@@ -336,7 +336,7 @@ def _render_suggestions_section(
     )
 
     for mid, items in ordered_groups:
-        title = f"{suggestion_group_icon(items)} {name_by_id.get(mid, mid)} — {mid}"
+        title = f"{suggestion_group_icon(items)} {name_by_id.get(mid, mid)} - {mid}"
         with st.expander(title, expanded=False):
             for it in items:
                 sev = (it.get("severity") or "").lower()
@@ -450,8 +450,8 @@ def main() -> None:
     metrics = normalized_pack.get("metrics", []) or []
     metric_count = len(metrics) if isinstance(metrics, list) else 0
     pack_name = str(pack_meta.get("name", "Untitled Metric Pack"))
-    pack_id = str(pack_meta.get("id", "—"))
-    pack_version = str(pack_meta.get("version", "—"))
+    pack_id = str(pack_meta.get("id", " - "))
+    pack_version = str(pack_meta.get("version", " - "))
     schema_version = str(pack_meta.get("schema_version", "1.0"))
     score_lbl, score_tone = score_signal(score_result.pack_score, config)
     val_label, val_detail, val_tone = validation_signal(issues)

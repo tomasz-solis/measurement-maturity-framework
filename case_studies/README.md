@@ -45,10 +45,10 @@ plus the calibration notes in the main methodology doc.
 Each case has a YAML spec and, where relevant, a Python script:
 
 ```bash
-# Netflix — two-version comparison (V1 reconstruction vs V0 cautious tagging)
+# Netflix - two-version comparison (V1 reconstruction vs V0 cautious tagging)
 python case_studies/01_netflix_run.py
 
-# Any other case — direct scoring
+# Any other case - direct scoring
 python -c "
 import yaml
 from mmf.scoring import score_pack

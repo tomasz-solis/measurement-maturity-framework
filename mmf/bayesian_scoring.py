@@ -5,8 +5,8 @@ integers (e.g. -10 for V0 tier, -5 for missing SQL). Those weights encode
 judgment about typical gap severity. This module treats them as random
 variables and reports the posterior distribution of pack scores.
 
-Why this matters
-----------------
+Purpose
+-------
 Every weight in mmf.config is asserted, not derived. A reviewer can
 reasonably ask "why -10 for V0 and not -5 or -15?" This module makes
 that question quantitative by sampling weights from priors centred on
@@ -18,7 +18,7 @@ under the Beta priors documented below, which is the robustness
 property this module measures.
 
 Prior specification
--------------------
+
 Each deduction weight w_k is treated as a draw from a scaled Beta:
 
     w_k ~ Beta(alpha_k, beta_k) * SCALE
@@ -41,7 +41,7 @@ Limits
 This is weight-robustness analysis, not calibration. The priors encode
 uncertainty about weights; they do not encode any empirical signal from
 audited packs. A separate, small-n calibration study against human
-ranking lives in analysis/weight_calibration.ipynb — its findings are
+ranking lives in analysis/weight_calibration.ipynb - its findings are
 held as directional pending a larger rater pool, and its recommended
 weight revisions have intentionally not been shipped as new defaults.
 
@@ -64,7 +64,7 @@ import numpy as np
 from .config import ScoringConfig, load_config
 from .scoring import ScoreResult, score_pack
 
-# Prior configuration. Separated from ScoringConfig deliberately — rule-based
+# Prior configuration. Separated from ScoringConfig deliberately - rule-based
 # weights and Bayesian priors evolve independently.
 SCALE = 20.0
 CONCENTRATION = 20.0

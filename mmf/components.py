@@ -1,7 +1,7 @@
 """Streamlit rendering components for pack analysis results.
 
 These functions translate scored/validated pack data into Streamlit UI.
-They depend on Streamlit but not on session state — all inputs are
+They depend on Streamlit but not on session state - all inputs are
 explicit arguments.
 """
 
@@ -13,7 +13,7 @@ import streamlit as st
 
 
 def severity_rank(sev: str) -> int:
-    """Return a sort key for issue severity — lower means higher priority."""
+    """Return a sort key for issue severity - lower means higher priority."""
     return {"ERROR": 0, "WARNING": 1, "INFO": 2}.get((sev or "").upper(), 9)
 
 
@@ -72,10 +72,10 @@ def suggestion_group_icon(items: List[Dict[str, str]]) -> str:
     """Return an icon character summarising a metric's suggestion state."""
     severities = {(item.get("severity") or "").lower() for item in items}
     if "critical" in severities or "warning" in severities:
-        return "⚠"
+        return "!"
     if "info" in severities:
-        return "ℹ"
-    return "✓"
+        return "i"
+    return "OK"
 
 
 def render_sidebar_intro() -> None:

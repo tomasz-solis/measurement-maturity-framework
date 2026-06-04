@@ -1,4 +1,4 @@
-# Reconstructed metric pack — Netflix "view count" pre-2019 redefinition
+# Reconstructed metric pack - Netflix "view count" pre-2019 redefinition
 #
 # DISCLAIMER: This is a reconstruction for illustrative purposes. Netflix
 # does not publish its internal metric specs. The YAML below is what a
@@ -15,7 +15,7 @@
 
 pack:
   id: netflix_viewership_2019
-  name: Netflix Viewership — Pre-2019 Redefinition
+  name: Netflix Viewership - Pre-2019 Redefinition
   version: "1.0.0"
   schema_version: "1.0"
   description: >
@@ -32,7 +32,7 @@ metrics:
       Excludes trailers and autoplayed next-episode flows.
     tier: V1
     status: active
-    accountable: Product Analytics — Viewership
+    accountable: Product Analytics - Viewership
     unit: count
     grain: title_week
     requires:

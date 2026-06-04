@@ -1,4 +1,4 @@
-# Reconstructed — what a cautious analyst expecting possible definition
+# Reconstructed - what a cautious analyst expecting possible definition
 # drift WOULD have written for Netflix's "view" metric pre-2019.
 #
 # The difference from 01_netflix_actual.yaml is a single field: `tier: V0`
@@ -10,11 +10,11 @@
 # preparer, dashboard designer, board-deck builder) that this number
 # was a working proxy rather than a stable commitment metric.
 #
-# No SQL or metadata changes — only the tier.
+# No SQL or metadata changes - only the tier.
 
 pack:
   id: netflix_viewership_2019_cautious
-  name: Netflix Viewership — With V0 tagging
+  name: Netflix Viewership - With V0 tagging
   version: "1.0.0"
   schema_version: "1.0"
   description: >
@@ -36,7 +36,7 @@ metrics:
       long-term definition is committed to.
     tier: V0  # <<< only change from actual reconstruction
     status: active
-    accountable: Product Analytics — Viewership
+    accountable: Product Analytics - Viewership
     unit: count
     grain: title_week
     requires:

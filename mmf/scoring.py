@@ -92,23 +92,23 @@ def _score_metric(metric: Dict[str, Any], config: ScoringConfig) -> MetricScore:
 
     deductions = config.deductions
 
-    # Tier stability — V0 proxies carry instability risk on top of any other gaps
+    # Tier stability - V0 proxies carry instability risk on top of any other gaps
     if (tier or "").upper() == "V0":
         base -= deductions["v0_tier"]
         gaps.append("tier_v0")
 
-    # Ownership — no accountable team means slower debugging and weaker follow-up
+    # Ownership - no accountable team means slower debugging and weaker follow-up
     has_owner = metric.get("accountable") or metric.get("responsible")
     if not has_owner:
         base -= deductions["missing_accountable"]
         gaps.append("missing_accountable")
 
-    # SQL — without query logic the metric can't be reproduced or inspected.
+    # SQL - without query logic the metric can't be reproduced or inspected.
     # When the metric declares implementation_type, we refine the deduction:
     # spreadsheet/notebook/dashboard/other signal structural unreviewability
     # (larger deduction); v0_proxy signals the SQL is just not written yet
     # (smaller deduction). Without implementation_type, the default
-    # missing_sql applies — this keeps older packs backward-compatible.
+    # missing_sql applies - this keeps older packs backward-compatible.
     sql = metric.get("sql") or {}
     has_value_sql = bool(sql.get("value"))
     has_ratio_sql = bool(sql.get("numerator")) and bool(sql.get("denominator"))
@@ -130,22 +130,22 @@ def _score_metric(metric: Dict[str, Any], config: ScoringConfig) -> MetricScore:
             base -= deductions["missing_sql"]
             gaps.append("missing_sql")
 
-    # Tests — without basic checks, silent breakage goes undetected
+    # Tests - without basic checks, silent breakage goes undetected
     if not metric.get("tests"):
         base -= deductions["missing_tests"]
         gaps.append("missing_tests")
 
-    # Description — intent should be readable without opening the SQL
+    # Description - intent should be readable without opening the SQL
     if not metric.get("description"):
         base -= deductions.get("missing_description", 0)
         gaps.append("missing_description")
 
-    # Grain — what one row of the output represents
+    # Grain - what one row of the output represents
     if not metric.get("grain"):
         base -= deductions.get("missing_grain", 0)
         gaps.append("missing_grain")
 
-    # Unit — how to interpret the value (count, percent, currency, etc.)
+    # Unit - how to interpret the value (count, percent, currency, etc.)
     if not metric.get("unit"):
         base -= deductions.get("missing_unit", 0)
         gaps.append("missing_unit")

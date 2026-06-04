@@ -140,7 +140,7 @@ def plot_posterior_distributions(
     for ax, name in zip(axes, selected_packs):
         with (FIXTURES / f"{name}.yaml").open() as f:
             pack = yaml.safe_load(f)
-        # Draw raw samples by running many small batches — reuse seeded sampler
+        # Draw raw samples by running many small batches - reuse seeded sampler
         # For density plotting we need the raw draws, so call the lower-level
         # machinery directly.
         from mmf.bayesian_scoring import _sample_weights, _score_pack_with_weights

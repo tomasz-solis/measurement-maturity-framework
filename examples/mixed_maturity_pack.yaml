@@ -3,7 +3,7 @@
 # Example pack for a team mid-way through formalising their metrics.
 # Three production-ready V1 metrics sit alongside one V0 proxy that
 # the team is still stabilising. The pack score lands below the average
-# metric score because the floor weight pulls it down — that's the
+# metric score because the floor weight pulls it down - that's the
 # intended behaviour for a pack where one metric isn't ready.
 
 pack:

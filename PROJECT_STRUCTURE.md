@@ -10,7 +10,7 @@ This repo is small enough that the important parts fit on one page.
 - `templates/`: starter YAML files for new metrics and packs.
 - `examples/`: reusable sample packs for the app sidebar and docs.
 - `case_studies/`: reconstructed real-world failures used to show MMF's scope.
-- `analysis/`: notebooks and scripts for calibration and robustness work.
+- `analysis/`: notebooks and scripts for calibration and sensitivity checks.
 - `README.md`: product-level overview.
 - `SCORING_METHODOLOGY.md`: scoring rules and rationale.
 
@@ -28,9 +28,9 @@ This repo is small enough that the important parts fit on one page.
 - `tests/test_validator.py`: validator behavior.
 - `tests/test_scorer.py`: scoring contract and edge cases.
 - `tests/test_suggestions.py`: deterministic suggestion text and priorities.
-- `tests/test_integration.py`: end-to-end pack flow.
+- `tests/test_integration.py`: full pack flow.
 - `tests/test_mermaid.py`: strategy graph output.
-- `tests/test_bayesian_scoring.py`: robustness layer checks.
+- `tests/test_bayesian_scoring.py`: Bayesian sensitivity layer checks.
 
 Note: the repo now uses synthetic fixtures under `tests/fixtures/synthetic_packs/` for much of the scoring analysis. If you update docs or tests, check that the fixture paths still match reality.
 

@@ -119,7 +119,7 @@ def generate_pack(profile: PackProfile, seed: int) -> Dict[str, Any]:
     return {
         "pack": {
             "id": profile.name,
-            "name": f"Synthetic — {profile.name}",
+            "name": f"Synthetic - {profile.name}",
             "version": "0.1.0",
             "schema_version": "1.0",
         },

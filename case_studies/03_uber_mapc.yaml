@@ -1,4 +1,4 @@
-# Reconstructed metric pack — Uber "Monthly Active Platform Consumers" (MAPC)
+# Reconstructed metric pack - Uber "Monthly Active Platform Consumers" (MAPC)
 #
 # DISCLAIMER: Reconstruction based on Uber's April 2019 S-1 filing, which
 # publicly defined MAPC as "the number of unique consumers who completed a
@@ -7,12 +7,12 @@
 # quarter."
 #
 # The metric itself is real and public. The SQL and internal metadata are
-# reconstruction — this is what a measurement spec matching Uber's public
+# reconstruction - this is what a measurement spec matching Uber's public
 # definition might have looked like.
 
 pack:
   id: uber_mapc_ipo
-  name: Uber — MAPC (S-1 April 2019)
+  name: Uber - MAPC (S-1 April 2019)
   version: "1.0.0"
   schema_version: "1.0"
   description: >
@@ -30,7 +30,7 @@ metrics:
       month is counted once.
     tier: V1
     status: active
-    accountable: Corporate FP&A — Investor Metrics
+    accountable: Corporate FP&A - Investor Metrics
     unit: count
     grain: quarter
     requires:

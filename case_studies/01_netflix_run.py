@@ -1,4 +1,4 @@
-"""Case 1 — Netflix view redefinition (2019-2020).
+"""Case 1 - Netflix view redefinition (2019-2020).
 
 Runs MMF against two reconstructed versions of the same metric:
   a) What Netflix likely had (V1, stable SQL, all checks present)
@@ -26,10 +26,10 @@ def run_and_report(yaml_path: Path, label: str) -> None:
     with yaml_path.open() as f:
         pack = yaml.safe_load(f)
     result = score_pack(pack)
-    print(f"=== {label} ===")
+    print(label)
     print(f"Pack score: {result.pack_score}")
     for ms in result.metric_scores:
-        print(f"  {ms.metric_id}: {ms.score} — {ms.why}")
+        print(f"  {ms.metric_id}: {ms.score} - {ms.why}")
         if ms.gaps:
             print(f"    gaps: {ms.gaps}")
     print()
@@ -37,5 +37,5 @@ def run_and_report(yaml_path: Path, label: str) -> None:
 
 if __name__ == "__main__":
     base = Path(__file__).parent
-    run_and_report(base / "01_netflix_actual.yaml", "Version A — What Netflix likely had (V1)")
-    run_and_report(base / "01_netflix_cautious.yaml", "Version B — With V0 tagging (proactive caution)")
+    run_and_report(base / "01_netflix_actual.yaml", "Version A - What Netflix likely had (V1)")
+    run_and_report(base / "01_netflix_cautious.yaml", "Version B - With V0 tagging (proactive caution)")

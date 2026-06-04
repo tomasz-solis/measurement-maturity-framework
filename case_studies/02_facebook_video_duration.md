@@ -1,6 +1,6 @@
-# Case Study 2 — Facebook's inflated video watch-time metric
+# Case Study 2: Facebook's inflated video watch-time metric
 
-**Status:** MISS. The SQL exists, the metric has an owner, and the pack looks
+Status: miss. The SQL exists, the metric has an owner, and the pack looks
 well-formed. The problem sits inside the query logic, which MMF does not audit.
 
 ## What happened

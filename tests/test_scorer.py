@@ -410,7 +410,7 @@ class TestCustomConfig:
 
 
 def _no_sql_metric(metric_id: str = "m", **overrides) -> dict:
-    """Metric with every field set except SQL — isolates the SQL-gap path."""
+    """Metric with every field set except SQL - isolates the SQL-gap path."""
     base = {
         "id": metric_id,
         "name": "No-SQL Metric",

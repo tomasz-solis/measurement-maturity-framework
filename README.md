@@ -1,9 +1,7 @@
 # Measurement Maturity Framework
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-The Measurement Maturity Framework is a small Streamlit app and Python library for reviewing metric definitions before they are treated as decision-ready.
+The Measurement Maturity Framework is a small Streamlit app and Python library for
+reviewing metric definitions before they are treated as decision-ready.
 
 It does three things:
 - validates the structure of a metric pack
@@ -14,7 +12,7 @@ The point is simple: many metric problems are structural before they are analyti
 
 ---
 
-## Why This Exists
+## Purpose
 
 Most metric problems are structural before they are analytical. A team debating DAU methodology is often missing something more basic: nobody owns the metric, the SQL isn't written down anywhere, and the first time anyone notices the number is wrong is when it surfaces in a board deck.
 
@@ -26,34 +24,33 @@ This tool surfaces those gaps early, while they are still cheap to fix. It does 
 
 Three side studies check whether the framework holds up beyond the unit tests.
 
-**Bayesian robustness analysis** ([`analysis/bayesian_robustness.ipynb`](analysis/bayesian_robustness.ipynb)). The deduction weights in `mmf/config.py` are hand-set, not estimated from data. The notebook perturbs those weights within a plausible range and checks whether the pack scores move much. Across 27 synthetic packs spanning the realistic quality space, the Spearman rank correlation between rule-based scores and Bayesian posterior means is 0.9992, with maximum absolute score divergence of 0.43 points. In practice, the ranking barely moves under reasonable weight uncertainty.
+Bayesian weight sensitivity ([`analysis/bayesian_robustness.ipynb`](analysis/bayesian_robustness.ipynb)). The deduction weights in `mmf/config.py` are hand-set, not estimated from data. The notebook perturbs those weights within a plausible range and checks whether the pack rankings move. Across 27 synthetic packs, the Spearman rank correlation between rule-based scores and Bayesian posterior means is 0.9992, with maximum absolute score divergence of 0.43 points. The rank order barely moves under reasonable weight uncertainty.
 
-**Weight calibration attempt** ([`analysis/weight_calibration.ipynb`](analysis/weight_calibration.ipynb)). The project author ranked the same 27 synthetic packs twice, a few minutes apart, and got test-retest reliability of 0.97. Claude ranked the same packs independently. A ridge regression then fit weights to match the average ranking. MMF's default weights agree with that small consensus at 0.95; fitted weights reach 0.99. The main signal is that `missing_sql` likely deserves more weight, `missing_owner` a bit more, and `tier_v0` a bit less. Because the study is still small and methodologically narrow, the magnitude changes have not shipped as defaults.
+Weight calibration attempt ([`analysis/weight_calibration.ipynb`](analysis/weight_calibration.ipynb)). The same 27 synthetic packs were ranked twice by the project author and once by an independent model rater. A ridge regression then fit weights to match the average ranking. MMF's default weights correlate with that small consensus at 0.95; fitted weights reach 0.99. The useful signal is directional: `missing_sql` likely deserves more weight, `missing_owner` a bit more, and `tier_v0` a bit less. Because the study is small and methodologically narrow, those magnitude changes have not shipped as defaults.
 
-**Retrospective case studies** ([`case_studies/`](case_studies/README.md)). Three public metric failures (Netflix's 2019 "view" redefinition, Facebook's 2014-2016 video watch time inflation, and Uber's MAPC at IPO) are reconstructed as YAML packs and scored. Most of them are misses, and that is useful. They show the boundary of the framework: MMF audits structural gaps, not logic bugs or executive framing choices. The case-study work also helped motivate the current `missing_sql` split between `missing_sql_temporary` and `missing_sql_structural`.
+Retrospective case studies ([`case_studies/`](case_studies/README.md)). Three public metric failures are reconstructed as YAML packs and scored: Netflix's 2019 "view" redefinition, Facebook's 2014-2016 video watch-time inflation, and Uber's MAPC at IPO. Most of them are misses, and that is the point. MMF audits structural gaps; it does not catch every logic bug or executive framing issue. The case studies helped motivate the current `missing_sql_temporary` vs `missing_sql_structural` split.
 
 All three pieces are reproducible: the notebooks regenerate via `python analysis/build_notebook.py` and `python analysis/build_calibration_notebook.py`, and each case study runs from its own YAML through the standard `score_pack()` path.
 
 ---
 
-## Try The UI
+## Running The UI
 
-> **Tip:** If you want a shareable link, this app is simple to deploy on [Streamlit Cloud](https://streamlit.io/cloud).
-
-If you want a quick feel for the app:
 - run `streamlit run app.py`
 - upload `examples/generic_product_metric_pack.yaml`
 - review the validation, scoring, suggestions, and strategy tree sections
 
 ---
 
-## What It Is
+## Boundaries
+
+What it is:
 
 - A review layer for YAML metric definitions
 - A lightweight way to surface ownership, reproducibility, and guardrail gaps
 - A decision-risk check before metrics reach dashboards, planning, or targets
 
-## What It Is Not
+What it is not:
 
 - A BI framework
 - A metrics catalog
@@ -145,7 +142,7 @@ What validation does not do today:
 
 ## How Scoring Works
 
-Scores measure **definition maturity**, not business performance.
+Scores measure definition maturity, not business performance.
 
 ### Metric score
 
@@ -277,7 +274,7 @@ Working assets:
 
 ---
 
-## Philosophy
+## Operating View
 
 Metrics are never just numbers. They carry assumptions, ownership, and failure modes.
 

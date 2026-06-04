@@ -1,7 +1,7 @@
-# Case Study 1 — Netflix redefines "view," reported viewership jumps 35%
+# Case Study 1: Netflix redefines "view," reported viewership jumps 35%
 
-**Status:** MISS under default tagging. HIT when the metric is proactively
-tagged V0. Teaches: V0 is not just for "new" metrics. It is also for metrics
+Status: miss under default tagging. Hit when the metric is proactively tagged
+V0. The lesson is that V0 is not only for new metrics. It is also for metrics
 whose definition is not stable yet.
 
 ## What happened
@@ -10,7 +10,7 @@ From roughly 2015 to 2019, Netflix reported viewership using a metric it later
 called "watchers": a view was counted when a household watched at least 70% of
 a title's runtime. In the Q4 2019 shareholder letter (January 2020), Netflix
 redefined "view" to mean any account that watched at least two minutes of a
-title — long enough to suggest intent, per the company's framing.
+title, long enough to suggest intent under the company's framing.
 
 The effect was immediate and material. Netflix itself disclosed in that same
 shareholder letter that the new metric was "about 35% higher on average than
@@ -32,29 +32,29 @@ had four different operational answers.
 Reconstructed metric spec: [`01_netflix_actual.yaml`](01_netflix_actual.yaml).
 Run the analysis: `python case_studies/01_netflix_run.py`.
 
-### Version A — what Netflix likely had internally (tier: V1)
+### Version A: what Netflix likely had internally (tier: V1)
 
 ```
 Pack score: 100.0
-  title_views: 100.0 — Well-defined and production-ready.
+  title_views: 100.0 - Well-defined and ready for production use.
 ```
 
 The metric has SQL, an owner, tests, a description, unit, grain. Every
-structural check passes. The framework rates it production-ready and hands
+structural check passes. The framework rates it ready for production use and hands
 the analyst a green light.
 
-**This is a miss.** The framework's checklist does not include "is this
+This is a miss. The framework's checklist does not include "is this
 definition under product-marketing pressure to change?" And as a tool that
 only audits what you tell it, it cannot. A competent analyst, looking at the
 Netflix spec as of Q3 2019, would have written something very close to
 Version A. The metric worked. The SQL was correct. Tests caught freshness
 and range problems. Ownership was clear.
 
-### Version B — same metric, proactively tagged V0
+### Version B: same metric, proactively tagged V0
 
 ```
 Pack score: 90.0
-  title_views: 90.0 — Good start, but it's a V0 proxy.
+  title_views: 90.0 - Good start, but it's a V0 proxy.
     gaps: ['tier_v0']
 ```
 
@@ -68,9 +68,9 @@ work.
 ## What this case teaches
 
 The framework's gap-check system doesn't detect redefinition risk directly.
-What it *does* provide is a dedicated instrument for the analyst to declare it:
-**V0 is not just for "I haven't finished the SQL yet." V0 is for "this definition
-is not something I'm willing to commit to long-term."**
+What it does provide is a dedicated instrument for the analyst to declare it:
+V0 can mean "this definition is not something I am willing to commit to
+long-term."
 
 Under that interpretation, any of the following should plausibly be V0:
 
@@ -102,6 +102,6 @@ should do.
 ## Sources
 
 - Netflix Q4 2019 shareholder letter (via company investor relations; reported in
-  WSJ, Hollywood Reporter, Variety — January 2020)
+  WSJ, Hollywood Reporter, Variety, January 2020)
 - Hollywood Reporter, "Netflix Viewership Changes Explained" (June 2023)
 - Michael L Wayne, "Netflix audience data, streaming industry discourse," journals.sagepub.com (2022)

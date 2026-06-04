@@ -160,7 +160,7 @@ class TestStructuralProperties:
     """Posterior behaves sensibly as pack quality varies."""
 
     def test_perfect_pack_has_zero_uncertainty(self):
-        """If there are no gaps, sampled weights are never applied — CI is a point."""
+        """If there are no gaps, sampled weights are never applied - CI is a point."""
         pack = _load_pack("prod_ready_01")  # all metrics score 100
         r = score_pack_bayesian(pack, n_samples=500, seed=42)
         assert r.std == pytest.approx(0.0, abs=1e-9)
@@ -218,7 +218,7 @@ class TestStructuralProperties:
         """Bayesian posterior means should rank packs similarly to rule-based scores.
 
         If ranks diverge wildly, the Bayesian layer is measuring something
-        different from the rule-based scorer — which defeats the purpose.
+        different from the rule-based scorer - which defeats the purpose.
         """
         names = [
             "prod_ready_01",
@@ -325,7 +325,7 @@ class TestRegression:
         """
         pack = _load_pack("edge_single_worst")
         r = score_pack_bayesian(pack, n_samples=2000, seed=42, ci_level=0.90)
-        # Stored as loose ranges — tighter than any plausible bug.
+        # Stored as loose ranges - tighter than any plausible bug.
         assert 66.5 < r.point_estimate < 69.5
         assert 58.0 < r.ci_lower < 62.0
         assert 74.0 < r.ci_upper < 79.0

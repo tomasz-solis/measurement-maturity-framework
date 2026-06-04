@@ -1,4 +1,4 @@
-"""Tests for mmf.mermaid module — strategy tree diagram generation."""
+"""Tests for mmf.mermaid module - strategy tree diagram generation."""
 
 from mmf.mermaid import (
     build_strategy_mermaid,

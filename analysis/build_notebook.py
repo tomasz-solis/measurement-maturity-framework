@@ -40,13 +40,13 @@ def build() -> nbf.NotebookNode:
     nb.cells.append(md(
         "# Bayesian Robustness Analysis\n"
         "\n"
-        "**Measurement Maturity Framework — weight sensitivity under uncertainty**\n"
+        "Measurement Maturity Framework - weight sensitivity under uncertainty\n"
         "\n"
         "The rule-based scorer in `mmf.scoring` applies fixed integer weights to each "
         "metric-definition gap: `-10` for a V0 tier, `-5` for missing SQL, and so on. "
         "Those weights encode judgment about typical gap severity. This notebook asks "
-        "a reasonable follow-up question: **how much does the pack score depend on "
-        "the specific weight values?**\n"
+        "a reasonable follow-up question: how much does the pack score depend on "
+        "the specific weight values?\n"
         "\n"
         "If rankings of real-world packs shift dramatically when weights are "
         "perturbed within a plausible range, the tool's output is an artefact of "
@@ -54,19 +54,19 @@ def build() -> nbf.NotebookNode:
         "the tool is robust to the fact that its weights are asserted rather than "
         "derived from data.\n"
         "\n"
-        "## What this is — and what it isn't\n"
+        "## What this is - and what it isn't\n"
         "\n"
-        "This is a **robustness** analysis. It tests whether the framework's "
+        "This is a robustness analysis. It tests whether the framework's "
         "outputs depend strongly on the exact weight settings. It passes if "
         "rankings are stable under reasonable weight uncertainty.\n"
         "\n"
-        "This is **not** a **calibration** study. Calibration compares the "
+        "This is not a calibration study. Calibration compares the "
         "framework's rankings to independent judgments of pack quality and "
         "fits weights to match. A small-n calibration attempt exists as a "
         "separate notebook (`analysis/weight_calibration.ipynb`); its "
         "findings are held as directional pending a larger rater pool. The "
         "robustness result below is a necessary condition for the tool to be "
-        "trustworthy, not a sufficient one — and it complements the "
+        "trustworthy, not a sufficient one - and it complements the "
         "calibration without replacing it."
     ))
 
@@ -97,14 +97,14 @@ def build() -> nbf.NotebookNode:
         "| `missing_grain` | 2 | 2.0 | ~[0.4, 4.5] |\n"
         "| `missing_unit` | 2 | 2.0 | ~[0.4, 4.5] |\n"
         "\n"
-        "The three `missing_sql*` rows are mutually exclusive — a metric "
+        "The three `missing_sql*` rows are mutually exclusive - a metric "
         "without SQL fires exactly one of them, selected by the "
         "`implementation_type` field. The Bayesian sampling treats all "
         "deductions uniformly; the split still benefits from the analysis "
         "because each row's prior is independently sampled.\n"
         "\n"
         "The concentration value was chosen so the prior 90% CI covers roughly "
-        "±50% of each weight — wide enough to express genuine uncertainty about "
+        "±50% of each weight - wide enough to express genuine uncertainty about "
         "the asserted values, tight enough to stay in a plausible range. Half "
         "a weight point either way is larger than any one reviewer would typically "
         "argue for; twice the value or zero is not defensible.\n"
@@ -188,10 +188,10 @@ def build() -> nbf.NotebookNode:
     ))
 
     nb.cells.append(md(
-        "**Observation worth naming.** The rule-based score has a theoretical "
+        "Observation worth naming. The rule-based score has a theoretical "
         "floor of 68 for a single-metric pack with every gap present (100 − 10 − "
-        "5 − 5 − 5 − 3 − 2 − 2 = 68). This means the lowest threshold band — "
-        "\"Not safe for decisions\" (<40) — is **unreachable** for small packs. "
+        "5 − 5 − 5 − 3 − 2 − 2 = 68). This means the lowest threshold band - "
+        "\"Not safe for decisions\" (<40) - is unreachable for small packs. "
         "This isn't a bug, but it's a property of the scoring that surfaced only "
         "because we generated the full synthetic range. A reviewer using this "
         "framework on a small pack should know that the score has a higher floor "
@@ -236,13 +236,13 @@ def build() -> nbf.NotebookNode:
     ))
 
     # -----------------------------------------------------------------------
-    # Rank correlation — headline result
+    # Rank correlation - headline result
     # -----------------------------------------------------------------------
     nb.cells.append(md(
         "## Headline result: rank correlation\n"
         "\n"
         "The single most important number in this analysis is how well the "
-        "Bayesian posterior mean agrees with the rule-based score as a **ranking** "
+        "Bayesian posterior mean agrees with the rule-based score as a ranking "
         "of packs. If the correlation is weak, the framework's output depends "
         "heavily on the asserted weights. If strong, the framework is robust to "
         "weight uncertainty within the prior's range."
@@ -260,21 +260,21 @@ def build() -> nbf.NotebookNode:
     ))
 
     nb.cells.append(md(
-        "**Interpretation.** Spearman ρ ≈ 0.999 and Kendall τ ≈ 0.99. Within the "
+        "Interpretation. Spearman ρ ≈ 0.999 and Kendall τ ≈ 0.99. Within the "
         "prior range, rankings are essentially invariant to which specific weight "
         "values you pick. Maximum absolute divergence across 27 packs is under 0.5 "
         "score points.\n"
         "\n"
-        "**What this result supports.** The rule-based weights are defensible "
+        "What this result supports. The rule-based weights are defensible "
         "under the stated uncertainty. A reviewer asking \"why −10 for V0 and not "
         "−8 or −12?\" gets a quantitative answer: within that band, it doesn't "
         "change which packs rank as decision-ready.\n"
         "\n"
-        "**What this result does not support.** Whether the asserted weights are "
+        "What this result does not support. Whether the asserted weights are "
         "*right* in absolute terms. A hypothetical weight of `v0_tier = 2` is "
         "outside the prior range by design, so this analysis does not test it. "
         "Answering the \"are the weights right\" question requires calibration "
-        "against independent judgment — see "
+        "against independent judgment - see "
         "`analysis/weight_calibration.ipynb` for a small-n attempt."
     ))
 
@@ -285,7 +285,7 @@ def build() -> nbf.NotebookNode:
         "## Where the posterior matters most: uncertainty vs pack quality\n"
         "\n"
         "Rank correlation is the summary number. The diagnostic question is "
-        "**which packs carry the most score uncertainty?** Intuition says packs "
+        "which packs carry the most score uncertainty? Intuition says packs "
         "with more gaps, because each gap introduces an uncertain weight into "
         "the score. Let's confirm."
     ))
@@ -303,13 +303,13 @@ def build() -> nbf.NotebookNode:
 
     nb.cells.append(md(
         "Monotonic but noisy, which is the expected shape. Packs with identical "
-        "gap counts can have different CI widths depending on *which* gaps — a "
+        "gap counts can have different CI widths depending on *which* gaps - a "
         "V0 tier contributes more weight-uncertainty than a missing `unit` "
         "(because `v0_tier` has the largest prior variance on the scaled Beta)."
     ))
 
     # -----------------------------------------------------------------------
-    # Scatter plot — the money shot
+    # Scatter plot - the money shot
     # -----------------------------------------------------------------------
     nb.cells.append(md(
         "## Full picture: rule-based vs posterior across the corpus\n"
@@ -403,7 +403,7 @@ def build() -> nbf.NotebookNode:
     nb.cells.append(md(
         "All four posteriors are unimodal and approximately symmetric around the "
         "rule-based score. No multi-modality, no long tails, no evidence of "
-        "pathological sampling behaviour — the posterior is as well-behaved as "
+        "pathological sampling behaviour - the posterior is as well-behaved as "
         "the prior, which is what you want for this kind of linear scoring model."
     ))
 
@@ -416,7 +416,7 @@ def build() -> nbf.NotebookNode:
         "Even though rankings correlate at ρ ≈ 0.999, absolute score divergences "
         "are diagnostic. The packs below have the largest gap between rule-based "
         "and posterior mean. These are the packs where weight uncertainty "
-        "matters most — and for a practitioner, these are the packs where a "
+        "matters most - and for a practitioner, these are the packs where a "
         "second review should be considered before using the score in a decision."
     ))
 
@@ -426,10 +426,10 @@ def build() -> nbf.NotebookNode:
     ))
 
     nb.cells.append(md(
-        "The divergences are small (max ~0.5 points) but all **in the same "
-        "direction**: posterior mean ≤ rule-based. That's a consistent, tiny "
+        "The divergences are small (max ~0.5 points) but all in the same "
+        "direction: posterior mean ≤ rule-based. That's a consistent, tiny "
         "bias arising from the asymmetric shape of Beta priors when their mean "
-        "is far from 0.5 — in other words, a property of the prior "
+        "is far from 0.5 - in other words, a property of the prior "
         "specification, not a problem with the scoring. For the small-deduction "
         "weights (`missing_unit` = 2 → Beta mean = 0.1), the prior has a "
         "right-skew; occasional large draws pull the score slightly down.\n"
@@ -447,19 +447,19 @@ def build() -> nbf.NotebookNode:
     nb.cells.append(md(
         "## Conclusions\n"
         "\n"
-        "**The rule-based scorer is robust to weight uncertainty within the "
-        "stated prior range.** Rankings of real packs are stable (ρ ≈ 0.999) "
+        "The rule-based scorer is robust to weight uncertainty within the "
+        "stated prior range. Rankings of real packs are stable (ρ ≈ 0.999) "
         "and absolute score divergences are under one point. This addresses the "
         "most likely first criticism of the tool (\"why these weights?\") with a "
         "quantitative answer: within a reasonable uncertainty range, it doesn't "
         "change the conclusions.\n"
         "\n"
-        "**What the framework should not claim.** This analysis does not "
+        "What the framework should not claim. This analysis does not "
         "establish that the weights are *correct*. It establishes that they are "
         "*robust*. Calibration against labelled judgments is needed to "
         "make the stronger claim.\n"
         "\n"
-        "**Related work: a small-n calibration exists.** "
+        "Related work: a small-n calibration exists. "
         "`analysis/weight_calibration.ipynb` fits MMF's weights against a "
         "consensus ranking of the 27 synthetic packs produced by two rankers "
         "(the project author + Claude). Its findings are held as directional "
@@ -468,12 +468,12 @@ def build() -> nbf.NotebookNode:
         "`missing_sql_temporary` (-3) and `missing_sql_structural` (-12), "
         "selected by an optional `implementation_type` field on each metric. "
         "The three magnitude revisions the calibration recommends are "
-        "deliberately not shipped — see SCORING_METHODOLOGY.md for the "
+        "deliberately not shipped - see SCORING_METHODOLOGY.md for the "
         "reasoning.\n"
         "\n"
-        "**What this enables in the UI.** Deliberately nothing. The Bayesian "
+        "What this enables in the UI. Deliberately nothing. The Bayesian "
         "machinery stays in the analysis path because its primary audience is "
-        "the technical reviewer asking hard questions about the scoring — not "
+        "the technical reviewer asking hard questions about the scoring - not "
         "the stakeholder who wants a clear headline number. Keeping the UI "
         "simple preserves the stakeholder-facing clarity that is the tool's "
         "actual product value."
