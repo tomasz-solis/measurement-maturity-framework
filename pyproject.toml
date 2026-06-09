@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68.0"]
+requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,7 +7,7 @@ name = "measurement-maturity-framework"
 version = "0.1.0"
 description = "Deterministic metric pack auditor for product analytics teams"
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
     "streamlit>=1.44.0",
@@ -28,6 +28,12 @@ dev = [
 [project.urls]
 Homepage = "https://github.com/tomasz-solis/measurement-maturity-framework"
 "Bug Tracker" = "https://github.com/tomasz-solis/measurement-maturity-framework/issues"
+
+[tool.setuptools.packages.find]
+include = ["mmf*"]
+
+[tool.setuptools.package-data]
+mmf = ["theme.css"]
 
 [tool.black]
 line-length = 88
