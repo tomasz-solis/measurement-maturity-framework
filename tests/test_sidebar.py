@@ -21,10 +21,12 @@ class TestSidebarExamples:
         examples_dir.mkdir()
 
         _write_text(
-            examples_dir / "spreadsheet_pipeline_pack.yaml", "pack: spreadsheet"
+            examples_dir / "notifications_measurement.yaml", "pack: notifications"
         )
-        _write_text(examples_dir / "generic_product_metric_pack.yaml", "pack: generic")
-        _write_text(examples_dir / "mixed_maturity_pack.yaml", "pack: mixed")
+        _write_text(
+            examples_dir / "onboarding_measurement_ready.yaml", "pack: onboarding"
+        )
+        _write_text(examples_dir / "mobile_app_measurement.yaml", "pack: mobile")
         _write_text(examples_dir / "z_custom_pack.yaml", "pack: custom")
 
         templates_dir = tmp_path / "templates"
@@ -36,15 +38,15 @@ class TestSidebarExamples:
         examples = sidebar.load_sidebar_examples()
 
         assert [example.file_name for example in examples] == [
-            "generic_product_metric_pack.yaml",
-            "mixed_maturity_pack.yaml",
-            "spreadsheet_pipeline_pack.yaml",
+            "onboarding_measurement_ready.yaml",
+            "mobile_app_measurement.yaml",
+            "notifications_measurement.yaml",
             "z_custom_pack.yaml",
         ]
         assert [example.label for example in examples[:3]] == [
-            "Generic product example",
-            "Mixed maturity example",
-            "Spreadsheet pipeline example",
+            "Onboarding (healthy)",
+            "Mobile app",
+            "Notifications",
         ]
 
     def test_render_sidebar_examples_renders_only_example_downloads(self, monkeypatch):
@@ -95,8 +97,8 @@ class TestSidebarExamples:
 
         assert subheaders == ["Example Packs"]
         assert [button["label"] for button in buttons] == [
-            "Download Generic product example",
-            "Download Mixed maturity example",
+            "Generic product example",
+            "Mixed maturity example",
         ]
         assert all(button["mime"] == "text/yaml" for button in buttons)
         assert all("template" not in str(button["label"]).lower() for button in buttons)

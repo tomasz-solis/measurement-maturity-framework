@@ -1,0 +1,128 @@
+# Vertical Measurement Pack template (schema_version 2.0)
+#
+# A v2 pack describes ONE product vertical as a measurement graph:
+# metrics -> decisions -> OKRs -> guardrails -> instrumentation -> ownership/rhythm.
+#
+# Fill in as much as you have. The pack is valid and useful at every level
+# (see docs/V2_SCHEMA.md "Progressive levels"): absent sections are reported as
+# "not assessed", never penalized. There is NO field for an expected number of
+# OKRs/KPIs/metrics — count is never scored (docs/V2_SCORING_METHODOLOGY.md).
+
+pack:
+  id: example_vertical_readiness
+  name: Example Vertical Measurement Readiness Pack
+  version: 0.1.0
+  schema_version: "2.0"
+  visibility: public_sample          # public_sample | private
+
+# ---- L1: vertical + strategy + OKRs + roles -------------------------------
+vertical:
+  id: example_vertical
+  name: Example Vertical
+  description: One product area and its measurement system.
+  lifecycle_stage: scaling           # exploring | scaling | mature (informational)
+  owner: Example Product Team
+
+strategy:
+  company_goals:
+    - { id: example_goal, name: Example Company Goal }
+  vertical_outcomes:
+    - id: example_outcome
+      name: The outcome this vertical is trying to move
+      linked_company_goals: [example_goal]
+
+okrs:
+  - id: example_okr
+    objective: What we are trying to achieve
+    owner: Example Product Team
+    period: Example period
+    key_results:
+      - id: example_kr
+        description: The measurable result
+        linked_metrics: [example_primary]   # must resolve to a metric id
+
+metric_portfolio:
+  design_intent: Free text for your own context. Unscored. No count target here.
+
+metrics:
+  - id: example_primary
+    name: Example Primary Metric
+    role: primary_metric              # primary|supporting|diagnostic|guardrail|input|output
+    tier: V1                          # V0 (proxy) | V1 (settled) — maturity, not role
+    status: active
+    accountable: Example Product Team # accountable OR responsible satisfies ownership
+    description: What this metric measures and why it matters.
+    unit: percent
+    grain: account
+    direction: higher_is_better       # higher_is_better | lower_is_better
+    linked_okrs: [example_okr]
+    linked_decisions: [example_decision]
+    depends_on: [example_event]       # instrumentation ids (when instrumentation is listed)
+    sql:
+      numerator: |
+        SELECT ...
+      denominator: |
+        SELECT ...
+      # or, for a non-ratio metric:
+      # value: |
+      #   SELECT ...
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+    known_limitations: []
+    interpretation_notes: []
+
+  - id: example_guardrail
+    name: Example Guardrail Metric
+    role: guardrail_metric
+    tier: V1
+    status: active
+    accountable: Example Product Team
+    description: What harm this guardrail protects against.
+    unit: percent
+    grain: account
+    direction: lower_is_better
+    linked_decisions: [example_decision]
+    sql:
+      value: |
+        SELECT ...
+    tests:
+      - { type: not_null }
+
+# ---- L2: decisions (the central object) -----------------------------------
+decisions:
+  - id: example_decision
+    question: The recurring product decision this measurement should support.
+    owner: Example Product Lead
+    cadence: weekly                   # how often the decision recurs
+    decision_type: rollout            # rollout|launch|ranking_change|pricing_change|
+                                      # prioritization|monitoring|... (risk-bearing types
+                                      # require a guardrail to be decision-ready)
+    required_metrics: [example_primary, example_guardrail]   # must resolve
+    guardrails: [example_guardrail]
+    action_thresholds:                # display-only; never validated or scored
+      - { condition: Primary improves and guardrail stable, action: Proceed }
+      - { condition: Guardrail worsens, action: Pause and investigate }
+
+# ---- L3: instrumentation + operating model + authored debt ----------------
+instrumentation:
+  - { id: example_event, status: complete, description: Source event for the metric. }
+                                      # status: complete | partial | missing
+
+operating_model:
+  review_cadence: weekly
+  primary_forum: Example performance review
+  decision_log_exists: false         # evidence, weighted above self-declared links
+  last_reviewed: null                # a date, or null if there is no evidence
+
+# Most debt is DERIVED from the graph above. Author items here only for problems
+# the structure cannot see (e.g., an event that fires incorrectly).
+measurement_debt: []
+
+# Private deployments only. Public packs keep these null (CI rejects non-null).
+internal_references:
+  dashboard_url: null
+  metric_catalog_url: null
+  dbt_model: null
+  source_table: null
+  planning_doc: null

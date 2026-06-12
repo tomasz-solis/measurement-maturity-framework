@@ -1,0 +1,175 @@
+# Reporting & Insights — Operating Gap Pack (SHARED-WEAKNESS sample)
+#
+# Purpose: a fourth vertical for the cross-vertical view. Its metrics are well
+# defined, role-clear, and decision-linked, and its decisions are ready -- but it
+# has NO operating rhythm (no review cadence, no decision log, never reviewed).
+#
+# Designed outcome: 2/2 decisions ready, but Operating rhythm = Weak caps the
+# overall band at "Usable with caution". It shares the Operating-rhythm weakness
+# with search_decision_gap, so the cross-vertical "shared gaps" view surfaces
+# operating rhythm as the most common weak dimension across verticals.
+#
+# Org-agnostic; shape deliberately differs from the other samples.
+
+pack:
+  id: reporting_operating_gap
+  name: Reporting & Insights Operating Gap Pack
+  version: 0.1.0
+  schema_version: "2.0"
+  visibility: public_sample
+
+vertical:
+  id: reporting
+  name: Reporting & Insights
+  description: Example area for dashboards, scheduled reports, and insights.
+  lifecycle_stage: mature
+  owner: Reporting Product Team
+
+strategy:
+  company_goals:
+    - { id: stickiness, name: Product Stickiness }
+  vertical_outcomes:
+    - id: teams_act_on_data
+      name: Teams act on the data they see
+      linked_company_goals: [stickiness]
+
+okrs:
+  - id: reporting_okr_1
+    objective: Grow reliable reporting usage
+    owner: Reporting Product Team
+    period: Example period
+    key_results:
+      - id: kr_adoption
+        description: Increase weekly report adoption
+        linked_metrics: [report_adoption_rate]
+      - id: kr_delivery
+        description: Increase scheduled-report delivery success
+        linked_metrics: [scheduled_delivery_success_rate]
+
+metric_portfolio:
+  design_intent: Track reporting usage and reliability.
+
+metrics:
+  - id: report_adoption_rate
+    name: Weekly Report Adoption Rate
+    role: primary_metric
+    tier: V1
+    status: active
+    accountable: Reporting Product Team
+    description: Share of active accounts that open a report or dashboard weekly.
+    unit: percent
+    grain: account_week
+    direction: higher_is_better
+    linked_okrs: [reporting_okr_1]
+    linked_decisions: [prioritize_reporting_investments]
+    depends_on: [reporting_events]
+    sql:
+      numerator: |
+        SELECT COUNT(DISTINCT account_id) FROM report_views
+        WHERE viewed_at >= DATE_TRUNC('week', CURRENT_DATE)
+      denominator: |
+        SELECT COUNT(DISTINCT account_id) FROM active_accounts
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+  - id: insight_action_rate
+    name: Insight Action Rate
+    role: supporting_metric
+    tier: V1
+    status: active
+    accountable: Reporting Product Team
+    description: Share of viewed insights that lead to an in-product action.
+    unit: percent
+    grain: account_week
+    direction: higher_is_better
+    linked_decisions: [prioritize_reporting_investments]
+    depends_on: [reporting_events]
+    sql:
+      numerator: |
+        SELECT COUNT(*) FROM insight_actions
+      denominator: |
+        SELECT COUNT(*) FROM insight_views
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+  - id: scheduled_delivery_success_rate
+    name: Scheduled Delivery Success Rate
+    role: supporting_metric
+    tier: V1
+    status: active
+    accountable: Reporting Product Team
+    description: Share of scheduled report deliveries that complete successfully.
+    unit: percent
+    grain: delivery
+    direction: higher_is_better
+    linked_okrs: [reporting_okr_1]
+    linked_decisions: [improve_report_reliability]
+    depends_on: [reporting_events]
+    sql:
+      numerator: |
+        SELECT COUNT(*) FROM scheduled_deliveries WHERE status = 'delivered'
+      denominator: |
+        SELECT COUNT(*) FROM scheduled_deliveries
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+  - id: dashboard_load_time
+    name: Dashboard Load Time
+    role: diagnostic_metric
+    tier: V1
+    status: active
+    accountable: Reporting Product Team
+    description: Median dashboard load time, used to investigate adoption dips.
+    unit: seconds
+    grain: dashboard_view
+    direction: lower_is_better
+    linked_decisions: [improve_report_reliability]
+    depends_on: [reporting_events]
+    sql:
+      value: |
+        SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY load_ms) / 1000.0
+        FROM dashboard_views
+    tests:
+      - { type: not_null }
+
+decisions:
+  - id: prioritize_reporting_investments
+    question: Where should reporting invest next?
+    owner: Reporting Product Lead
+    cadence: monthly
+    decision_type: prioritization
+    required_metrics: [report_adoption_rate, insight_action_rate]
+    guardrails: []
+    action_thresholds:
+      - { condition: Adoption flat but actions rising, action: Invest in insight surfacing }
+
+  - id: improve_report_reliability
+    question: Should we prioritize reporting reliability work?
+    owner: Reporting Product Lead
+    cadence: monthly
+    decision_type: prioritization
+    required_metrics: [scheduled_delivery_success_rate, dashboard_load_time]
+    guardrails: []
+    action_thresholds:
+      - { condition: Delivery success dips or load time rises, action: Prioritize reliability }
+
+instrumentation:
+  - { id: reporting_events, status: complete, description: Report views, insight actions, deliveries. }
+
+# The gap: no operating rhythm. Cadence, forum, decision log, and review date are all absent.
+operating_model:
+  review_cadence: null
+  primary_forum: null
+  decision_log_exists: false
+  last_reviewed: null
+
+measurement_debt: []
+
+internal_references:
+  dashboard_url: null
+  metric_catalog_url: null
+  dbt_model: null
+  source_table: null

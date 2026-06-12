@@ -26,17 +26,33 @@ class SidebarExample:
 
 
 _EXAMPLE_METADATA: dict[str, tuple[str, str]] = {
-    "generic_product_metric_pack.yaml": (
-        "Generic product example",
-        "A full reference pack spanning adoption, engagement, outcome, reliability, and support.",
+    "onboarding_measurement_ready.yaml": (
+        "Onboarding (healthy)",
+        "A healthy, decision-ready measurement system - what good looks like.",
     ),
-    "mixed_maturity_pack.yaml": (
-        "Mixed maturity example",
-        "Shows how one weaker V0 metric can drag a mostly strong pack downward.",
+    "mobile_app_measurement.yaml": (
+        "Mobile app",
+        "Reliable, decision-linked mobile metrics with a crash-free guardrail.",
     ),
-    "spreadsheet_pipeline_pack.yaml": (
-        "Spreadsheet pipeline example",
-        "Highlights the structural SQL gap for metrics that still depend on spreadsheet pipelines.",
+    "notifications_measurement.yaml": (
+        "Notifications",
+        "Relevance and opt-out metrics wired to notification decisions.",
+    ),
+    "support_experience_measurement.yaml": (
+        "Support experience",
+        "Resolution, response time, and CSAT linked to support decisions.",
+    ),
+    "collaboration_portfolio_design.yaml": (
+        "Collaboration portfolio design",
+        "Good metrics, but unclear roles and weak decision linkage.",
+    ),
+    "search_decision_gap.yaml": (
+        "Search decision gap",
+        "Well-defined metrics, but a weak decision model.",
+    ),
+    "reporting_operating_gap.yaml": (
+        "Reporting operating gap",
+        "Solid metrics with no operating rhythm; used in the cross-vertical view.",
     ),
 }
 _PREFERRED_EXAMPLE_ORDER = tuple(_EXAMPLE_METADATA)
@@ -77,8 +93,7 @@ def _example_label_and_description(file_name: str) -> tuple[str, str]:
 
     stem = file_name.rsplit(".", 1)[0].replace("_", " ").strip()
     label = stem.title() or file_name
-    description = "Example pack from ./examples."
-    return label, description
+    return label, ""
 
 
 def load_sidebar_examples() -> list[SidebarExample]:
@@ -138,25 +153,16 @@ def render_sidebar_examples(examples: Sequence[SidebarExample]) -> None:
         )
         for example in examples:
             render_download_button(
-                label=f"Download {example.label}",
+                label=example.label,
                 data=example.content,
                 file_name=example.file_name,
                 mime="text/yaml",
             )
-            st.markdown(
-                f'<p class="mmf-sidebar-example-copy">{example.description}</p>',
-                unsafe_allow_html=True,
-            )
-
-    st.markdown("---")
-    st.markdown(
-        (
-            '<p class="mmf-sidebar-tip">'
-            "Tip: keep IDs stable. It makes change tracking much easier later."
-            "</p>"
-        ),
-        unsafe_allow_html=True,
-    )
+            if example.description:
+                st.markdown(
+                    f'<p class="mmf-sidebar-example-copy">{example.description}</p>',
+                    unsafe_allow_html=True,
+                )
 
 
 def render_normalized_download(normalized_yaml_text: str) -> None:

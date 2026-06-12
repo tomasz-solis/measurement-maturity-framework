@@ -1,0 +1,166 @@
+# Support Experience — Measurement Pack (v2, decision-ready exemplar)
+#
+# A clean, principal-level v2 vertical: resolution, response time, and CSAT are
+# source-controlled, tested, owned, role-clear, and wired to decisions with a
+# guardrail. Scores in the "Decision-ready" band; every metric is ~100.
+
+pack:
+  id: support_experience_measurement
+  name: Support Experience Measurement Pack
+  version: 0.1.0
+  schema_version: "2.0"
+  visibility: public_sample
+
+vertical:
+  id: support
+  name: Support Experience
+  description: Example area for the in-product help and support experience.
+  lifecycle_stage: mature
+  owner: Support Product Team
+
+strategy:
+  company_goals:
+    - { id: retention, name: Customer Retention }
+  vertical_outcomes:
+    - id: fast_helpful_support
+      name: Fast, helpful support that resolves issues
+      linked_company_goals: [retention]
+
+okrs:
+  - id: support_okr_1
+    objective: Improve support resolution
+    owner: Support Product Team
+    period: Example period
+    key_results:
+      - id: kr_resolution
+        description: Increase first-contact resolution
+        linked_metrics: [first_contact_resolution_rate]
+      - id: kr_csat
+        description: Increase support CSAT
+        linked_metrics: [support_csat]
+
+metric_portfolio:
+  design_intent: Track support speed and quality for the weekly review.
+
+metrics:
+  - id: first_contact_resolution_rate
+    name: First-contact Resolution Rate
+    role: primary_metric
+    tier: V1
+    status: active
+    accountable: Support Product Team
+    description: Share of support contacts resolved on first interaction.
+    unit: percent
+    grain: contact
+    direction: higher_is_better
+    linked_okrs: [support_okr_1]
+    linked_decisions: [staff_support_coverage, roll_out_self_service]
+    depends_on: [support_events]
+    sql:
+      numerator: |
+        SELECT COUNT(*) FROM support_contacts WHERE resolved_first_contact = true
+      denominator: |
+        SELECT COUNT(*) FROM support_contacts
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+  - id: median_response_time
+    name: Median First Response Time
+    role: supporting_metric
+    tier: V1
+    status: active
+    accountable: Support Product Team
+    description: Median minutes to first response on a support contact.
+    unit: minutes
+    grain: contact
+    direction: lower_is_better
+    linked_decisions: [staff_support_coverage]
+    depends_on: [support_events]
+    sql:
+      value: |
+        SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY first_response_s) / 60.0
+        FROM support_contacts
+    tests:
+      - { type: not_null }
+
+  - id: support_csat
+    name: Support CSAT
+    role: output_metric
+    tier: V1
+    status: active
+    accountable: Support Product Team
+    description: Average satisfaction score on resolved support contacts.
+    unit: score
+    grain: contact
+    direction: higher_is_better
+    linked_okrs: [support_okr_1]
+    linked_decisions: [staff_support_coverage]
+    depends_on: [support_events]
+    sql:
+      value: |
+        SELECT AVG(csat_score) FROM support_contacts WHERE csat_score IS NOT NULL
+    tests:
+      - { type: not_null }
+      - { type: range, field: csat_score, min: 1, max: 5 }
+
+  - id: reopen_rate
+    name: Ticket Reopen Rate
+    role: guardrail_metric
+    tier: V1
+    status: active
+    accountable: Support Product Team
+    description: Share of resolved contacts reopened within 7 days.
+    unit: percent
+    grain: contact
+    direction: lower_is_better
+    linked_okrs: [support_okr_1]
+    linked_decisions: [roll_out_self_service]
+    depends_on: [support_events]
+    sql:
+      numerator: |
+        SELECT COUNT(*) FROM support_contacts WHERE reopened_within_7d = true
+      denominator: |
+        SELECT COUNT(*) FROM support_contacts WHERE resolved = true
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+decisions:
+  - id: staff_support_coverage
+    question: How should we staff support coverage next quarter?
+    owner: Support Product Lead
+    cadence: monthly
+    decision_type: prioritization
+    required_metrics: [median_response_time, first_contact_resolution_rate]
+    guardrails: []
+    action_thresholds:
+      - { condition: Response time rising, action: Add coverage at peak hours }
+
+  - id: roll_out_self_service
+    question: Should we roll out the new self-service flow?
+    owner: Support Product Lead
+    cadence: weekly during rollout
+    decision_type: rollout
+    required_metrics: [first_contact_resolution_rate, reopen_rate]
+    guardrails: [reopen_rate]
+    action_thresholds:
+      - { condition: Resolution holds and reopens stay flat, action: Continue rollout }
+      - { condition: Reopens rise, action: Pause and investigate }
+
+instrumentation:
+  - { id: support_events, status: complete, description: Contact, response, resolution, CSAT, reopen events. }
+
+operating_model:
+  review_cadence: weekly
+  primary_forum: Support weekly product review
+  decision_log_exists: true
+  last_reviewed: "2026-05-26"
+
+measurement_debt: []
+
+internal_references:
+  dashboard_url: null
+  metric_catalog_url: null
+  dbt_model: null
+  source_table: null

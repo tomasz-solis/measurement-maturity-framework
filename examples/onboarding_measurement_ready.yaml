@@ -1,0 +1,184 @@
+# Onboarding — Measurement Readiness Pack (HEALTHY sample)
+#
+# Purpose: show what a decision-ready measurement system looks like.
+# Designed outcome: 2/2 decisions decision-ready, overall band "Decision-ready",
+# no dimension rated Weak. See docs/V2_SCORING_METHODOLOGY.md (discriminant test).
+#
+# Org-agnostic and deliberately small/varied in shape. Do not read into the counts.
+
+pack:
+  id: onboarding_measurement_readiness
+  name: Onboarding Measurement Readiness Pack
+  version: 0.1.0
+  schema_version: "2.0"
+  visibility: public_sample
+
+vertical:
+  id: onboarding
+  name: Onboarding
+  description: Example area focused on getting new accounts to first value.
+  lifecycle_stage: scaling
+  owner: Onboarding Product Team
+
+strategy:
+  company_goals:
+    - { id: retention, name: Customer Retention }
+  vertical_outcomes:
+    - id: faster_first_value
+      name: Get new accounts to first value faster
+      linked_company_goals: [retention]
+
+okrs:
+  - id: onboarding_okr_1
+    objective: Improve activation
+    owner: Onboarding Product Team
+    period: Example period
+    key_results:
+      - id: kr_activation
+        description: Increase 14-day activation rate
+        linked_metrics: [activation_rate]
+      - id: kr_setup
+        description: Increase core setup completion
+        linked_metrics: [setup_completion_rate]
+
+metric_portfolio:
+  design_intent: Support the weekly onboarding performance review.
+
+metrics:
+  - id: activation_rate
+    name: Activation Rate
+    role: primary_metric
+    tier: V1
+    status: active
+    accountable: Onboarding Product Team
+    description: Share of new accounts reaching first value within 14 days of signup.
+    unit: percent
+    grain: account
+    direction: higher_is_better
+    linked_okrs: [onboarding_okr_1]
+    linked_decisions: [continue_new_onboarding]
+    depends_on: [setup_completed_event, first_value_event]
+    sql:
+      numerator: |
+        SELECT COUNT(DISTINCT account_id) FROM setup_events
+        WHERE event = 'first_value' AND days_since_signup <= 14
+      denominator: |
+        SELECT COUNT(DISTINCT account_id) FROM accounts
+        WHERE signup_at >= CURRENT_DATE - INTERVAL '90 days'
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+    interpretation_notes:
+      - Read alongside support_contact_rate to catch activation that creates friction.
+
+  - id: setup_completion_rate
+    name: Core Setup Completion Rate
+    role: input_metric
+    tier: V1
+    status: active
+    accountable: Onboarding Product Team
+    description: Share of new accounts that complete the core setup checklist.
+    unit: percent
+    grain: account
+    direction: higher_is_better
+    linked_okrs: [onboarding_okr_1]
+    linked_decisions: [prioritize_onboarding_work]
+    depends_on: [setup_completed_event]
+    sql:
+      numerator: |
+        SELECT COUNT(DISTINCT account_id) FROM setup_events
+        WHERE event = 'core_setup_completed'
+      denominator: |
+        SELECT COUNT(DISTINCT account_id) FROM accounts
+        WHERE signup_at >= CURRENT_DATE - INTERVAL '90 days'
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+  - id: time_to_first_value
+    name: Time to First Value
+    role: supporting_metric
+    tier: V1
+    status: active
+    accountable: Onboarding Product Team
+    description: Median hours from signup to first successful core action.
+    unit: hours
+    grain: account
+    direction: lower_is_better
+    linked_decisions: [prioritize_onboarding_work]
+    depends_on: [first_value_event]
+    sql:
+      value: |
+        SELECT account_id,
+               EXTRACT(EPOCH FROM (first_value_at - signup_at)) / 3600.0 AS hours_ttfv
+        FROM accounts
+        WHERE first_value_at IS NOT NULL
+    tests:
+      - { type: not_null, field: hours_ttfv }
+      - { type: range, field: hours_ttfv, min: 0, max: 720 }
+
+  - id: support_contact_rate
+    name: Support Contact Rate
+    role: guardrail_metric
+    tier: V1
+    status: active
+    accountable: Onboarding Product Team
+    description: Share of new accounts that contact support within 14 days.
+    unit: percent
+    grain: account_week
+    direction: lower_is_better
+    linked_decisions: [continue_new_onboarding]
+    depends_on: [support_ticket_link]
+    sql:
+      numerator: |
+        SELECT COUNT(DISTINCT account_id) FROM support_tickets
+        WHERE days_since_signup <= 14
+      denominator: |
+        SELECT COUNT(DISTINCT account_id) FROM accounts
+        WHERE signup_at >= CURRENT_DATE - INTERVAL '14 days'
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+decisions:
+  - id: continue_new_onboarding
+    question: Should we continue rolling out the new onboarding flow?
+    owner: Onboarding Product Lead
+    cadence: weekly during rollout
+    decision_type: rollout
+    required_metrics: [activation_rate, support_contact_rate]
+    guardrails: [support_contact_rate]
+    action_thresholds:
+      - { condition: Activation up and support contacts stable, action: Continue rollout }
+      - { condition: Activation up but support contacts up, action: Pause and investigate friction }
+
+  - id: prioritize_onboarding_work
+    question: Where should onboarding invest next quarter?
+    owner: Onboarding Product Lead
+    cadence: weekly
+    decision_type: prioritization
+    required_metrics: [time_to_first_value, setup_completion_rate]
+    guardrails: []
+    action_thresholds:
+      - { condition: Setup completion lags time-to-value, action: Prioritize setup friction }
+
+instrumentation:
+  - { id: setup_completed_event, status: complete, description: Core setup + first-value events. }
+  - { id: first_value_event, status: complete, description: First successful core action. }
+  - { id: support_ticket_link, status: complete, description: Support tickets linked to account. }
+
+operating_model:
+  review_cadence: weekly
+  primary_forum: Onboarding weekly performance review
+  decision_log_exists: true
+  last_reviewed: "2026-05-30"
+
+# No authored debt: nothing here that the graph cannot already see.
+measurement_debt: []
+
+# Public packs keep internal_references null (or omit the block). CI rejects non-null. (PRD §15)
+internal_references:
+  dashboard_url: null
+  metric_catalog_url: null
+  dbt_model: null
+  source_table: null

@@ -1,0 +1,6 @@
+# Streamlit theme. The detailed look is injected via mmf/theme.css; this only
+# sets the accent so default widgets (buttons, radios, checkboxes) stop using
+# Streamlit's red primaryColor, which clashes with the blue/mint palette.
+[theme]
+base = "light"
+primaryColor = "#4f6dff"

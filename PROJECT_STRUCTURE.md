@@ -51,5 +51,5 @@ mypy app.py mmf/
 - New validation rule: update `mmf/validator.py` and add tests in `tests/test_validator.py`.
 - New scoring rule: update `mmf/config.py`, `mmf/scoring.py`, and the relevant tests.
 - New suggestion behavior: update `mmf/suggestions.py` and its tests.
-- New example pack: add it under `examples/`. The sidebar prefers `generic_product_metric_pack.yaml`.
+- New example pack: add it under `examples/`. The sidebar prefers `onboarding_measurement_ready.yaml`.
 - New case study or analysis artifact: keep it under `case_studies/` or `analysis/`, not mixed into the app code.

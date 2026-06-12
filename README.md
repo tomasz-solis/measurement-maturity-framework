@@ -20,6 +20,44 @@ This tool surfaces those gaps early, while they are still cheap to fix. It does 
 
 ---
 
+## Version 2: Vertical Measurement Readiness (in progress)
+
+v1 answers *is this individual metric structurally ready?* v2 adds a larger
+question: *can this product area use its measurement system to make reliable
+recurring decisions?*
+
+A v2 **vertical measurement pack** models one product area as a measurement
+graph — metrics, the decisions they feed, the OKRs they ladder to, the
+guardrails that protect them, the instrumentation they depend on, and the
+ownership and review rhythm that keep them alive. The headline result is
+decision-centric: *how many of the vertical's key decisions are backed by
+trusted, owned, instrumented, guardrailed metrics*, reported as a band rather
+than a falsely-precise number.
+
+> MetricReady does not judge whether a team has too many or too few metrics. It
+> assesses whether the metric portfolio is structured well enough to support
+> recurring product decisions.
+
+Metric count is never a scoring input. Operating concerns are expressed as
+*counts of problems* — orphaned metrics, missing roles, decisions with no
+metric — never counts of metrics.
+
+The framework is **dual-use**: this public repo is fully company-agnostic
+(engine plus sample packs); a private deployment maps real OKRs, KPIs, and
+metric definitions into the same schema using local packs that never enter a
+public repo.
+
+Three sample packs show the core idea — all three have well-defined metrics, but
+only one is decision-ready:
+
+- [examples/onboarding_measurement_ready.yaml](examples/onboarding_measurement_ready.yaml) — a healthy, decision-ready system
+- [examples/collaboration_portfolio_design.yaml](examples/collaboration_portfolio_design.yaml) — good metrics, unclear roles and linkage
+- [examples/search_decision_gap.yaml](examples/search_decision_gap.yaml) — good metrics, weak decision model
+
+Docs: [PRD](docs/PRD_v2_product_measurement_readiness.md) · [V2 schema](docs/V2_SCHEMA.md) · [V2 scoring methodology](docs/V2_SCORING_METHODOLOGY.md). v1 metric packs continue to validate and score unchanged.
+
+---
+
 ## Evidence
 
 Three side studies check whether the framework holds up beyond the unit tests.
@@ -37,8 +75,9 @@ All three pieces are reproducible: the notebooks regenerate via `python analysis
 ## Running The UI
 
 - run `streamlit run app.py`
-- upload `examples/generic_product_metric_pack.yaml`
-- review the validation, scoring, suggestions, and strategy tree sections
+- pick **Review a pack** and upload `examples/onboarding_measurement_ready.yaml` (a v2 vertical pack)
+- review the vertical readiness, decision map, measurement debt, strategy tree, and brief sections
+- or pick **Compare verticals** to see the cross-vertical heatmap across the bundled packs
 
 ---
 
@@ -268,7 +307,8 @@ Documentation:
 - [examples/README.md](examples/README.md)
 
 Working assets:
-- [examples/generic_product_metric_pack.yaml](examples/generic_product_metric_pack.yaml)
+- [examples/onboarding_measurement_ready.yaml](examples/onboarding_measurement_ready.yaml)
+- [templates/vertical_measurement_pack_template.yaml](templates/vertical_measurement_pack_template.yaml)
 - [templates/metric_template.yaml](templates/metric_template.yaml)
 - [templates/metric_pack_template.yaml](templates/metric_pack_template.yaml)
 

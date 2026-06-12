@@ -1,0 +1,169 @@
+# Notifications — Measurement Pack (v2, decision-ready exemplar)
+#
+# A clean, principal-level v2 vertical: relevance and opt-out metrics are
+# source-controlled, tested, owned, role-clear, and wired to decisions with a
+# guardrail. Scores in the "Decision-ready" band; every metric is ~100.
+
+pack:
+  id: notifications_measurement
+  name: Notifications Measurement Pack
+  version: 0.1.0
+  schema_version: "2.0"
+  visibility: public_sample
+
+vertical:
+  id: notifications
+  name: Notifications
+  description: Example area for outbound product notifications.
+  lifecycle_stage: scaling
+  owner: Notifications Product Team
+
+strategy:
+  company_goals:
+    - { id: engagement, name: Sustained Engagement }
+  vertical_outcomes:
+    - id: timely_relevant_notifications
+      name: Timely, relevant notifications people keep on
+      linked_company_goals: [engagement]
+
+okrs:
+  - id: notifications_okr_1
+    objective: Improve notification relevance
+    owner: Notifications Product Team
+    period: Example period
+    key_results:
+      - id: kr_open
+        description: Increase notification open rate
+        linked_metrics: [notification_open_rate]
+      - id: kr_optout
+        description: Keep opt-outs low
+        linked_metrics: [notification_opt_out_rate]
+
+metric_portfolio:
+  design_intent: Track notification relevance and fatigue for the weekly review.
+
+metrics:
+  - id: notification_open_rate
+    name: Notification Open Rate
+    role: primary_metric
+    tier: V1
+    status: active
+    accountable: Notifications Product Team
+    description: Share of delivered notifications that are opened.
+    unit: percent
+    grain: notification
+    direction: higher_is_better
+    linked_okrs: [notifications_okr_1]
+    linked_decisions: [tune_notification_defaults]
+    depends_on: [notification_events]
+    sql:
+      numerator: |
+        SELECT COUNT(*) FROM notifications WHERE opened = true
+      denominator: |
+        SELECT COUNT(*) FROM notifications WHERE delivered = true
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+  - id: click_through_rate
+    name: Notification Click-through Rate
+    role: supporting_metric
+    tier: V1
+    status: active
+    accountable: Notifications Product Team
+    description: Share of opened notifications that are clicked through.
+    unit: percent
+    grain: notification
+    direction: higher_is_better
+    linked_decisions: [prioritize_notification_work]
+    depends_on: [notification_events]
+    sql:
+      numerator: |
+        SELECT COUNT(*) FROM notifications WHERE clicked = true
+      denominator: |
+        SELECT COUNT(*) FROM notifications WHERE opened = true
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+  - id: delivery_success_rate
+    name: Delivery Success Rate
+    role: diagnostic_metric
+    tier: V1
+    status: active
+    accountable: Notifications Platform Team
+    description: Share of notifications successfully delivered, used to investigate dips.
+    unit: percent
+    grain: notification
+    direction: higher_is_better
+    linked_decisions: [prioritize_notification_work]
+    depends_on: [notification_events]
+    sql:
+      numerator: |
+        SELECT COUNT(*) FROM notifications WHERE delivered = true
+      denominator: |
+        SELECT COUNT(*) FROM notifications
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+  - id: notification_opt_out_rate
+    name: Notification Opt-out Rate
+    role: guardrail_metric
+    tier: V1
+    status: active
+    accountable: Notifications Product Team
+    description: Share of active accounts that disable notifications in a week.
+    unit: percent
+    grain: account_week
+    direction: lower_is_better
+    linked_okrs: [notifications_okr_1]
+    linked_decisions: [tune_notification_defaults]
+    depends_on: [notification_events]
+    sql:
+      numerator: |
+        SELECT COUNT(DISTINCT account_id) FROM notification_settings WHERE enabled = false
+      denominator: |
+        SELECT COUNT(DISTINCT account_id) FROM active_accounts
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+decisions:
+  - id: tune_notification_defaults
+    question: Should we change notification default settings?
+    owner: Notifications Product Lead
+    cadence: weekly during rollout
+    decision_type: rollout
+    required_metrics: [notification_open_rate, notification_opt_out_rate]
+    guardrails: [notification_opt_out_rate]
+    action_thresholds:
+      - { condition: Opens rise and opt-outs stay stable, action: Keep new defaults }
+      - { condition: Opt-outs rise, action: Revert defaults }
+
+  - id: prioritize_notification_work
+    question: Where should notifications invest next?
+    owner: Notifications Product Lead
+    cadence: monthly
+    decision_type: prioritization
+    required_metrics: [click_through_rate, delivery_success_rate]
+    guardrails: []
+    action_thresholds:
+      - { condition: Click-through lags opens, action: Invest in relevance }
+
+instrumentation:
+  - { id: notification_events, status: complete, description: Send, deliver, open, click, opt-out events. }
+
+operating_model:
+  review_cadence: weekly
+  primary_forum: Notifications weekly product review
+  decision_log_exists: true
+  last_reviewed: "2026-05-27"
+
+measurement_debt: []
+
+internal_references:
+  dashboard_url: null
+  metric_catalog_url: null
+  dbt_model: null
+  source_table: null

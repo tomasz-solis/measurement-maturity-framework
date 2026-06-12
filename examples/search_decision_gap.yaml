@@ -1,0 +1,169 @@
+# Search — Decision Gap Pack (WEAK DECISION MODEL sample)
+#
+# Purpose: a product area with well-defined, OKR-linked metrics whose DECISIONS are
+# weak: one decision references a metric that does not exist, a risk-bearing rollout
+# has no guardrail, and there is no operating rhythm. Good metrics, weak system.
+#
+# Designed outcome: 1/2 decisions decision-ready, overall band "Fragile".
+# Weak dimensions: Decision coverage & linkage, Guardrail coverage, Operating rhythm.
+# Metric definition quality stays Strong. Signature debt: decision_linkage (a decision
+# references undefined `query_understanding_score`). See methodology discriminant test.
+#
+# Org-agnostic; shape deliberately differs from the other samples.
+
+pack:
+  id: search_decision_gap
+  name: Search Decision Gap Pack
+  version: 0.1.0
+  schema_version: "2.0"
+  visibility: public_sample
+
+vertical:
+  id: search
+  name: Search & Discovery
+  description: Example area for query-based search and result ranking.
+  lifecycle_stage: mature
+  owner: Search Product Team
+
+strategy:
+  company_goals:
+    - { id: activation, name: Faster Activation }
+  vertical_outcomes:
+    - id: users_find_things
+      name: Users reliably find what they need
+      linked_company_goals: [activation]
+
+okrs:
+  - id: search_okr_1
+    objective: Improve search effectiveness
+    owner: Search Product Team
+    period: Example period
+    key_results:
+      - id: kr_success
+        description: Increase search success rate
+        linked_metrics: [search_success_rate]
+      - id: kr_zero
+        description: Reduce zero-result searches
+        linked_metrics: [zero_result_rate]
+
+metric_portfolio:
+  design_intent: Track search effectiveness for OKR reporting.
+
+# All three metrics are well-defined (definition quality is Strong) and OKR-linked.
+# The gap is downstream: they are barely wired into operating decisions.
+metrics:
+  - id: search_success_rate
+    name: Search Success Rate
+    role: primary_metric
+    tier: V1
+    status: active
+    accountable: Search Product Team
+    description: Share of searches with a result click within the session.
+    unit: percent
+    grain: search_session
+    direction: higher_is_better
+    linked_okrs: [search_okr_1]
+    linked_decisions: [improve_search_relevance, ship_search_ranking_change]
+    depends_on: [search_index]
+    sql:
+      numerator: |
+        SELECT COUNT(*) FROM searches
+        WHERE clicked_result = true
+      denominator: |
+        SELECT COUNT(*) FROM searches
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+  - id: result_click_through_rate
+    name: Result Click-through Rate
+    role: supporting_metric
+    tier: V1
+    status: active
+    accountable: Search Product Team
+    description: Average click-through rate across returned result lists.
+    unit: percent
+    grain: search_session
+    direction: higher_is_better
+    linked_okrs: [search_okr_1]
+    linked_decisions: [improve_search_relevance]
+    depends_on: [search_index]
+    sql:
+      numerator: |
+        SELECT COUNT(*) FROM result_impressions WHERE clicked = true
+      denominator: |
+        SELECT COUNT(*) FROM result_impressions
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+  # Well-defined guardrail, linked to an OKR but to NO decision:
+  # "OKR-linked but not operationalized" finding (softer than a full orphan).
+  - id: zero_result_rate
+    name: Zero-result Rate
+    role: guardrail_metric
+    tier: V1
+    status: active
+    accountable: Search Product Team
+    description: Share of searches that return no results.
+    unit: percent
+    grain: search_session
+    direction: lower_is_better
+    linked_okrs: [search_okr_1]
+    sql:
+      numerator: |
+        SELECT COUNT(*) FROM searches WHERE result_count = 0
+      denominator: |
+        SELECT COUNT(*) FROM searches
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+decisions:
+  - id: improve_search_relevance
+    question: Where should we invest to improve relevance next?
+    owner: Search Product Lead
+    cadence: monthly
+    decision_type: prioritization
+    required_metrics: [search_success_rate, result_click_through_rate]
+    guardrails: []
+    action_thresholds:
+      - { condition: Click-through lags success rate, action: Investigate ranking }
+
+  # Risk-bearing rollout, but (a) references a metric that does not exist and
+  # (b) has no guardrail. This decision is "Not ready".
+  - id: ship_search_ranking_change
+    question: Should we ship the new ranking model?
+    owner: Search Product Lead
+    cadence: per release
+    decision_type: ranking_change
+    required_metrics: [search_success_rate, query_understanding_score]
+    guardrails: []
+    action_thresholds:
+      - { condition: Success rate improves without harming a quality bar, action: Ship }
+
+instrumentation:
+  - { id: search_index, status: complete, description: Search + result-click event stream. }
+
+operating_model:
+  review_cadence: null
+  primary_forum: null
+  decision_log_exists: false
+  last_reviewed: null
+
+# Authored debt for what the graph cannot see: a planned metric has no source yet.
+# (The dangling reference itself is also derived; this adds the "why".)
+measurement_debt:
+  - id: query_understanding_not_instrumented
+    type: instrumentation
+    severity: high
+    description: The planned query-understanding metric has no instrumentation source yet.
+    affected_metrics: []
+    affected_decisions: [ship_search_ranking_change]
+    recommended_fix: Instrument a query-understanding signal before gating ranking changes on it.
+
+internal_references:
+  dashboard_url: null
+  metric_catalog_url: null
+  dbt_model: null
+  source_table: null

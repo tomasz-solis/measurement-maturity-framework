@@ -16,6 +16,8 @@ from .components import (
     validation_signal,
 )
 from .layout import (
+    data_table_html,
+    heatmap_table_html,
     inject_theme_css,
     render_empty_state_cards,
     render_footer,
@@ -34,6 +36,8 @@ from .sidebar import (
 )
 
 __all__ = [
+    "data_table_html",
+    "heatmap_table_html",
     "inject_theme_css",
     "issue_counts",
     "load_sidebar_examples",

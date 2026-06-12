@@ -69,13 +69,17 @@ def issue_counts(issues: List[Any]) -> Dict[str, int]:
 
 
 def suggestion_group_icon(items: List[Dict[str, str]]) -> str:
-    """Return an icon character summarising a metric's suggestion state."""
+    """Return a colour-coded status dot summarising a metric's suggestion state.
+
+    Green = all good, yellow = minor improvements (info), red = significant
+    changes (warnings/critical). Colour conveys severity faster than a glyph.
+    """
     severities = {(item.get("severity") or "").lower() for item in items}
     if "critical" in severities or "warning" in severities:
-        return "!"
+        return "\U0001f534"  # red circle
     if "info" in severities:
-        return "i"
-    return "OK"
+        return "\U0001f7e1"  # yellow circle
+    return "\U0001f7e2"  # green circle
 
 
 def render_sidebar_intro() -> None:

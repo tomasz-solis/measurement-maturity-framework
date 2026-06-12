@@ -1,0 +1,168 @@
+# Mobile App — Measurement Pack (v2, decision-ready exemplar)
+#
+# A clean, principal-level v2 vertical: every metric is source-controlled,
+# tested, owned, and role-clear; decisions are backed by trusted metrics and
+# guardrails; there is a real operating rhythm. Scores in the "Decision-ready"
+# band and every metric is definition-complete (~100).
+
+pack:
+  id: mobile_app_measurement
+  name: Mobile App Measurement Pack
+  version: 0.1.0
+  schema_version: "2.0"
+  visibility: public_sample
+
+vertical:
+  id: mobile_app
+  name: Mobile App
+  description: Example area for the native mobile experience.
+  lifecycle_stage: scaling
+  owner: Mobile Product Team
+
+strategy:
+  company_goals:
+    - { id: engagement, name: Sustained Engagement }
+  vertical_outcomes:
+    - id: reliable_mobile_experience
+      name: A reliable, frequently-used mobile experience
+      linked_company_goals: [engagement]
+
+okrs:
+  - id: mobile_okr_1
+    objective: Grow reliable mobile usage
+    owner: Mobile Product Team
+    period: Example period
+    key_results:
+      - id: kr_mobile_active
+        description: Increase weekly mobile active rate
+        linked_metrics: [mobile_active_rate]
+      - id: kr_crash_free
+        description: Keep sessions crash-free
+        linked_metrics: [crash_free_rate]
+
+metric_portfolio:
+  design_intent: Track mobile engagement and reliability for the weekly review.
+
+metrics:
+  - id: mobile_active_rate
+    name: Weekly Mobile Active Rate
+    role: primary_metric
+    tier: V1
+    status: active
+    accountable: Mobile Product Team
+    description: Share of active accounts that use the mobile app in a week.
+    unit: percent
+    grain: account_week
+    direction: higher_is_better
+    linked_okrs: [mobile_okr_1]
+    linked_decisions: [expand_mobile_features]
+    depends_on: [mobile_events]
+    sql:
+      numerator: |
+        SELECT COUNT(DISTINCT account_id) FROM mobile_sessions
+        WHERE started_at >= DATE_TRUNC('week', CURRENT_DATE)
+      denominator: |
+        SELECT COUNT(DISTINCT account_id) FROM active_accounts
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+  - id: session_length
+    name: Median Session Length
+    role: supporting_metric
+    tier: V1
+    status: active
+    accountable: Mobile Product Team
+    description: Median mobile session length in minutes.
+    unit: minutes
+    grain: session
+    direction: higher_is_better
+    linked_decisions: [prioritize_mobile_work]
+    depends_on: [mobile_events]
+    sql:
+      value: |
+        SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY duration_s) / 60.0
+        FROM mobile_sessions
+    tests:
+      - { type: not_null }
+
+  - id: push_opt_in_rate
+    name: Push Opt-in Rate
+    role: input_metric
+    tier: V1
+    status: active
+    accountable: Mobile Product Team
+    description: Share of mobile accounts opted in to push notifications.
+    unit: percent
+    grain: account
+    direction: higher_is_better
+    linked_decisions: [prioritize_mobile_work]
+    depends_on: [mobile_events]
+    sql:
+      numerator: |
+        SELECT COUNT(DISTINCT account_id) FROM push_settings WHERE opted_in = true
+      denominator: |
+        SELECT COUNT(DISTINCT account_id) FROM mobile_accounts
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+  - id: crash_free_rate
+    name: Crash-free Session Rate
+    role: guardrail_metric
+    tier: V1
+    status: active
+    accountable: Mobile Platform Team
+    description: Share of mobile sessions that complete without a crash.
+    unit: percent
+    grain: session
+    direction: higher_is_better
+    linked_okrs: [mobile_okr_1]
+    linked_decisions: [expand_mobile_features]
+    depends_on: [mobile_events]
+    sql:
+      numerator: |
+        SELECT COUNT(*) FROM mobile_sessions WHERE crashed = false
+      denominator: |
+        SELECT COUNT(*) FROM mobile_sessions
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+decisions:
+  - id: expand_mobile_features
+    question: Should we expand the mobile feature set?
+    owner: Mobile Product Lead
+    cadence: monthly
+    decision_type: launch
+    required_metrics: [mobile_active_rate, crash_free_rate]
+    guardrails: [crash_free_rate]
+    action_thresholds:
+      - { condition: Active rate rising and sessions stay crash-free, action: Expand }
+
+  - id: prioritize_mobile_work
+    question: Where should mobile invest next?
+    owner: Mobile Product Lead
+    cadence: weekly
+    decision_type: prioritization
+    required_metrics: [session_length, push_opt_in_rate]
+    guardrails: []
+    action_thresholds:
+      - { condition: Session length flat, action: Prioritize engagement surfaces }
+
+instrumentation:
+  - { id: mobile_events, status: complete, description: Mobile session, push, and crash events. }
+
+operating_model:
+  review_cadence: weekly
+  primary_forum: Mobile weekly product review
+  decision_log_exists: true
+  last_reviewed: "2026-05-29"
+
+measurement_debt: []
+
+internal_references:
+  dashboard_url: null
+  metric_catalog_url: null
+  dbt_model: null
+  source_table: null

@@ -1,0 +1,185 @@
+# Team Collaboration — Portfolio Design Pack (ROLE-CLARITY GAP sample)
+#
+# Purpose: a portfolio with useful, well-defined metrics that needs clearer role
+# separation and decision linkage. The metrics are good; the system is mis-organized.
+#
+# Designed outcome: 2/2 decisions are decision-ready, BUT "Portfolio role clarity"
+# is rated Weak (one metric has no role; two metrics are orphaned), which caps the
+# overall band at "Usable with caution". Metric definition quality stays Strong.
+# Signature debt: decision_linkage (orphaned metrics). See methodology discriminant test.
+#
+# Org-agnostic; shape deliberately differs from the other samples.
+
+pack:
+  id: collaboration_portfolio_design
+  name: Team Collaboration Portfolio Design Pack
+  version: 0.1.0
+  schema_version: "2.0"
+  visibility: public_sample
+
+vertical:
+  id: collaboration
+  name: Team Collaboration
+  description: Example area for shared workspaces, documents, and discussion.
+  lifecycle_stage: scaling
+  owner: Collaboration Product Team
+
+strategy:
+  company_goals:
+    - { id: engagement, name: Sustained Engagement }
+  vertical_outcomes:
+    - id: more_team_collaboration
+      name: More teams collaborating regularly
+      linked_company_goals: [engagement]
+
+okrs:
+  - id: collab_okr_1
+    objective: Grow active collaboration
+    owner: Collaboration Product Team
+    period: Example period
+    key_results:
+      - id: kr_active_collab
+        description: Increase weekly active collaborators
+        linked_metrics: [active_collaborators]
+
+metric_portfolio:
+  design_intent: Track collaboration health for the weekly product review.
+
+metrics:
+  - id: active_collaborators
+    name: Weekly Active Collaborators
+    role: primary_metric
+    tier: V1
+    status: active
+    accountable: Collaboration Product Team
+    description: Accounts with at least one collaborative action in the week.
+    unit: count
+    grain: account_week
+    direction: higher_is_better
+    linked_okrs: [collab_okr_1]
+    linked_decisions: [expand_collaboration_features, tune_notifications]
+    sql:
+      value: |
+        SELECT COUNT(DISTINCT account_id) FROM collab_events
+        WHERE occurred_at >= DATE_TRUNC('week', CURRENT_DATE)
+    tests:
+      - { type: not_null }
+
+  - id: shared_docs_created
+    name: Shared Documents Created
+    role: supporting_metric
+    tier: V1
+    status: active
+    accountable: Collaboration Product Team
+    description: Count of documents shared with at least one other member.
+    unit: count
+    grain: account_week
+    direction: higher_is_better
+    linked_decisions: [expand_collaboration_features]
+    sql:
+      value: |
+        SELECT COUNT(*) FROM documents
+        WHERE shared = true AND created_at >= DATE_TRUNC('week', CURRENT_DATE)
+    tests:
+      - { type: not_null }
+
+  # NO role set, and linked to nothing -> orphan + role-clarity finding.
+  # Otherwise well-defined (definition quality is not affected by a missing role).
+  - id: comment_volume
+    name: Comment Volume
+    tier: V1
+    status: active
+    accountable: Collaboration Product Team
+    description: Total comments posted across shared documents per week.
+    unit: count
+    grain: account_week
+    direction: higher_is_better
+    sql:
+      value: |
+        SELECT COUNT(*) FROM comments
+        WHERE created_at >= DATE_TRUNC('week', CURRENT_DATE)
+    tests:
+      - { type: not_null }
+
+  # Well-defined diagnostic, but orphaned: linked to no decision and no OKR.
+  - id: mentions_per_user
+    name: Mentions per Active User
+    role: diagnostic_metric
+    tier: V1
+    status: active
+    accountable: Collaboration Product Team
+    description: Average @-mentions received per active collaborator per week.
+    unit: ratio
+    grain: account_week
+    direction: higher_is_better
+    sql:
+      numerator: |
+        SELECT COUNT(*) FROM mentions
+        WHERE created_at >= DATE_TRUNC('week', CURRENT_DATE)
+      denominator: |
+        SELECT COUNT(DISTINCT account_id) FROM collab_events
+        WHERE occurred_at >= DATE_TRUNC('week', CURRENT_DATE)
+    tests:
+      - { type: not_null }
+
+  - id: notification_opt_out_rate
+    name: Notification Opt-out Rate
+    role: guardrail_metric
+    tier: V1
+    status: active
+    accountable: Collaboration Product Team
+    description: Share of active users who disable collaboration notifications.
+    unit: percent
+    grain: account_week
+    direction: lower_is_better
+    linked_decisions: [tune_notifications]
+    sql:
+      numerator: |
+        SELECT COUNT(DISTINCT account_id) FROM notification_settings
+        WHERE collaboration_notifications = false
+      denominator: |
+        SELECT COUNT(DISTINCT account_id) FROM collab_events
+        WHERE occurred_at >= DATE_TRUNC('week', CURRENT_DATE)
+    tests:
+      - { type: not_null }
+      - { type: range, field: value, min: 0, max: 100 }
+
+decisions:
+  - id: expand_collaboration_features
+    question: Should we expand the collaboration feature set?
+    owner: Collaboration Product Lead
+    cadence: monthly
+    decision_type: launch
+    required_metrics: [active_collaborators, shared_docs_created]
+    guardrails: [notification_opt_out_rate]
+    action_thresholds:
+      - { condition: Active collaborators and shared docs both rising, action: Expand }
+
+  - id: tune_notifications
+    question: Should we change collaboration notification defaults?
+    owner: Collaboration Product Lead
+    cadence: weekly during rollout
+    decision_type: rollout
+    required_metrics: [notification_opt_out_rate, active_collaborators]
+    guardrails: [notification_opt_out_rate]
+    action_thresholds:
+      - { condition: Engagement up and opt-outs stable, action: Keep new defaults }
+      - { condition: Opt-outs rise, action: Revert defaults }
+
+instrumentation:
+  - { id: collab_event_stream, status: complete, description: Collaborative action events. }
+
+operating_model:
+  review_cadence: weekly
+  primary_forum: Collaboration weekly product review
+  decision_log_exists: true
+  last_reviewed: "2026-05-28"
+
+# Debt is derived (two orphaned metrics + one missing role). Nothing authored here.
+measurement_debt: []
+
+internal_references:
+  dashboard_url: null
+  metric_catalog_url: null
+  dbt_model: null
+  source_table: null

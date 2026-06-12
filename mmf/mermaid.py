@@ -57,6 +57,129 @@ def build_strategy_mermaid(pack: Mapping[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def build_vertical_strategy_mermaid(pack: Mapping[str, Any]) -> str:
+    """Build a Mermaid flowchart for a v2 vertical pack's strategy.
+
+    Ladders bottom-up: primary/supporting metrics -> OKRs -> the vertical ->
+    vertical outcomes -> company goals. Returns "" when there is nothing to draw
+    (an L0/L1 pack without strategy or OKRs).
+    """
+    _strategy = pack.get("strategy")
+    strategy: Dict[str, Any] = _strategy if isinstance(_strategy, dict) else {}
+    goals = [
+        g
+        for g in (strategy.get("company_goals") or [])
+        if isinstance(g, dict) and g.get("id")
+    ]
+    outcomes = [
+        o
+        for o in (strategy.get("vertical_outcomes") or [])
+        if isinstance(o, dict) and o.get("id")
+    ]
+    okrs = [o for o in (pack.get("okrs") or []) if isinstance(o, dict) and o.get("id")]
+    metrics_by_id: Dict[str, Any] = {
+        str(m.get("id")): m
+        for m in (pack.get("metrics") or [])
+        if isinstance(m, dict) and m.get("id")
+    }
+
+    if not (goals or outcomes or okrs):
+        return ""
+
+    _vertical = pack.get("vertical")
+    vertical: Dict[str, Any] = _vertical if isinstance(_vertical, dict) else {}
+    _meta = pack.get("pack")
+    meta: Dict[str, Any] = _meta if isinstance(_meta, dict) else {}
+    vname = vertical.get("name") or meta.get("name") or "Vertical"
+    vnode = "v_node"
+
+    lines: List[str] = ["flowchart BT"]
+
+    if goals:
+        lines.append('  subgraph Goals["Company Goals"]')
+        lines.append("    direction LR")
+        for g in goals:
+            lines.append(f'    g_{_safe(g["id"])}["{_esc(g.get("name") or g["id"])}"]')
+        lines += ["  end", ""]
+
+    for o in outcomes:
+        lines.append(f'  o_{_safe(o["id"])}(["{_esc(o.get("name") or o["id"])}"])')
+    if outcomes:
+        lines.append("")
+
+    lines += [f'  {vnode}["{_esc(vname)}"]', ""]
+
+    for okr in okrs:
+        lines.append(
+            f'  k_{_safe(okr["id"])}["{_esc(okr.get("objective") or okr["id"])}"]'
+        )
+    if okrs:
+        lines.append("")
+
+    rendered_metrics: List[str] = []
+    metric_edges: List[Tuple[str, str]] = []
+    for okr in okrs:
+        linked: List[str] = []
+        for kr in okr.get("key_results") or []:
+            if isinstance(kr, dict):
+                linked += list(kr.get("linked_metrics") or [])
+        for m_id, metric in metrics_by_id.items():
+            if okr["id"] in (metric.get("linked_okrs") or []):
+                linked.append(m_id)
+        for m_id in dict.fromkeys(linked):
+            if m_id not in metrics_by_id:
+                continue
+            if m_id not in rendered_metrics:
+                name = metrics_by_id[m_id].get("name") or m_id
+                lines.append(f'  m_{_safe(m_id)}["{_esc(name)}"]')
+                rendered_metrics.append(m_id)
+            metric_edges.append((f"m_{_safe(m_id)}", f"k_{_safe(okr['id'])}"))
+    if rendered_metrics:
+        lines.append("")
+
+    lines.append("  %% --- CONNECTIONS ---")
+    for src, dst in metric_edges:
+        lines.append(f"  {src} --> {dst}")
+    for okr in okrs:
+        lines.append(f"  k_{_safe(okr['id'])} --> {vnode}")
+    for o in outcomes:
+        lines.append(f"  {vnode} --> o_{_safe(o['id'])}")
+    goal_id_set = {g["id"] for g in goals}
+    for o in outcomes:
+        for gid in o.get("linked_company_goals") or []:
+            if gid in goal_id_set:
+                lines.append(f"  o_{_safe(o['id'])} == ladders ==> g_{_safe(gid)}")
+    lines.append("")
+
+    lines.append("  classDef metric fill:#eef2ff,stroke:#4f6dff,color:#10131a")
+    lines.append("  classDef okr fill:#e6f7f1,stroke:#1ecf9b,color:#10131a")
+    lines.append("  classDef outcome fill:#fff7e6,stroke:#d18a1f,color:#10131a")
+    if rendered_metrics:
+        lines.append(
+            "  class " + ",".join(f"m_{_safe(m)}" for m in rendered_metrics) + " metric"
+        )
+    if okrs:
+        lines.append(
+            "  class " + ",".join(f"k_{_safe(o['id'])}" for o in okrs) + " okr"
+        )
+    if outcomes:
+        lines.append(
+            "  class " + ",".join(f"o_{_safe(o['id'])}" for o in outcomes) + " outcome"
+        )
+    lines.append(f"  style {vnode} fill:#0d1015,stroke:#0d1015,color:#ffffff")
+    for g in goals:
+        lines.append(
+            f"  style g_{_safe(g['id'])} fill:#e0e0e0,stroke:#9e9e9e,color:#616161"
+        )
+
+    return "\n".join(lines)
+
+
+def _safe(text: str) -> str:
+    """Sanitise an id into a Mermaid-safe node id fragment."""
+    return re.sub(r"[^0-9A-Za-z_]", "_", str(text))
+
+
 # -------------------------
 # Section renderers
 # -------------------------

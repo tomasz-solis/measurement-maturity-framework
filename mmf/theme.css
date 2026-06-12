@@ -8,6 +8,7 @@
           --mmf-blue: #4f6dff;
           --mmf-mint: #1ecf9b;
           --mmf-amber: #d18a1f;
+          --mmf-orange: #e07b1a;
           --mmf-red: #dd5b52;
         }
 
@@ -265,13 +266,14 @@
 
         .mmf-grid-card .value {
           font-size: 1.9rem;
-          line-height: 1;
+          line-height: 1.08;
           letter-spacing: -0.04em;
           font-weight: 700;
           margin-bottom: 0.55rem;
           font-family: "Avenir Next", "Helvetica Neue", sans-serif;
           min-height: 2rem;
           font-variant-numeric: tabular-nums;
+          overflow-wrap: anywhere;
         }
 
         .mmf-grid-card .body {
@@ -286,7 +288,11 @@
         }
 
         .mmf-tone-good .value {
-          color: #14b47a;
+          color: #0f9d6c;
+        }
+
+        .mmf-tone-alarm .value {
+          color: var(--mmf-orange);
         }
 
         .mmf-tone-watch .value {
@@ -330,10 +336,22 @@
 
         .mmf-card-row {
           display: grid;
-          grid-template-columns: repeat(var(--mmf-card-cols, 3), minmax(0, 1fr));
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 1rem;
           align-items: stretch;
           margin: 0 0 0.25rem;
+        }
+
+        .mmf-card-row.mmf-cols-2 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .mmf-card-row.mmf-cols-3 {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .mmf-card-row.mmf-cols-4 {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
         }
 
         .mmf-threshold-band {
@@ -481,7 +499,229 @@
             grid-template-columns: 1fr;
           }
 
-          .mmf-card-row {
+          .mmf-card-row,
+          .mmf-card-row.mmf-cols-2,
+          .mmf-card-row.mmf-cols-3,
+          .mmf-card-row.mmf-cols-4 {
             grid-template-columns: 1fr;
           }
+        }
+
+        /* Main-area buttons: on-brand accent, never the default red. */
+        [data-testid="stMainBlockContainer"] .stDownloadButton > button,
+        [data-testid="stMainBlockContainer"] .stButton > button {
+          background: linear-gradient(135deg, var(--mmf-blue), var(--mmf-mint));
+          color: #ffffff;
+          border: 1px solid rgba(79, 109, 255, 0.35);
+          border-radius: 999px;
+          min-height: 2.85rem;
+          font-weight: 650;
+          box-shadow: 0 10px 24px rgba(79, 109, 255, 0.18);
+          transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+        }
+
+        [data-testid="stMainBlockContainer"] .stDownloadButton > button p,
+        [data-testid="stMainBlockContainer"] .stButton > button p {
+          color: #ffffff !important;
+        }
+
+        [data-testid="stMainBlockContainer"] .stDownloadButton > button:hover,
+        [data-testid="stMainBlockContainer"] .stButton > button:hover {
+          filter: brightness(1.06);
+          transform: translateY(-1px);
+          color: #ffffff;
+          border-color: rgba(79, 109, 255, 0.5);
+          box-shadow: 0 14px 30px rgba(79, 109, 255, 0.26);
+        }
+
+        [data-testid="stMainBlockContainer"] .stDownloadButton > button:focus,
+        [data-testid="stMainBlockContainer"] .stDownloadButton > button:focus:not(:active),
+        [data-testid="stMainBlockContainer"] .stButton > button:focus,
+        [data-testid="stMainBlockContainer"] .stButton > button:focus:not(:active) {
+          color: #ffffff;
+          border-color: rgba(79, 109, 255, 0.6);
+          box-shadow: 0 0 0 3px rgba(79, 109, 255, 0.28);
+        }
+
+        /* Cross-vertical heatmap (verticals as columns, dimensions as rows). */
+        .mmf-heatmap-wrap {
+          overflow-x: auto;
+          border-radius: 26px;
+          border: 1px solid rgba(16, 19, 26, 0.08);
+          box-shadow: 0 14px 34px rgba(15, 18, 26, 0.06);
+          background: rgba(255, 255, 255, 0.82);
+          margin: 0.25rem 0 0.5rem;
+        }
+
+        .mmf-heatmap {
+          border-collapse: collapse;
+          width: 100%;
+          font-size: 0.9rem;
+        }
+
+        .mmf-heatmap th,
+        .mmf-heatmap td {
+          padding: 0.6rem 0.85rem;
+          text-align: center;
+          border-bottom: 1px solid rgba(16, 19, 26, 0.06);
+          white-space: nowrap;
+        }
+
+        .mmf-heatmap thead th {
+          font-size: 0.74rem;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #46506a;
+          font-weight: 700;
+          background: rgba(13, 16, 21, 0.04);
+        }
+
+        .mmf-heatmap tbody th {
+          text-align: left;
+          font-weight: 650;
+          color: #10131a;
+          background: rgba(255, 255, 255, 0.92);
+          position: sticky;
+          left: 0;
+        }
+
+        .mmf-heatmap tbody td {
+          font-weight: 600;
+          color: #10131a;
+        }
+
+        .mmf-hm-good {
+          background: rgba(30, 207, 155, 0.22);
+        }
+
+        .mmf-hm-watch {
+          background: rgba(209, 138, 31, 0.22);
+        }
+
+        .mmf-hm-risk {
+          background: rgba(221, 91, 82, 0.24);
+        }
+
+        .mmf-hm-none {
+          background: rgba(16, 19, 26, 0.05);
+          color: #6a7281;
+        }
+
+        .mmf-heatmap .mmf-hm-corner {
+          background: rgba(13, 16, 21, 0.04);
+        }
+
+        .mmf-hm-alarm {
+          background: rgba(224, 123, 26, 0.22);
+        }
+
+        /* Tone-tinted stat cards so status reads at a glance. */
+        .mmf-grid-card.mmf-tone-good:not(.mmf-grid-card--dark) {
+          background: linear-gradient(180deg, rgba(30, 207, 155, 0.16), rgba(255, 255, 255, 0.82));
+          border-color: rgba(30, 207, 155, 0.34);
+        }
+
+        .mmf-grid-card.mmf-tone-watch:not(.mmf-grid-card--dark) {
+          background: linear-gradient(180deg, rgba(209, 138, 31, 0.16), rgba(255, 255, 255, 0.82));
+          border-color: rgba(209, 138, 31, 0.32);
+        }
+
+        .mmf-grid-card.mmf-tone-alarm:not(.mmf-grid-card--dark) {
+          background: linear-gradient(180deg, rgba(224, 123, 26, 0.18), rgba(255, 255, 255, 0.82));
+          border-color: rgba(224, 123, 26, 0.34);
+        }
+
+        .mmf-grid-card.mmf-tone-risk:not(.mmf-grid-card--dark) {
+          background: linear-gradient(180deg, rgba(221, 91, 82, 0.16), rgba(255, 255, 255, 0.82));
+          border-color: rgba(221, 91, 82, 0.32);
+        }
+
+        /* Alerts: keep the semantic tint but force high-contrast dark text. */
+        [data-testid="stAlert"] {
+          color: #0f1720;
+        }
+
+        [data-testid="stAlert"] [data-testid="stMarkdownContainer"],
+        [data-testid="stAlert"] [data-testid="stMarkdownContainer"] p,
+        [data-testid="stAlert"] [data-testid="stMarkdownContainer"] * {
+          color: #0f1720 !important;
+        }
+
+        /* Unified data tables: light, high-contrast, same look as the heatmap. */
+        .mmf-table-wrap {
+          overflow-x: auto;
+          border-radius: 26px;
+          border: 1px solid rgba(16, 19, 26, 0.08);
+          box-shadow: 0 14px 34px rgba(15, 18, 26, 0.06);
+          background: rgba(255, 255, 255, 0.9);
+          margin: 0.25rem 0 0.5rem;
+        }
+
+        .mmf-table {
+          border-collapse: collapse;
+          width: 100%;
+          font-size: 0.9rem;
+        }
+
+        .mmf-table th,
+        .mmf-table td {
+          padding: 0.6rem 0.9rem;
+          text-align: left;
+          vertical-align: top;
+          border-bottom: 1px solid rgba(16, 19, 26, 0.06);
+          color: #10131a;
+        }
+
+        .mmf-table thead th {
+          font-size: 0.74rem;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: #46506a;
+          font-weight: 700;
+          background: rgba(13, 16, 21, 0.04);
+          white-space: nowrap;
+        }
+
+        .mmf-table tbody tr:last-child td {
+          border-bottom: none;
+        }
+
+        /* Status chips used inside tables. */
+        .mmf-tag {
+          display: inline-block;
+          padding: 0.18rem 0.6rem;
+          border-radius: 999px;
+          font-size: 0.78rem;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .mmf-tag-good {
+          background: rgba(30, 207, 155, 0.24);
+          color: #0a6e4c;
+        }
+
+        .mmf-tag-watch {
+          background: rgba(209, 138, 31, 0.24);
+          color: #8a5a08;
+        }
+
+        .mmf-tag-alarm {
+          background: rgba(224, 123, 26, 0.24);
+          color: #97490a;
+        }
+
+        .mmf-tag-risk {
+          background: rgba(221, 91, 82, 0.26);
+          color: #9a2f28;
+        }
+
+        .mmf-tag-accent {
+          background: rgba(79, 109, 255, 0.20);
+          color: #2c3da8;
+        }
+
+        .mmf-tag-none {
+          background: rgba(16, 19, 26, 0.08);
+          color: #565f6e;
         }
