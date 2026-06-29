@@ -1,15 +1,16 @@
         :root {
-          --mmf-bg: #eff2f7;
-          --mmf-surface: rgba(255, 255, 255, 0.78);
+          /* Local names map onto the shared design tokens (mmf/theme-tokens.css). */
+          --mmf-bg: var(--ds-bg);
+          --mmf-surface: var(--ds-card-bg);
           --mmf-surface-strong: #0d1015;
-          --mmf-ink: #10131a;
-          --mmf-muted: #646c79;
-          --mmf-line: rgba(16, 19, 26, 0.08);
-          --mmf-blue: #4f6dff;
-          --mmf-mint: #1ecf9b;
-          --mmf-amber: #d18a1f;
+          --mmf-ink: var(--ds-ink);
+          --mmf-muted: var(--ds-muted);
+          --mmf-line: var(--ds-card-border);
+          --mmf-blue: var(--ds-blue);
+          --mmf-mint: var(--ds-mint);
+          --mmf-amber: var(--ds-amber);
           --mmf-orange: #e07b1a;
-          --mmf-red: #dd5b52;
+          --mmf-red: var(--ds-red);
         }
 
         [data-testid="stAppViewContainer"] {
@@ -18,6 +19,7 @@
             radial-gradient(circle at 100% 12%, rgba(30, 207, 155, 0.10), transparent 24%),
             linear-gradient(180deg, #f7f8fb 0%, var(--mmf-bg) 100%);
           color: var(--mmf-ink);
+          font-family: var(--ds-font-sans);
         }
 
         [data-testid="stHeader"] {
@@ -37,7 +39,7 @@
         [data-testid="stSidebar"] {
           background:
             radial-gradient(circle at top left, rgba(79, 109, 255, 0.22), transparent 30%),
-            linear-gradient(180deg, #0d1015 0%, #171b22 100%);
+            linear-gradient(180deg, var(--ds-sidebar-top) 0%, var(--ds-sidebar-bottom) 100%);
           border-right: 1px solid rgba(255, 255, 255, 0.08);
         }
 
@@ -145,7 +147,7 @@
           font-size: 1.45rem;
           line-height: 1.02;
           letter-spacing: -0.04em;
-          font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+          font-family: var(--ds-font-sans);
         }
 
         .mmf-sidebar-brand p {
@@ -190,7 +192,7 @@
         }
 
         .mmf-hero h1 {
-          font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+          font-family: var(--ds-font-sans);
           font-size: clamp(2.1rem, 3.8vw, 4rem);
           line-height: 0.95;
           letter-spacing: -0.05em;
@@ -270,7 +272,7 @@
           letter-spacing: -0.04em;
           font-weight: 700;
           margin-bottom: 0.55rem;
-          font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+          font-family: var(--ds-font-sans);
           min-height: 2rem;
           font-variant-numeric: tabular-nums;
           overflow-wrap: anywhere;
@@ -324,7 +326,7 @@
           margin: 0;
           font-size: 1.7rem;
           letter-spacing: -0.04em;
-          font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+          font-family: var(--ds-font-sans);
         }
 
         .mmf-section-head p {
@@ -438,7 +440,7 @@
         }
 
         [data-testid="stMetricValue"] {
-          font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+          font-family: var(--ds-font-sans);
           letter-spacing: -0.04em;
           font-size: 2rem;
           color: #10131a;

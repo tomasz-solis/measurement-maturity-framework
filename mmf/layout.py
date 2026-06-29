@@ -14,16 +14,21 @@ from typing import Any, Dict, List, Optional, Tuple
 import streamlit as st
 
 _THEME_CSS_PATH = Path(__file__).parent / "theme.css"
+_THEME_TOKENS_PATH = Path(__file__).parent / "theme-tokens.css"
 
 
 def inject_theme_css() -> None:
-    """Inject the main app theme from theme.css into the Streamlit page."""
+    """Inject the shared design tokens, then the main app theme from theme.css."""
+    try:
+        tokens = _THEME_TOKENS_PATH.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        tokens = ""  # Degrade gracefully if the file is missing
     try:
         css = _THEME_CSS_PATH.read_text(encoding="utf-8")
     except FileNotFoundError:
         css = ""  # Degrade gracefully if the file is missing
 
-    st.markdown(f"<style>\n{css}\n</style>", unsafe_allow_html=True)
+    st.markdown(f"<style>\n{tokens}\n{css}\n</style>", unsafe_allow_html=True)
 
 
 def render_hero(title: str, subtitle: str, pills: List[str]) -> None:
