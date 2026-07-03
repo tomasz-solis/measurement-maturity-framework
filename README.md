@@ -320,8 +320,11 @@ Metrics are never just numbers. They carry assumptions, ownership, and failure m
 
 This repo exists to make those things visible early, while the cost of fixing them is still low.
 
-## Contact
+## Part of the Product Decision Lab
 
-Tomasz Solis
-- [LinkedIn](https://linkedin.com/in/tomaszsolis)
-- [GitHub](https://github.com/tomasz-solis)
+The Measurement Maturity Framework is one of three headline projects in my
+[Product Decision Lab](https://github.com/tomasz-solis/product-decision-lab) —
+measurement readiness, experimentation, and decision analysis for product teams deciding
+under uncertainty.
+
+Tomasz Solis — [LinkedIn](https://www.linkedin.com/in/tomaszsolis) · [GitHub](https://github.com/tomasz-solis)
