@@ -3,6 +3,8 @@
 The Measurement Maturity Framework is a small Streamlit app and Python library for
 reviewing metric definitions before they are treated as decision-ready.
 
+Live app: `https://metricready.streamlit.app/`
+
 It does three things:
 - validates the structure of a metric pack
 - scores metric maturity and pack-level decision risk
