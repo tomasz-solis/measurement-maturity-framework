@@ -92,7 +92,7 @@
             rgba(255, 255, 255, 0.05) 100%
           ) !important;
           border: 1px dashed rgba(255, 255, 255, 0.18) !important;
-          border-radius: 22px !important;
+          border-radius: 24px !important;
         }
 
         [data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] * {
@@ -133,13 +133,13 @@
           margin-bottom: 0.6rem;
         }
 
+        /* Sentence case. The hero kicker is the one eyebrow this system allows;
+           see DESIGN.md, The Eyebrow Rule. */
         .mmf-sidebar-brand .kicker {
-          font-size: 0.74rem;
-          text-transform: uppercase;
-          letter-spacing: 0.2em;
-          color: rgba(240, 244, 255, 0.6);
+          font-size: 0.82rem;
+          color: rgba(240, 244, 255, 0.72);
           margin-bottom: 0.45rem;
-          font-weight: 700;
+          font-weight: 600;
         }
 
         .mmf-sidebar-brand h2 {
@@ -160,7 +160,7 @@
         .mmf-hero {
           position: relative;
           overflow: hidden;
-          border-radius: 36px;
+          border-radius: 28px;
           padding: 2rem 2.2rem;
           margin-bottom: 1.25rem;
           background:
@@ -168,7 +168,7 @@
             radial-gradient(circle at 85% 0%, rgba(30, 207, 155, 0.16), transparent 28%),
             linear-gradient(135deg, #0d1015 0%, #171c24 52%, #0d1015 100%);
           border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 30px 80px rgba(12, 16, 24, 0.22);
+          box-shadow: 0 30px 72px rgba(12, 16, 24, 0.22);
           color: #f8fbff;
         }
 
@@ -224,7 +224,6 @@
           font-size: 0.82rem;
           font-weight: 650;
           color: #f8fbff;
-          backdrop-filter: blur(10px);
         }
 
         .mmf-pill--accent {
@@ -234,10 +233,8 @@
         .mmf-grid-card {
           background: var(--mmf-surface);
           border: 1px solid var(--mmf-line);
-          border-radius: 28px;
+          border-radius: 24px;
           padding: 1.15rem 1.2rem;
-          box-shadow: 0 12px 35px rgba(15, 18, 26, 0.06);
-          backdrop-filter: blur(10px);
           min-height: 148px;
           height: 100%;
           display: flex;
@@ -248,17 +245,14 @@
           background: linear-gradient(180deg, #10141b 0%, #181d26 100%);
           color: #f7f9ff;
           border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 18px 45px rgba(13, 17, 24, 0.18);
         }
 
         .mmf-grid-card .eyebrow,
         .mmf-grid-card--dark .eyebrow {
-          font-size: 0.74rem;
-          text-transform: uppercase;
-          letter-spacing: 0.18em;
-          color: rgba(92, 100, 116, 0.72);
+          font-size: 0.82rem;
+          color: var(--mmf-muted);
           margin-bottom: 0.65rem;
-          font-weight: 700;
+          font-weight: 600;
           min-height: 1.05rem;
         }
 
@@ -314,11 +308,9 @@
         }
 
         .mmf-section-head .label {
-          font-size: 0.76rem;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.18em;
-          color: #6a7281;
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: var(--mmf-muted);
           margin-bottom: 0.45rem;
         }
 
@@ -366,10 +358,9 @@
         .mmf-threshold {
           flex: 1 1 220px;
           padding: 0.95rem 1rem;
-          border-radius: 22px;
+          border-radius: 24px;
           background: rgba(255, 255, 255, 0.74);
           border: 1px solid rgba(16, 19, 26, 0.07);
-          box-shadow: 0 10px 30px rgba(15, 18, 26, 0.05);
         }
 
         .mmf-threshold strong {
@@ -401,7 +392,6 @@
           border-radius: 24px;
           padding: 1.2rem;
           min-height: 190px;
-          box-shadow: 0 12px 30px rgba(15, 18, 26, 0.05);
         }
 
         .mmf-empty-card h3 {
@@ -416,27 +406,22 @@
         }
 
         .mmf-empty-card .index {
-          font-size: 0.8rem;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          color: #73819a;
-          font-weight: 700;
+          font-size: 0.82rem;
+          color: var(--mmf-muted);
+          font-weight: 600;
         }
 
         [data-testid="stMetric"] {
           background: rgba(255, 255, 255, 0.78);
           border: 1px solid rgba(16, 19, 26, 0.08);
           padding: 1rem 1.15rem;
-          border-radius: 26px;
-          box-shadow: 0 12px 35px rgba(15, 18, 26, 0.05);
+          border-radius: 24px;
         }
 
         [data-testid="stMetricLabel"] {
-          color: #6a7180;
-          text-transform: uppercase;
-          letter-spacing: 0.16em;
-          font-size: 0.72rem;
-          font-weight: 700;
+          color: var(--mmf-muted);
+          font-size: 0.82rem;
+          font-weight: 600;
         }
 
         [data-testid="stMetricValue"] {
@@ -447,9 +432,8 @@
         }
 
         .stAlert {
-          border-radius: 22px;
+          border-radius: 24px;
           border: 1px solid rgba(16, 19, 26, 0.08);
-          box-shadow: 0 10px 28px rgba(15, 18, 26, 0.05);
         }
 
         [data-testid="stExpander"] {
@@ -457,7 +441,6 @@
           border: 1px solid rgba(16, 19, 26, 0.08);
           border-radius: 24px;
           overflow: hidden;
-          box-shadow: 0 12px 35px rgba(15, 18, 26, 0.05);
         }
 
         [data-testid="stExpander"] details summary p {
@@ -466,10 +449,9 @@
         }
 
         [data-testid="stDataFrame"] {
-          border-radius: 26px;
+          border-radius: 24px;
           overflow: hidden;
           border: 1px solid rgba(16, 19, 26, 0.08);
-          box-shadow: 0 14px 34px rgba(15, 18, 26, 0.06);
           background: rgba(255, 255, 255, 0.8);
         }
 
@@ -494,7 +476,7 @@
         @media (max-width: 900px) {
           .mmf-hero {
             padding: 1.5rem 1.35rem;
-            border-radius: 30px;
+            border-radius: 28px;
           }
 
           .mmf-empty-grid {
@@ -510,16 +492,17 @@
         }
 
         /* Main-area buttons: on-brand accent, never the default red. */
+        /* Primary action: solid Instrument Periwinkle. Mint is reserved for "passed"
+           and is never a gradient partner; see DESIGN.md, The Signature Rule. */
         [data-testid="stMainBlockContainer"] .stDownloadButton > button,
         [data-testid="stMainBlockContainer"] .stButton > button {
-          background: linear-gradient(135deg, var(--mmf-blue), var(--mmf-mint));
+          background: var(--mmf-blue);
           color: #ffffff;
           border: 1px solid rgba(79, 109, 255, 0.35);
           border-radius: 999px;
           min-height: 2.85rem;
           font-weight: 650;
-          box-shadow: 0 10px 24px rgba(79, 109, 255, 0.18);
-          transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+          transition: transform 140ms ease-out, box-shadow 140ms ease-out, background 140ms ease-out;
         }
 
         [data-testid="stMainBlockContainer"] .stDownloadButton > button p,
@@ -527,30 +510,22 @@
           color: #ffffff !important;
         }
 
+        /* The lift is the hover state, not the resting state. Focus styling comes
+           from the shared :focus-visible ring in theme-tokens.css — no glow. */
         [data-testid="stMainBlockContainer"] .stDownloadButton > button:hover,
         [data-testid="stMainBlockContainer"] .stButton > button:hover {
-          filter: brightness(1.06);
+          background: var(--ds-blue-strong);
           transform: translateY(-1px);
           color: #ffffff;
           border-color: rgba(79, 109, 255, 0.5);
-          box-shadow: 0 14px 30px rgba(79, 109, 255, 0.26);
-        }
-
-        [data-testid="stMainBlockContainer"] .stDownloadButton > button:focus,
-        [data-testid="stMainBlockContainer"] .stDownloadButton > button:focus:not(:active),
-        [data-testid="stMainBlockContainer"] .stButton > button:focus,
-        [data-testid="stMainBlockContainer"] .stButton > button:focus:not(:active) {
-          color: #ffffff;
-          border-color: rgba(79, 109, 255, 0.6);
-          box-shadow: 0 0 0 3px rgba(79, 109, 255, 0.28);
+          box-shadow: 0 12px 24px rgba(79, 109, 255, 0.12);
         }
 
         /* Cross-vertical heatmap (verticals as columns, dimensions as rows). */
         .mmf-heatmap-wrap {
           overflow-x: auto;
-          border-radius: 26px;
+          border-radius: 24px;
           border: 1px solid rgba(16, 19, 26, 0.08);
-          box-shadow: 0 14px 34px rgba(15, 18, 26, 0.06);
           background: rgba(255, 255, 255, 0.82);
           margin: 0.25rem 0 0.5rem;
         }
@@ -570,11 +545,9 @@
         }
 
         .mmf-heatmap thead th {
-          font-size: 0.74rem;
-          text-transform: uppercase;
-          letter-spacing: 0.12em;
+          font-size: 0.82rem;
           color: #46506a;
-          font-weight: 700;
+          font-weight: 600;
           background: rgba(13, 16, 21, 0.04);
         }
 
@@ -652,9 +625,8 @@
         /* Unified data tables: light, high-contrast, same look as the heatmap. */
         .mmf-table-wrap {
           overflow-x: auto;
-          border-radius: 26px;
+          border-radius: 24px;
           border: 1px solid rgba(16, 19, 26, 0.08);
-          box-shadow: 0 14px 34px rgba(15, 18, 26, 0.06);
           background: rgba(255, 255, 255, 0.9);
           margin: 0.25rem 0 0.5rem;
         }
@@ -675,11 +647,9 @@
         }
 
         .mmf-table thead th {
-          font-size: 0.74rem;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
+          font-size: 0.82rem;
           color: #46506a;
-          font-weight: 700;
+          font-weight: 600;
           background: rgba(13, 16, 21, 0.04);
           white-space: nowrap;
         }

@@ -32,3 +32,4 @@ htmlcov/
 
 # Optional: exclude private local examples
 examples/pleo/
+.impeccable/
