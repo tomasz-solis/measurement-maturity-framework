@@ -1,7 +1,7 @@
 """One-page measurement-readiness brief (Markdown).
 
 Deterministic, template slot-filled from the structured score, decision map, and
-top debt (PRD principle P6) — no generated narrative, no model calls. The same
+top debt (PRD principle P6). No generated narrative, no model calls. The same
 pack always produces the same brief, suitable for pasting into a planning doc.
 """
 

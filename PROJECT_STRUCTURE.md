@@ -1,40 +1,44 @@
-# Project Structure
-
-This repo is small enough that the important parts fit on one page.
+# Project structure
 
 ## Top level
 
-- `app.py`: Streamlit entry point.
-- `mmf/`: package code for validation, scoring, suggestions, and UI helpers.
-- `tests/`: unit and integration tests.
-- `templates/`: starter YAML files for new metrics and packs.
-- `examples/`: reusable sample packs for the app sidebar and docs.
-- `case_studies/`: reconstructed real-world failures used to show MMF's scope.
-- `analysis/`: notebooks and scripts for calibration and sensitivity checks.
-- `README.md`: product-level overview.
-- `SCORING_METHODOLOGY.md`: scoring rules and rationale.
+| Path | Contents |
+|---|---|
+| `app.py` | Streamlit entry point |
+| `mmf/` | Validation, scoring, suggestions and UI helpers |
+| `tests/` | Unit and integration tests |
+| `templates/` | Starter YAML for new metrics and packs |
+| `examples/` | Sample packs for the sidebar and docs |
+| `case_studies/` | Rebuilt real-world failures that show MMF's scope |
+| `analysis/` | Notebooks and scripts for calibration and sensitivity checks |
+| `README.md` | Product overview |
+| `SCORING_METHODOLOGY.md` | Scoring rules and reasoning |
 
-## Package layout
+## Package
 
-- `mmf/validator.py`: schema and structural checks.
-- `mmf/scoring.py`: metric-level and pack-level scoring.
-- `mmf/suggestions.py`: deterministic next-step suggestions.
-- `mmf/mermaid.py`: strategy graph generation.
-- `mmf/layout.py`, `mmf/components.py`, `mmf/sidebar.py`: Streamlit rendering helpers.
-- `mmf/config.py`: default deductions, thresholds, and config validation.
+| Module | Role |
+|---|---|
+| `mmf/validator.py` | Schema and structural checks |
+| `mmf/scoring.py` | Metric and pack scoring |
+| `mmf/suggestions.py` | Next-step suggestions |
+| `mmf/mermaid.py` | Strategy graph |
+| `mmf/layout.py`, `mmf/components.py`, `mmf/sidebar.py` | Streamlit rendering helpers |
+| `mmf/config.py` | Default deductions, thresholds, config validation |
 
 ## Tests
 
-- `tests/test_validator.py`: validator behavior.
-- `tests/test_scorer.py`: scoring contract and edge cases.
-- `tests/test_suggestions.py`: deterministic suggestion text and priorities.
-- `tests/test_integration.py`: full pack flow.
-- `tests/test_mermaid.py`: strategy graph output.
-- `tests/test_bayesian_scoring.py`: Bayesian sensitivity layer checks.
+| File | Covers |
+|---|---|
+| `tests/test_validator.py` | Validator behaviour |
+| `tests/test_scorer.py` | Scoring contract and edge cases |
+| `tests/test_suggestions.py` | Suggestion text and priorities |
+| `tests/test_integration.py` | Full pack flow |
+| `tests/test_mermaid.py` | Strategy graph output |
+| `tests/test_bayesian_scoring.py` | Bayesian sensitivity layer |
 
-Note: the repo now uses synthetic fixtures under `tests/fixtures/synthetic_packs/` for much of the scoring analysis. If you update docs or tests, check that the fixture paths still match reality.
+Much of the scoring analysis uses synthetic fixtures in `tests/fixtures/synthetic_packs/`. When you change docs or tests, check the fixture paths still match.
 
-## Quick commands
+## Commands
 
 ```bash
 pip install -r requirements.txt
@@ -48,8 +52,10 @@ mypy app.py mmf/
 
 ## Where to make changes
 
-- New validation rule: update `mmf/validator.py` and add tests in `tests/test_validator.py`.
-- New scoring rule: update `mmf/config.py`, `mmf/scoring.py`, and the relevant tests.
-- New suggestion behavior: update `mmf/suggestions.py` and its tests.
-- New example pack: add it under `examples/`. The sidebar prefers `onboarding_measurement_ready.yaml`.
-- New case study or analysis artifact: keep it under `case_studies/` or `analysis/`, not mixed into the app code.
+| Change | Where |
+|---|---|
+| New validation rule | `mmf/validator.py`, tests in `tests/test_validator.py` |
+| New scoring rule | `mmf/config.py`, `mmf/scoring.py` and their tests |
+| New suggestion | `mmf/suggestions.py` and its tests |
+| New example pack | `examples/` (the sidebar defaults to `onboarding_measurement_ready.yaml`) |
+| New case study or analysis | `case_studies/` or `analysis/`, kept out of the app code |

@@ -4,7 +4,7 @@ These assert that the three public sample packs rank in their intended order and
 that each pack's designed weakness shows up where it should. This is the primary
 validity mechanism described in docs/V2_SCORING_METHODOLOGY.md: it tests that the
 score *discriminates* between systems that should differ and *attributes* the
-weakness correctly — deterministically, with no rater pool required.
+weakness correctly, deterministically, with no rater pool required.
 
 If a rules change breaks an assertion here, fix either the rule or the pack on
 purpose; never silently re-baseline.

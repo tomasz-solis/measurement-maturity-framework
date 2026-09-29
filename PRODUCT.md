@@ -10,75 +10,44 @@ web
 
 ## Users
 
-Analytics leads who are responsible for whether the company's metrics can be trusted. They own a
-metric set they did not always write, they get asked to certify numbers that are about to drive a
-decision, and they need a defensible way to say "not yet" — one that survives a room full of people
-who would rather ship. They arrive with a metric pack and a deadline.
+Analytics leads responsible for whether the company's metrics can be trusted. They own metrics they didn't always write, get asked to sign off numbers about to drive a decision, and need a defensible way to say "not yet" that holds up in a room of people who would rather ship. They arrive with a metric pack and a deadline.
 
-There is one audience. Others read the output — PMs, execs, data teams — but the tool is designed
-for the person who has to sign off.
+There is one audience. PMs, execs and data teams read the output, but the tool is built for the person who signs off.
 
-## Product Purpose
+## Product purpose
 
-A review tool for metric definitions, used before those metrics are treated as decision-ready. It
-validates a metric pack, scores it, surfaces measurement debt, maps the decisions each metric is
-supposed to support, and exports the review. The win is concrete: **a metric marked
-not-decision-ready before it drives a call.** Catching it here costs a conversation; catching it
-after the decision costs the decision.
+A review tool for metric definitions before they are treated as decision-ready. It validates a metric pack, scores it, shows measurement debt, maps the decisions each metric should support, and exports the review. The concrete win: a metric marked not ready before it drives a call. Catching it here costs a conversation. Catching it after costs the decision.
 
 ## Positioning
 
-Metrics are treated as decision-ready by default. This says which ones have actually earned it.
+Metrics are treated as decision-ready by default. This shows which ones have earned it.
 
-## Brand Personality
+## Brand personality
 
-Rigorous, welcoming, practical. The voice is an honest analyst briefing a decision-maker, not a
-vendor pitching one: it states the method, names its own limits out loud, and assumes the reader is
-smart but not a statistician. Closest in feel to FT / Economist interactives — editorial numeracy,
-where the chart and the prose argue together and the honest caveat is part of the argument rather
-than a footnote.
+Rigorous, welcoming, practical. The voice is an honest analyst briefing a decision maker. It states the method, says its own limits out loud, and assumes the reader is smart but not a statistician. Closest in feel to FT or Economist interactives, where the chart and the text argue together and the caveat is part of the argument.
 
 ## Anti-references
 
-A raw Streamlit default: unstyled widgets, stock primary colours, the look of a prototype nobody
-cared about. If the interface reads as "someone's weekend notebook with a slider on it", the
-method's credibility goes with it.
+A raw Streamlit default: unstyled widgets, stock colours, a prototype nobody looked after. If the app looks like someone's weekend notebook with a slider, the method loses credibility with it.
 
-## Design Principles
+## Design principles
 
-- **"Not ready" is the valuable verdict.** The tool exists to say no with evidence. A failed check
-  is the product working, not the product complaining — present it that way.
-- **Say the limit out loud.** Where a score is soft or a check is heuristic, the interface says so
-  at the point of reading. Honesty is the trust mechanism.
-- **The verdict must survive the room.** Every finding is exportable and quotable, because the user
-  has to defend it to people who want a different answer.
-- **Meet a non-specialist where they stand.** Every score, band, and debt category carries a
-  plain-language definition within reach. Jargon that cannot explain itself does not ship.
-- **One system across the Lab.** This app is one of three Product Decision Lab surfaces
-  (`product-decision-under-uncertainty`, `experiment-architect`,
-  `measurement-maturity-framework`). They must read as one family, so the design system is a
-  shared contract, not a local choice — see the constraint below. A visual idea that cannot travel
-  to the other two does not ship here.
+1. "Not ready" is the valuable verdict. The tool exists to say no with evidence. A failed check is the product working; present it that way.
+2. Say the limit out loud. Where a score is soft or a check is a heuristic, the app says so where you read it.
+3. The verdict must hold up in the room. Every finding can be exported and quoted, because the user has to defend it to people who want a different answer.
+4. Meet non-specialists where they are. Every score, band and debt category has a plain-language definition within reach. Jargon that can't explain itself doesn't ship.
+5. One system across the Lab. This app is one of three Product Decision Lab apps (`product-decision-under-uncertainty`, `experiment-architect`, `measurement-maturity-framework`). They must look like one family, so the design system is shared (see below). A visual idea that can't work in the other two doesn't ship here.
 
 ## Design system constraint (cross-repo)
 
-`mmf/theme-tokens.css` is the shared source of truth and is **byte-identical** in all three repos
-(stored at `mmf/` here, `static/` in product-decision-under-uncertainty, `ui/` in
-experiment-architect). Also shared: the pinned light Streamlit base with `primaryColor #4f6dff`,
-the periwinkle/mint radial app background, the dark gradient sidebar, glassy light panels, pill
-tabs and buttons, and the Avenir Next stack.
+`mmf/theme-tokens.css` is the shared source of truth and is byte-identical in all three repos (`mmf/` here, `static/` in product-decision-under-uncertainty, `ui/` in experiment-architect). Also shared: the pinned light Streamlit base with `primaryColor #4f6dff`, the periwinkle and mint radial background, the dark gradient sidebar, light panels, pill tabs and buttons, and the Avenir Next font stack.
 
 Rules:
 
-- Never edit the `--ds-*` tokens for this app alone. A token change is a three-repo change: edit it
-  here, then copy the file verbatim into the other two.
+- Never edit the `--ds-*` tokens for this app alone. A token change is a three-repo change: edit here, then copy the file verbatim to the other two.
 - Local names (`--mmf-*`) may only alias `--ds-*` tokens, never redefine the palette.
-- Per-app variation is allowed only in the branded hero (`.mmf-hero`, vs `.app-hero` and
-  `.editorial-hero`) and in app-specific components. Everything else stays in the family vocabulary.
+- Per-app variation is allowed only in the hero (`.mmf-hero`, vs `.app-hero` and `.editorial-hero`) and in app-specific components.
 
-## Accessibility & Inclusion
+## Accessibility
 
-WCAG 2.1 AA. Body text ≥4.5:1 and large text ≥3:1 against its surface (the dark sidebar and the dark
-hero included), full keyboard navigation, `prefers-reduced-motion` honoured, and severity — the
-pass/warn/fail vocabulary this app is built on — never carried by colour alone. Every verdict pairs
-its colour with an icon or a label.
+WCAG 2.1 AA. Body text at least 4.5:1 and large text at least 3:1 against its surface (including the dark sidebar and hero), full keyboard navigation, `prefers-reduced-motion` respected, and severity (the pass, warn and fail vocabulary this app is built on) never shown by colour alone. Every verdict pairs its colour with an icon or label.

@@ -511,7 +511,7 @@
         }
 
         /* The lift is the hover state, not the resting state. Focus styling comes
-           from the shared :focus-visible ring in theme-tokens.css — no glow. */
+           from the shared :focus-visible ring in theme-tokens.css, no glow. */
         [data-testid="stMainBlockContainer"] .stDownloadButton > button:hover,
         [data-testid="stMainBlockContainer"] .stButton > button:hover {
           background: var(--ds-blue-strong);

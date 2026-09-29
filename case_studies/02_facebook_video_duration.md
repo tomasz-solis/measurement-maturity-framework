@@ -1,64 +1,34 @@
-# Case Study 2: Facebook's inflated video watch-time metric
+# Case study 2: Facebook's inflated video watch-time metric
 
-Status: miss. The SQL exists, the metric has an owner, and the pack looks
-well-formed. The problem sits inside the query logic, which MMF does not audit.
+Result: a miss. The SQL exists, the metric has an owner and the pack is well formed. The problem is inside the query logic, which MMF doesn't audit.
 
 ## What happened
 
-From roughly 2014 to 2016, Facebook overstated a video engagement metric used
-by advertisers. Public reporting and later lawsuit filings said the numerator
-counted all watched seconds, while the denominator counted only views longer
-than three seconds. That mismatch pushed the reported average up materially.
+From roughly 2014 to 2016, Facebook overstated a video engagement metric used by advertisers. Public reporting and later lawsuit filings said the numerator counted all watched seconds while the denominator counted only views longer than three seconds. That mismatch pushed the reported average up a lot.
 
-This is the kind of failure that makes people suspicious of any "metric
-governance" tool. A skeptic would say: if the framework misses this, what good
-is it? The fair answer is that MMF was never meant to prove a query is logically
-correct. It checks whether the metric is documented, reviewable, and owned.
+A sceptic would say: if the framework misses this, what good is it? MMF was never meant to prove a query is logically correct. It checks whether a metric is documented, reviewable and owned.
 
 ## What the framework sees
 
-Reconstructed pack: [`02_facebook_video_duration.yaml`](02_facebook_video_duration.yaml)
+Reconstructed pack: [`02_facebook_video_duration.yaml`](02_facebook_video_duration.yaml).
 
-The pack has:
-
-- an owner
-- a description
-- SQL
-- tests
-- unit and grain
-
-So MMF gives it a strong score. That result is uncomfortable, but honest. The
-query is present and reviewable. The bug is that the logic inside the query is
-wrong.
+The pack has an owner, a description, SQL, tests, a unit and a grain, so MMF scores it highly. Uncomfortable but honest: the query is present and reviewable. The logic inside it is wrong.
 
 ## What this case teaches
 
-MMF is a structural review layer, not a semantic SQL checker.
+MMF reviews structure, not SQL semantics. It helps teams notice missing owners, absent or hidden SQL, missing tests, and unstable definitions that should be tagged V0. It can't tell you a ratio is built wrong if the SQL is there and parses.
 
-It can help teams notice:
+## What helps beyond MMF
 
-- missing ownership
-- absent or hidden SQL
-- missing tests
-- unstable definitions that should still be tagged V0
+If this kind of failure matters to you, add a layer next to MMF:
 
-It cannot tell you that a ratio is built incorrectly if the SQL itself is
-present and syntactically fine.
-
-## What would help beyond MMF
-
-If this kind of failure matters in your environment, you need an extra layer on
-top of MMF. A few examples:
-
-- query review by another analyst or engineer
-- metric-specific invariants in tests
-- reconciliation checks against raw events or alternate definitions
-- pair review for ratios and filters
-
-Those practices live next to MMF, not inside it.
+- Query review by another analyst or engineer.
+- Metric-specific invariants in the tests.
+- Reconciliation against raw events or alternative definitions.
+- Pair review for ratios and filters.
 
 ## Sources
 
 - Wall Street Journal reporting on Facebook's September 2016 disclosure
-- Subsequent class-action filings describing the denominator bug
+- Later class-action filings describing the denominator bug
 - Facebook's public statements on the correction window and affected metrics

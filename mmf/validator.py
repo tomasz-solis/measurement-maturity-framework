@@ -219,7 +219,7 @@ def validate_metric_pack(pack: Dict[str, Any]) -> ValidationResult:
                             _warning(
                                 "metric_sql_syntax_error",
                                 f"SQL syntax appears invalid in '{field_name}'. "
-                                "This is a basic check - verify the query works in your database.",
+                                "This is a basic check. Make sure the query runs in your database.",
                                 f"/metrics/{idx}/sql/{field_name}",
                                 f"{mid}.sql.{field_name}",
                             )

@@ -8,7 +8,7 @@ render them with no changes.
 
 Validation is non-blocking, exactly as in v1: errors mean "not clean", but
 scoring still runs. Broken cross-references are warnings (the gap is also
-surfaced as debt and drives decision readiness), not hard errors — so a pack
+surfaced as debt and drives decision readiness), not hard errors, so a pack
 that documents a real gap stays structurally valid.
 """
 

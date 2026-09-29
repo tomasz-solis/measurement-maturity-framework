@@ -120,8 +120,8 @@ def _render_validation_section(
     render_section_header(
         "Signal 01",
         "Validation",
-        "Check the structure first. Scoring still runs when issues exist, but this section "
-        "tells you how much trust to place in the input.",
+        "Check the structure first. Scoring still runs when there are issues, but this section "
+        "shows how far to trust the input.",
     )
 
     if validation.ok:
@@ -222,8 +222,8 @@ def _render_scoring_section(
     render_section_header(
         "Signal 02",
         "Scoring",
-        "This score is about metric safety, not business performance. The pack score "
-        "blends the average metric quality with the weakest metric in the set.",
+        "This score is about metric safety, not business performance. The pack score blends "
+        "average metric quality with the weakest metric.",
     )
 
     pack_score = score_result.pack_score
@@ -292,8 +292,7 @@ def _render_suggestions_section(
     render_section_header(
         "Signal 03",
         "Suggestions",
-        "Suggestions stay rules-based too. They are grouped by metric so the next step "
-        "is easy to see.",
+        "Suggestions are rules-based too, grouped by metric so the next step is easy to see.",
     )
 
     render_stat_card_row(
@@ -358,8 +357,8 @@ def _render_strategy_section(normalized_pack: Mapping[str, Any]) -> None:
     render_section_header(
         "Signal 04",
         "Strategy Tree",
-        "An optional view of how the pack rolls up into levers and business outcomes. "
-        "It helps show where one weak metric can distort the bigger picture.",
+        "Optional: how the pack rolls up into levers and business outcomes, and where one weak "
+        "metric can distort the bigger picture.",
     )
 
     build_strategy = _try_get_strategy_mermaid_builder()
@@ -441,8 +440,7 @@ _WHY_IT_MATTERS = {
         "With no owner, the metric drifts and no one is responsible when it breaks."
     ),
     "metric_sql_syntax_error": (
-        "The query may not run as written - verify it in the warehouse before "
-        "relying on it."
+        "The query may not run as written. Check it in the warehouse before relying on it."
     ),
     "missing_schema_version": (
         "Without a schema version, future compatibility is harder to track."
@@ -485,7 +483,7 @@ _WHY_IT_MATTERS = {
         "person."
     ),
     "internal_reference_in_public_sample": (
-        "A public sample is carrying private links - clear them before committing."
+        "A public sample has private links. Clear them before committing."
     ),
 }
 
@@ -638,8 +636,8 @@ def _render_v2_pack(pack: Dict[str, Any]) -> None:
 
     render_hero(
         name,
-        "Vertical measurement readiness: which key decisions are backed by trusted, "
-        "owned, instrumented metrics - and where the gaps are.",
+        "Which key decisions are backed by trusted, owned, instrumented metrics, and where the "
+        "gaps are.",
         [
             band,
             f"{frac} decisions ready",
@@ -694,8 +692,8 @@ def _render_v2_pack(pack: Dict[str, Any]) -> None:
     render_section_header(
         "Signal 02",
         "Vertical Readiness",
-        "Decision-ready fraction plus a dimension profile. Bands, not a "
-        "falsely-precise number. Absent sections are 'not assessed', not zero.",
+        "Decision-ready fraction plus a dimension profile, shown as bands, not a falsely precise "
+        "number. Missing sections are 'not assessed', not zero.",
     )
     dim_rows = [
         {
@@ -840,8 +838,8 @@ def _render_cross_vertical(uploaded_list: Any, include_samples: bool) -> None:
     render_section_header(
         "Cross-vertical",
         "Compare Verticals",
-        "Patterns across verticals - shared gaps and where to focus enablement. "
-        "This is a comparison of patterns, not a single-number ranking.",
+        "Patterns across verticals: shared gaps and where to focus enablement. It compares "
+        "patterns and doesn't rank verticals.",
     )
 
     packs = []
@@ -917,8 +915,8 @@ def _render_cross_vertical(uploaded_list: Any, include_samples: bool) -> None:
     render_section_header(
         "Focus",
         "Shared Gaps",
-        "Dimensions that are weak across multiple verticals - the enablement "
-        "priorities a cross-vertical owner can act on.",
+        "Dimensions that are weak in several verticals. These are the enablement priorities a "
+        "cross-vertical owner can act on.",
     )
     if view.shared_gaps:
         gap_rows = [
@@ -970,8 +968,8 @@ def _render_v1_pack(pack: Dict[str, Any]) -> None:
 
     render_hero(
         pack_name,
-        "One review pass across structure, decision risk, and strategy. "
-        "The weakest metric stays visible so it does not get hidden by stronger ones.",
+        "One review pass across structure, decision risk and strategy. The weakest metric stays "
+        "visible so stronger ones can't hide it.",
         [
             f"{metric_count} metric(s)",
             f"Version {pack_version}",
@@ -1070,8 +1068,8 @@ def main() -> None:
     if not uploaded:
         render_hero(
             "Review metric packs before they steer decisions.",
-            "A quick pass for teams that want clearer metrics and fewer surprises once "
-            "a KPI shows up in a dashboard or target.",
+            "A quick check for teams that want clearer metrics and fewer surprises once a KPI "
+            "lands in a dashboard or target.",
             ["Rules-based review", "No silent edits", "Optional strategy tree"],
         )
         render_empty_state_cards()

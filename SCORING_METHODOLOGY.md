@@ -1,51 +1,30 @@
-# Scoring Methodology
+# Scoring methodology
 
-Version: 1.2
-Last Updated: 2026-04-19
-Status: Active
+Version 1.2. Last updated 2026-04-19. Status: active.
 
-This document describes the scoring logic that is actually implemented in the repo today.
-
-If this file and the code ever disagree, the code is the source of truth:
-- [mmf/config.py](mmf/config.py)
-- [mmf/scoring.py](mmf/scoring.py)
-
----
+The scoring logic as implemented. If this file and the code disagree, the code wins: [mmf/config.py](mmf/config.py) and [mmf/scoring.py](mmf/scoring.py).
 
 ## Scope
 
-The scoring system measures definition maturity and decision risk.
+The score measures how mature a metric definition is and how risky it is to decide on. It doesn't measure business performance, forecast quality or strategic importance. It covers a small set of failure modes that are easy to explain and act on.
 
-It does not measure:
-- business performance
-- forecast quality
-- whether the metric is strategically important
+## Metric score
 
-The current implementation is intentionally narrow. It focuses on a small set of failure modes that are easy to explain and easy to act on.
-
----
-
-## Metric Score
-
-Each metric starts at `100`.
-
-Points are deducted for the following gaps:
+Each metric starts at `100` and loses points for these gaps:
 
 | Check | Deduction | Why it matters |
 |---|---:|---|
-| `tier: V0` | -10 | Instability risk is additive to any other gap - a V0 metric may change definition mid-quarter, making trends unreliable. |
-| missing `accountable` or `responsible` | -5 | No owner means slower debugging, weaker follow-up, and higher risk of the metric drifting past its shelf life. |
-| missing SQL (default, `implementation_type` not set) | -5 | Without query logic the metric can't be independently reproduced or inspected. |
+| `tier: V0` | -10 | A V0 metric may change definition mid-quarter, so trends are unreliable. This adds to any other gap. |
+| missing `accountable` or `responsible` | -5 | No owner means slower debugging, weaker follow-up and a metric that outlives its usefulness. |
+| missing SQL (default, no `implementation_type`) | -5 | Without query logic nobody can reproduce or inspect the metric. |
 | missing SQL with `implementation_type: v0_proxy` | -3 | SQL is deferred while the proxy settles, so the gap is temporary by design. |
-| missing SQL with `implementation_type: spreadsheet`/`notebook`/`dashboard`/`other` | -12 | No SQL because the implementation is not in a query engine. Larger deduction because the gap is structural, not temporary. |
-| missing tests | -5 | Without basic checks, silent breakage goes undetected until it surfaces in a dashboard. |
-| missing `description` | -3 | A metric without a description forces readers to reverse-engineer intent from naming alone. |
-| missing `grain` | -2 | Without grain, a reader can't tell what one row represents, making aggregation decisions ambiguous. |
-| missing `unit` | -2 | Without unit, value interpretation is a guess (is 0.12 a ratio, a percent, or a count?). |
+| missing SQL with `implementation_type: spreadsheet`/`notebook`/`dashboard`/`other` | -12 | The metric doesn't live in a query engine. The gap is structural, not temporary. |
+| missing tests | -5 | Without basic checks, breakage stays hidden until it shows up in a dashboard. |
+| missing `description` | -3 | Readers have to guess intent from the name. |
+| missing `grain` | -2 | Readers can't tell what one row is, so aggregation is ambiguous. |
+| missing `unit` | -2 | Is 0.12 a ratio, a percent or a count? |
 
-The three SQL-missing deductions are mutually exclusive. A metric with missing SQL fires exactly one of them, selected by the `implementation_type` field. See the "The missing_sql split" section below for the full reasoning.
-
-Formula:
+Only one of the three missing-SQL deductions fires, chosen by `implementation_type` (see [the missing SQL split](#the-missing-sql-split--3---5---12)).
 
 ```text
 metric_score = clamp(
@@ -62,277 +41,116 @@ metric_score = clamp(
 )
 ```
 
-Default base score is `100`.
+The default base score is `100`.
 
----
+## Why these weights
 
-## Weight Rationale
-
-The deduction values reflect relative risk contributions, not arbitrary constants.
+The deductions reflect relative risk.
 
 ### V0 tier: -10
 
-V0 gets the largest deduction because tier instability is additive to every
-other gap. A V0 metric can change definition mid-quarter. That makes trend
-analysis unreliable even if SQL and tests exist today - the number it tracked
-last month may not be comparable to the number it tracks this month. The -10
-reflects that risk to historical comparability, not just current completeness.
+The largest deduction, because instability adds to every other gap. A V0 metric can change definition mid-quarter, so even with SQL and tests today, last month's number may not compare with this month's. The -10 is for lost comparability over time, not current completeness.
 
-### Missing accountable/SQL/tests: -5 each
+### Missing owner, SQL or tests: -5 each
 
-These carry equal weight because they represent three independent failure modes:
+Three independent failure modes, weighted equally:
 
-- Ownership gap: the metric may be correct today but becomes unreliable
-  when upstream tables change and nobody knows they're responsible for updating
-  the definition.
-- SQL gap: without query logic, the number can't be reproduced,
-  audited, or handed off to another team.
-- Test gap: without basic checks (not_null, range bounds), breakage
-  is discovered in a board deck rather than a data pipeline alert.
+- No owner: the metric may be right today but breaks when upstream tables change and nobody knows they should update it.
+- No SQL: the number can't be reproduced, audited or handed to another team.
+- No tests: without basic checks (not_null, range bounds), breakage is found in a board deck instead of a pipeline alert.
 
-Each is worth -5 because each represents one dimension of verifiability.
-None dominates the others - a metric with SQL but no owner is as risky in
-practice as one with an owner but no SQL.
+None dominates. A metric with SQL but no owner is as risky as one with an owner but no SQL.
 
-### Missing description/grain/unit: -3, -2, -2
+### Missing description, grain or unit: -3, -2, -2
 
-These are softer deductions. They penalise metrics that are harder to
-interpret or maintain, without blocking a pack that is otherwise well-defined.
-A metric without a description but with SQL, tests, and an owner is still
-usable - it's just harder to onboard new teammates to.
+Softer deductions. They penalise metrics that are harder to read or maintain without blocking an otherwise sound pack. A metric with SQL, tests and an owner but no description is still usable; new teammates just need longer to understand it. Missing intent (-3) is a bigger reading risk than missing formatting metadata (-2).
 
-The asymmetry (description = -3, grain/unit = -2) reflects that missing
-intent is a bigger interpretability risk than missing formatting metadata.
+### The missing SQL split: -3 / -5 / -12
 
-### The missing_sql split: -3 / -5 / -12
+One `missing_sql = -5` was too coarse for two different situations:
 
-A single `missing_sql = -5` was too coarse to cover two structurally
-different situations that both produce the same gap:
+- Temporary: a V0 proxy where the team hasn't written SQL yet on purpose ("we'll add it once the definition settles"). A soft gap, because the metric is tagged as work in progress.
+- Structural: no SQL because the metric isn't in a query engine at all (a spreadsheet pipeline, an undocumented notebook, a black-box dashboard calculation). Not temporary, and hard to review independently.
 
-- Temporary absence. A V0 proxy metric where the team has deliberately
-  not written SQL yet: "we'll add it once the definition settles."
-  This is a soft gap because the metric is explicitly tagged as
-  work-in-progress.
-- Structural absence. A metric with no SQL because the implementation
-  is not in a query engine at all - a spreadsheet pipeline, an
-  undocumented notebook, a black-box dashboard calculation. This is not
-  a temporary gap; it is hard to review independently.
-
-The framework distinguishes these cases using an optional
-`implementation_type` field on each metric:
+The optional `implementation_type` field tells them apart:
 
 | `implementation_type` | Deduction | Gap code | Reason |
 |---|---:|---|---|
-| (absent) | -5 | `missing_sql` | Default - backward-compatible with existing packs |
+| (absent) | -5 | `missing_sql` | Default, compatible with existing packs |
 | `v0_proxy` | -3 | `missing_sql_temporary` | Temporary by design |
-| `spreadsheet` / `notebook` / `dashboard` / `other` | -12 | `missing_sql_structural` | Structurally unreviewable |
+| `spreadsheet` / `notebook` / `dashboard` / `other` | -12 | `missing_sql_structural` | Can't be reviewed |
 
-The three deductions are mutually exclusive. Older packs that don't declare
-`implementation_type` get the backward-compatible -5 default. Analysts who
-want the stronger signal opt in by declaring the type.
+Older packs without `implementation_type` get the -5 default. Analysts who want the stronger signal declare the type.
 
----
+## Robustness
 
-## Robustness Analysis
+The weights are set by judgment, not derived, so the fair question is how much the scores depend on them. The Bayesian study in [`analysis/bayesian_robustness.ipynb`](analysis/bayesian_robustness.ipynb) says: very little.
 
-The deduction weights above are asserted, not derived. That's an honest
-limit of the scoring model and it invites a reasonable question: how
-much do the scores depend on the specific weight values?
+Each weight is treated as a random variable with a Beta prior centred on its rule-based value (scale 20, concentration 20, so the 90% prior interval covers about ±50% of each weight). Across 27 synthetic packs covering the realistic quality range, the Spearman correlation between rule-based scores and Bayesian posterior means is 0.9992, and the largest score gap is 0.43 points.
 
-The answer, from the Bayesian robustness study in
-[`analysis/bayesian_robustness.ipynb`](analysis/bayesian_robustness.ipynb),
-is: not much. Each deduction weight is treated as a random variable with a
-Beta prior centred on its rule-based value (scale 20, concentration 20, so
-the prior 90% CI covers roughly ±50% of each weight). Across 27 synthetic
-packs spanning the realistic quality space, the Spearman rank correlation
-between rule-based scores and Bayesian posterior means is 0.9992, with
-maximum absolute score divergence of 0.43 points. The rankings barely move
-within the plausible weight range.
-
-What this does support: the rankings stay stable under reasonable weight
-uncertainty. A reviewer asking "why -10 for V0 and not -8 or -12?" gets a
-quantitative answer: within that band, the ordering barely changes.
-
-What this does not support: whether the asserted weights are *right* in
-absolute terms. Calibration against independent judgments of pack quality
-would still be needed for that. The small calibration study in the next
-section is a first pass, not a replacement for the robustness work.
+So rankings hold under reasonable weight uncertainty. Asked "why -10 for V0 and not -8 or -12?", the answer is that within that range the order barely changes. What the study can't show is whether the weights are right in absolute terms. That needs calibration against independent judgments, which the next section starts on.
 
 ### `pack_floor_weight` sensitivity
 
-For completeness, the table below shows how the pack score changes as
-`pack_floor_weight` varies, for a two-metric pack with scores `[100, 85]`.
-This is a single-dimensional sensitivity check. The full robustness
-analysis in the notebook covers all seven deduction weights jointly.
+How the pack score moves with `pack_floor_weight` for a two-metric pack scoring `[100, 85]`. This is one dimension; the notebook covers all seven weights together.
 
-| pack_floor_weight | Pack score | Interpretation |
+| pack_floor_weight | Pack score | Meaning |
 |---|---|---|
-| 0.0 | 92.50 | Pure average - ignores the weakest metric entirely |
+| 0.0 | 92.50 | Plain average, ignores the weakest metric |
 | 0.1 | 91.75 | |
 | 0.2 | 91.00 | |
-| 0.3 | 90.25 | Default - 70% average, 30% floor |
+| 0.3 | 90.25 | Default: 70% average, 30% floor |
 | 0.4 | 89.50 | |
-| 0.5 | 88.75 | Blend approaches 50/50 |
-| 1.0 | 85.00 | Full min - pack score equals weakest metric |
+| 0.5 | 88.75 | Close to 50/50 |
+| 1.0 | 85.00 | Pack score equals the weakest metric |
 
-The default 0.3 is conservative. A pack is often used as one decision
-surface, and a single fragile metric can distort the broader story in ways
-pure averages hide. Full-min (1.0) overpunishes packs where one metric is
-intentionally a V0 proxy while the rest are ready for production use.
+The default 0.3 is conservative. A pack is often used as one decision surface, and one fragile metric can distort the story in ways an average hides. Full minimum (1.0) overpunishes packs where one metric is a deliberate V0 proxy and the rest are production-ready.
 
----
+## Calibration findings
 
-## Calibration Findings
+A small calibration study in [`analysis/weight_calibration.ipynb`](analysis/weight_calibration.ipynb) fit weights to a consensus ranking of the 27 synthetic packs. Two raters produced the ranking: me (twice, for test-retest reliability, ρ = 0.97 between attempts) and an independent model rater as a second check. A ridge regression (α = 1.0, positive weights) on gap counts per metric gave fitted weights with three material differences from the defaults:
 
-A small-n calibration study in
-[`analysis/weight_calibration.ipynb`](analysis/weight_calibration.ipynb)
-fit the default weights against a consensus ranking of the 27 synthetic
-packs. The ranking was produced by two raters: the project author
-(who ranked twice for test-retest reliability, ρ = 0.97 between
-attempts) and an independent model rater used as a second-pass check. A
-ridge regression (α = 1.0, positive weights) on gap counts per metric
-produced a fitted weight configuration with three material differences
-from MMF's defaults.
+| Finding | Default | Fitted | Status |
+|---|---|---|---|
+| `missing_sql` is underweighted. Both raters ranked missing SQL as the most severe gap. | -5 | about -8 to -10 (roughly 2x) | Magnitude not shipped. The structural split (above) shipped. |
+| `tier_v0` is overweighted. A well-documented V0 metric shouldn't lose more than a poorly documented V1 metric. | -10 | about -5 | Not shipped |
+| `missing_owner` is slightly underweighted. | -5 | about -7 | Not shipped |
 
-Finding 1: `missing_sql` is underweighted. Both rankers
-independently placed missing SQL as the single most severe gap. The
-fitted value is roughly 2x the current weight. This lines up with
-an independent design critique that a single -5 deduction conflates
-two structurally different gaps, leading to the `missing_sql` split
-described above, which has been shipped. The magnitude revision
-(e.g. raising default `missing_sql` from -5 to -8) has not been
-shipped pending a larger-n study.
+The first finding matched an independent critique that one -5 lumped two different gaps together, which led to the `missing_sql` split.
 
-Finding 2: `tier_v0` is overweighted. The calibration suggests it
-should be around half its current value. Rationale: V0 is useful
-information for any downstream consumer because it tags the metric as a
-temporary proxy. A well-documented V0 metric should not be penalised
-more than a poorly-documented V1 metric. This change has not been
-shipped for the same reason.
+Why the magnitudes haven't shipped:
 
-Finding 3: `missing_owner` is slightly underweighted. The
-calibration suggests -7 rather than -5. Not shipped.
+- n = 27 is small. A ridge regression with seven features on 27 observations can overfit even with regularisation.
+- Two raters is thin: one human (me) and one LLM. A stronger study needs at least three independent human raters from different backgrounds.
+- The packs are synthetic. Real packs may behave differently.
 
-Why the magnitude revisions have not shipped:
+The notebook states these caveats, and shipping the fitted weights now would ignore them. A follow-up with more raters is planned; the worksheet, ranking CSVs and fit code are ready for it.
 
-- n = 27 is small. Ridge regression with seven features fit on 27
-  observations is susceptible to overfitting even with regularisation.
-- Two rankers is thin. The study has one human rater (the project
-  author) and one LLM rater. A stronger calibration needs at least
-  three independent human raters, ideally drawn from different
-  professional backgrounds.
-- Synthetic packs only. Real-world metric packs might show
-  different weight dynamics.
+## Pack score
 
-The notebook is explicit about those caveats. Shipping the fitted weights now
-would ignore the notebook's own warning labels.
-
-What has shipped from this work: the `missing_sql` split into `missing_sql_temporary`
-(-3) and `missing_sql_structural` (-12), selected by the
-`implementation_type` field. This addresses the *structural* form of
-Finding 1 without relying on the magnitude of a small-n fit.
-
-A follow-up calibration with a larger rater pool is earmarked as
-future work. The scaffolding (worksheet, ranking CSVs, fit code) is
-in place so that a second study can be run quickly once independent
-raters are available.
-
----
-
-## Pack Score
-
-The pack score is not a plain average.
-
-It blends:
-- the average metric score
-- the weakest metric score
-
-Formula:
+The pack score blends the average metric score with the weakest one:
 
 ```text
 pack_score = (1 - pack_floor_weight) * average_metric_score
            + pack_floor_weight * min_metric_score
 ```
 
-Default configuration:
+With the default `pack_floor_weight = 0.3`, that is 70% average quality and 30% weakest-metric floor. A pack is often one decision surface, and a plain average hides a single fragile metric too easily.
 
-```text
-pack_floor_weight = 0.3
-```
+## Bands
 
-This means the pack score is:
-- 70% average metric quality
-- 30% weakest-metric floor
+Thresholds come from [mmf/config.py](mmf/config.py):
 
-Why do this:
-- a pack is often used as one decision surface
-- a single fragile metric can distort a broader story
-- pure averages hide that risk too easily
+| Range | Label | Usually means | Safe for |
+|---|---|---|---|
+| `80-100` | Decision-ready | Owner, SQL and tests present; not a V0 proxy, or it makes up for it elsewhere | Dashboards in regular reviews, target tracking, decisions needing a stable definition |
+| `60-79` | Usable with caution | Useful, but at least one structural gap still matters. Fine for direction, review it before it becomes a commitment metric. | Exploration, trend monitoring, forming hypotheses |
+| `40-59` | Early/fragile | Several structural gaps. More a draft signal than an operating metric. | Prototypes, early exploration |
+| `0-39` | Not safe for decisions | Too many core safeguards missing | Nothing yet. Fix owner, SQL and tests first. |
 
----
+## Worked examples
 
-## Thresholds
-
-Current thresholds come from [mmf/config.py](mmf/config.py):
-
-| Range | Label |
-|---|---|
-| `80-100` | Decision-ready |
-| `60-79` | Usable with caution |
-| `40-59` | Early/fragile |
-| `0-39` | Not safe for decisions |
-
-Interpretation:
-
-### 80-100: Decision-ready
-
-This usually means:
-- ownership is defined
-- SQL is present
-- tests are present
-- the metric is not a V0 proxy, or it compensates for that elsewhere
-
-Safe for:
-- dashboards used in regular operating reviews
-- target tracking
-- decisions that need a stable metric definition
-
-### 60-79: Usable with caution
-
-This usually means:
-- the metric is useful
-- at least one structural gap still matters
-- the metric may be acceptable for directional work but should be reviewed before it becomes a commitment metric
-
-Safe for:
-- exploration
-- trend monitoring
-- hypothesis generation
-
-### 40-59: Early/fragile
-
-This usually means:
-- multiple structural gaps are still present
-- the metric is more of a draft signal than a reliable operating metric
-
-Safe for:
-- prototypes
-- early exploratory analysis
-
-### 0-39: Not safe for decisions
-
-This usually means:
-- too many core safeguards are missing
-- the metric definition is not strong enough for serious reliance
-
-Recommendation:
-- fix ownership, SQL, and tests before using it in a meaningful decision loop
-
----
-
-## Worked Examples
-
-### Example 1: Fully defined V1 metric
+### 1. Fully defined V1 metric
 
 ```yaml
 id: active_accounts
@@ -349,13 +167,9 @@ tests:
   - type: not_null
 ```
 
-Score:
+Score: `100`.
 
-```text
-100
-```
-
-### Example 2: V0 proxy with no SQL or tests
+### 2. V0 proxy with no SQL or tests
 
 ```yaml
 id: support_ticket_ratio
@@ -364,47 +178,21 @@ tier: V0
 responsible: Customer Success
 ```
 
-Score:
+Score: `100 - 10 - 5 - 5 - 3 - 2 - 2 = 73`. It has an owner but loses points for being a V0 proxy with no SQL, no tests and no description, grain or unit.
 
-```text
-100 - 10 - 5 - 5 - 3 - 2 - 2 = 73
-```
+### 3. Mixed pack
 
-The metric keeps ownership, but still loses points for being a V0 proxy with no SQL, no tests, and missing basic interpretability fields.
-
-### Example 3: Mixed pack
-
-Metric scores:
-
-```text
-[100, 85]
-```
-
-Intermediate values:
-
-```text
-average_metric_score = 92.5
-min_metric_score = 85
-```
-
-Pack score:
+Metric scores `[100, 85]`, so the average is 92.5 and the minimum is 85:
 
 ```text
 pack_score = 0.7 * 92.5 + 0.3 * 85 = 90.25
 ```
 
-Rounded result:
+This is why a pack can score below its average when most metrics look strong.
 
-```text
-90.25
-```
+### 4. The SQL split in action
 
-This is why the pack score can be lower than the average metric score even when most metrics look strong.
-
-### Example 4: The SQL split in action
-
-The same bare V0 proxy from Example 2, but now declared explicitly as a
-`v0_proxy`:
+Example 2, now declared as a `v0_proxy`:
 
 ```yaml
 id: support_ticket_ratio
@@ -414,19 +202,13 @@ responsible: Customer Success
 implementation_type: v0_proxy
 ```
 
-Score:
-
 ```text
 100 - 10 (V0) - 3 (missing_sql_temporary) - 5 (tests) - 3 (desc) - 2 (grain) - 2 (unit) = 75
 ```
 
-Declaring the metric as a deliberate V0 proxy earns a 2-point softening
-on the SQL gap, lifting the score from 73 (Example 2) to 75. The framework
-reads this as: "the analyst explicitly marked this as work-in-progress,
-the missing SQL is a feature of the stage, not a reliability problem."
+Declaring the proxy softens the SQL gap by 2 points, from 73 to 75. The analyst marked it as work in progress, so the missing SQL belongs to the stage, not to a reliability problem.
 
-Contrast with a metric that has owner, tests, description, grain, and
-unit - but is implemented in a spreadsheet:
+Compare a metric with an owner, tests, description, grain and unit that lives in a spreadsheet:
 
 ```yaml
 id: weekly_ticket_ratio
@@ -440,64 +222,37 @@ tests:
   - type: not_null
 ```
 
-Score:
-
 ```text
 100 - 12 (missing_sql_structural) = 88
 ```
 
-The metric is otherwise well-defined. The -12 deduction reflects that a
-spreadsheet implementation is hard to review outside the spreadsheet - not a
-temporary gap. At 88, the metric is still in the "decision-ready" band but sits
-meaningfully below the equivalent SQL-backed version at 100.
+Otherwise well defined. The -12 reflects that a spreadsheet is hard to review outside the spreadsheet. At 88 it is still decision-ready, but clearly below the SQL-backed version at 100.
 
----
+## Validation vs scoring
 
-## Relationship To Validation
+Validation checks some things that don't change the score: missing or unknown `schema_version`, missing `requires`, missing metric `name`, duplicate IDs, malformed `metrics`, partial ratio SQL, and SQL syntax warnings when `sqlparse` is available. So a pack can validate with warnings and still score well, and not every validation issue is a deduction.
 
-Validation and scoring are related, but they are not the same thing.
+## Suggestions
 
-Validation checks additional things that do not currently change the score, including:
-- missing `schema_version`
-- unknown `schema_version`
-- missing `requires`
-- missing metric `name`
-- duplicate metric IDs
-- malformed `metrics`
-- partial ratio SQL
-- lightweight SQL syntax warnings when `sqlparse` is available
+Suggestions come from the scored output and the metric definitions. The scorer emits these gaps:
 
-That means:
-- a pack can validate with warnings and still score well
-- a pack can score well while still having useful info-level cleanup items
-- not every validation issue is a scoring deduction
+| Gap | When |
+|---|---|
+| `tier_v0` | Tier is V0 |
+| `missing_accountable` | No owner |
+| `missing_sql` | No SQL, no `implementation_type` |
+| `missing_sql_temporary` | No SQL, `implementation_type: v0_proxy` |
+| `missing_sql_structural` | No SQL, `implementation_type` is `spreadsheet`, `notebook`, `dashboard` or `other` |
+| `missing_tests` | No tests |
+| `missing_description` | No description |
+| `missing_grain` | No grain |
+| `missing_unit` | No unit |
 
----
-
-## Relationship To Suggestions
-
-Suggestions are generated from the scored output plus the metric definitions.
-
-The current scorer emits these gap types:
-- `tier_v0`
-- `missing_accountable`
-- `missing_sql` (default when `implementation_type` is not set)
-- `missing_sql_temporary` (when `implementation_type: v0_proxy`)
-- `missing_sql_structural` (when `implementation_type` is `spreadsheet`, `notebook`, `dashboard`, or `other`)
-- `missing_tests`
-- `missing_description`
-- `missing_grain`
-- `missing_unit`
-
-The three `missing_sql*` gaps are mutually exclusive; exactly one fires per metric that lacks SQL.
-
-The suggestion layer can also react to richer gap names (for example, `deprecated_status`), which makes it ready for future scoring expansion, but those richer gaps are not part of the active scoring contract today.
-
----
+Exactly one `missing_sql*` gap fires per metric without SQL. The suggestion layer also handles richer gap names (such as `deprecated_status`) for future rules, but those aren't part of the scoring contract today.
 
 ## Configuration
 
-Default configuration is defined in [mmf/config.py](mmf/config.py):
+Defaults live in [mmf/config.py](mmf/config.py):
 
 ```python
 ScoringConfig(
@@ -522,33 +277,15 @@ ScoringConfig(
 )
 ```
 
-If you change these values:
-- update the tests
-- update this document
-- re-check the app labels and threshold descriptions
-- re-run the Bayesian robustness analysis to confirm rank stability still holds
+If you change them:
 
----
+1. Update the tests.
+2. Update this document.
+3. Check the app labels and band descriptions.
+4. Rerun the Bayesian robustness analysis to confirm the rankings still hold.
 
-## Current Limits
+## Current limits
 
-The current scoring model does not deduct for:
+No deduction today for deprecated status (a suggestion only) or missing upstream dependencies (`requires`).
 
-- deprecated status (surfaced as a suggestion only)
-- missing upstream dependencies (`requires`)
-
-These may appear in suggestions but are not active scoring deductions.
-`missing_description`, `missing_grain`, and `missing_unit` are now active
-deductions (see the table above).
-
-The calibration study (see "Calibration Findings" above) also flagged
-three weight-magnitude revisions that are not shipped:
-
-- `missing_sql` default value (currently -5; calibration suggests -8 to -10)
-- `tier_v0` (currently -10; calibration suggests ~-5)
-- `missing_accountable` (currently -5; calibration suggests ~-7)
-
-These are held pending a larger-n rater pool. They do not affect the
-current scoring behaviour and are documented here so that any future
-calibration study starts from a clear record of what was considered
-and deferred.
+The three weight changes from the calibration study (`missing_sql` to about -8 to -10, `tier_v0` to about -5, `missing_accountable` to about -7) are on hold until a larger rater pool exists. They don't affect scoring now; they are recorded so the next study starts from a clear list of what was considered and deferred.

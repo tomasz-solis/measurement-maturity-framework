@@ -1,123 +1,68 @@
-# Case Study 3: Uber's MAPC definition at IPO
+# Case study 3: Uber's MAPC definition at IPO
 
-Status: miss. The framework scores 100/100 on a metric whose definition bundles
-different behaviours into one headline number. The lesson is that MMF checks
-whether a metric is defined, not whether it is the right single construct.
+Result: a miss. The framework scores 100/100 on a metric that bundles different behaviours into one headline number. MMF checks whether a metric is defined, not whether it is the right single measure.
 
 ## What happened
 
-In April 2019, Uber filed its S-1 ahead of its IPO. The headline user metric
-disclosed to investors was "Monthly Active Platform Consumers" (MAPC),
-defined as:
+In April 2019 Uber filed its S-1 ahead of its IPO. The headline user metric for investors was Monthly Active Platform Consumers (MAPC):
 
-> The number of unique consumers who completed a Ridesharing or New Mobility
-> ride or received an Uber Eats meal on our platform at least once in a given
-> month, averaged over each month in the quarter.
+> The number of unique consumers who completed a Ridesharing or New Mobility ride or received an Uber Eats meal on our platform at least once in a given month, averaged over each month in the quarter.
 
-MAPC in Q4 2018 was reported at 91 million, up 35% year over year.
+MAPC for Q4 2018 was 91 million, up 35% year over year.
 
-The definition was technically precise and publicly disclosed. But it
-combined three products: rideshare, micro-mobility (scooters and bikes
-from the JUMP acquisition), and food delivery.
-Analyst coverage at the time (Investing.com, MergersAndInquisitions.com,
-and others) noted the problem: if rideshare growth stalled but Uber Eats
-grew fast, MAPC would still look healthy, and an investor reading the
-headline number would not see the shift.
+The definition was precise and public, but it combined three products: rideshare, micro-mobility (scooters and bikes from the JUMP acquisition) and food delivery. Analysts at the time (Investing.com, MergersAndInquisitions.com and others) pointed out the problem: if rideshare stalled while Uber Eats grew fast, MAPC would still look healthy, and an investor reading the headline wouldn't see the shift.
 
-This is not metric fraud. Uber disclosed the construction. Any analyst with
-the time to read past the headline could see what was in MAPC. But that's
-the point: the metric only works cleanly as a headline number if the reader
-does not look too closely at what is bundled inside it.
+This isn't metric fraud. Uber disclosed how MAPC was built, and anyone who read past the headline could see it. But the metric only works as a clean headline if the reader doesn't look closely at what's inside.
 
 ## What the framework sees
 
-Reconstructed metric spec: [`03_uber_mapc.yaml`](03_uber_mapc.yaml).
+Reconstructed spec: [`03_uber_mapc.yaml`](03_uber_mapc.yaml).
 
-The SQL UNIONs three event sources and counts distinct consumers. Every
-structural check MMF runs passes:
+The SQL unions three event sources and counts distinct consumers. Every structural check passes:
 
-```
+```text
 Pack score: 100.0
   mapc: 100.0 - Well-defined and ready for production use.
 ```
 
-The metric has an owner (Corporate FP&A - Investor Metrics), SQL, three tests,
-a description, grain, unit. Nothing is missing. The framework rates it
-ready for production use.
+The metric has an owner (Corporate FP&A, Investor Metrics), SQL, three tests, a description, a grain and a unit. Nothing is missing.
 
-This is a miss, but a different kind from the Facebook miss. The Facebook
-metric was structurally fine but logically wrong. The Uber metric is
-structurally and logically fine for the definition given, but the definition
-itself is a composite that obscures variation within it. The problem is not in
-the SQL; it is in the choice of what to put in the SQL.
+This is a different miss from Facebook. Facebook's metric was structurally fine but logically wrong. Uber's is structurally and logically fine for its definition, but the definition is a composite that hides variation inside it. The problem isn't in the SQL. It's in what was put in the SQL.
 
 ## What this case teaches
 
-The framework checks the quality of a metric's definition, not the quality of
-the decision to frame it as one metric. If a team decides that "accounts that
-bought anything from us" is the right unit of analysis, the framework can
-audit whether that metric is well-defined. It cannot tell the team that their
-choice of unit is strategically misleading.
+The framework checks how well a metric is defined, not whether framing it as one metric was wise. If a team decides "accounts that bought anything from us" is the right unit, MMF can audit that metric. It can't tell the team the unit is strategically misleading.
 
-Practical implication: for any metric that aggregates heterogeneous
-sub-populations, the framework's 100/100 score is a green light on the
-implementation, not on the concept. A careful reviewer should also ask:
+For any metric that combines different sub-populations, a 100/100 score approves the implementation, not the concept. A careful reviewer should also ask:
 
-- What is this metric composed of, and do those components move together?
-- If one component grows while another shrinks, does the composite signal
-  what we want it to signal?
-- Is there a breakdown view that should accompany the headline number?
+- What is this metric made of, and do the parts move together?
+- If one part grows while another shrinks, does the total still say what we want?
+- Should a breakdown sit next to the headline number?
 
-None of those questions live in MMF today.
+MMF doesn't ask these today.
 
-## What would it take to catch this in the framework?
+## What it would take to catch this
 
-Three candidate extensions, in increasing order of effort:
+Three possible extensions, from least to most effort:
 
-1. A `decomposable` check. Add an optional field to a metric spec listing
-   its sub-metrics (e.g. `decomposes_into: [rideshare_mau, new_mobility_mau,
-   eats_mau]`). Deduct points when a metric is composite but has no
-   decomposition listed. This is mostly about forcing the analyst to be
-   explicit rather than letting composition hide.
+1. A `decomposable` check. An optional field lists a metric's sub-metrics (for example `decomposes_into: [rideshare_mau, new_mobility_mau, eats_mau]`), and a composite metric without it loses points. It mainly forces the analyst to be explicit.
+2. A `homogeneity_assumption` field. Composite metrics declare whether their parts are assumed to move together. If they do, a test has to check it against history, for example a correlation between sub-metric movements.
+3. A breakdown rule for headline metrics. Any metric used for investor or board reporting must carry a sub-breakdown in the pack. This is closer to governance than scoring.
 
-2. A `homogeneity_assumption` field. Require composite metrics to declare
-   whether their components are assumed to co-move (same direction, similar
-   magnitude). When that assumption is asserted, require a test that checks
-   it historically, for example with a correlation check between sub-metric
-   movements.
+Option 1 is about a week of work and useful right away. Option 2 is more honest but needs backfilled sub-metrics for every composite. Option 3 belongs closer to a CFO office than a metric framework.
 
-3. A reporting/decomposition rule for headline metrics. Require that any
-   metric whose use case includes "investor reporting" or "board-level"
-   carries a sub-breakdown in the pack. This is closer to a governance
-   extension than a scoring one.
+## What it would catch if the analyst declared the risk
 
-Option 1 is a week's work and immediately useful. Option 2 is more honest
-but requires backfilled sub-metrics for every composite, which is a lot to
-ask. Option 3 is governance and lives closer to a CFO office than a metric
-framework.
+As with Netflix (case 1), the analyst can signal the risk. A careful analyst might write a `description` that names it:
 
-## What the framework *would* catch if the analyst declared the problem
+> MAPC aggregates Ridesharing, New Mobility, and Uber Eats consumers. Investors reading MAPC growth in isolation may miss divergence between these segments. Always present MAPC alongside sub-segment breakdowns when used in external reporting.
 
-Just as with Netflix (Case 1), the framework gives the analyst a way to signal
-the risk if they choose to. A pragmatic analyst looking at Uber's MAPC might
-write a `description` that explicitly names the composition risk:
-
-> MAPC aggregates Ridesharing, New Mobility, and Uber Eats consumers. Investors
-> reading MAPC growth in isolation may miss divergence between these segments.
-> Always present MAPC alongside sub-segment breakdowns when used in external
-> reporting.
-
-And might tag the metric V0 until a segment-breakdown companion is ready. The
-tier deduction would then surface the risk in the score, as with Netflix.
-
-That is a reasonable use of the framework by the analyst. It is not something
-the framework will do on its own.
+They might also tag it V0 until a segment breakdown exists, so the tier deduction shows the risk in the score. That's a reasonable use of the framework. It won't do it on its own.
 
 ## Sources
 
 - Uber Technologies, Inc., Form S-1 (April 11, 2019), definition of MAPC
-- PYMNTS, "Uber's Growth Slowed But Sees $12 Trillion Market Opportunity"
-  (April 2019)
+- PYMNTS, "Uber's Growth Slowed But Sees $12 Trillion Market Opportunity" (April 2019)
 - CNBC, "Uber releases S-1 filing for IPO" (April 11, 2019)
 - Investing.com, "Uber IPO Preview" (April 2019)
 - MergersAndInquisitions.com, "Uber Valuation" (May 2019)

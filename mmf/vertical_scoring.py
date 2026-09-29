@@ -1,4 +1,4 @@
-"""Layer 2 — vertical measurement readiness scoring.
+"""Layer 2: vertical measurement readiness scoring.
 
 Decision-centric: readiness is built bottom-up from whether each key decision
 is backed by trusted, owned, instrumented, guardrailed metrics, then rolled up
@@ -24,7 +24,7 @@ from .measurement_debt import (
 )
 from .scoring import score_pack
 
-# A metric must be "decision-ready" (>= 80) to gate a decision — a deliberately
+# A metric must be "decision-ready" (>= 80) to gate a decision, a deliberately
 # higher bar than the 60 "usable" cutoff.
 TRUSTED_THRESHOLD = 80.0
 

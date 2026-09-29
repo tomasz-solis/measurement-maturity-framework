@@ -6,7 +6,7 @@
 # Fill in as much as you have. The pack is valid and useful at every level
 # (see docs/V2_SCHEMA.md "Progressive levels"): absent sections are reported as
 # "not assessed", never penalized. There is NO field for an expected number of
-# OKRs/KPIs/metrics — count is never scored (docs/V2_SCORING_METHODOLOGY.md).
+# OKRs/KPIs/metrics; count is never scored (docs/V2_SCORING_METHODOLOGY.md).
 
 pack:
   id: example_vertical_readiness
@@ -48,7 +48,7 @@ metrics:
   - id: example_primary
     name: Example Primary Metric
     role: primary_metric              # primary|supporting|diagnostic|guardrail|input|output
-    tier: V1                          # V0 (proxy) | V1 (settled) — maturity, not role
+    tier: V1                          # V0 (proxy) | V1 (settled). Maturity, not role
     status: active
     accountable: Example Product Team # accountable OR responsible satisfies ownership
     description: What this metric measures and why it matters.

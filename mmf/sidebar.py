@@ -28,7 +28,7 @@ class SidebarExample:
 _EXAMPLE_METADATA: dict[str, tuple[str, str]] = {
     "onboarding_measurement_ready.yaml": (
         "Onboarding (healthy)",
-        "A healthy, decision-ready measurement system - what good looks like.",
+        "A healthy, decision-ready measurement system. What good looks like.",
     ),
     "mobile_app_measurement.yaml": (
         "Mobile app",
